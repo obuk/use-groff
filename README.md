@@ -1,76 +1,69 @@
 # using-grops
 
-最近の groff (ports の groff) で ps を出力します。
+FreeBSD の日本語のマンページを ports の textproc/groff で ps にします。
+euc-jp より utf8 を使いたい人向けですが、Linux でも同様だと思います。
 
-FreeBSD で日本語マニュアルを、euc-jp より utf8 で使いたい人向けですが、
-Linux でも同様かもしれません。
+## はじめに
 
-はじめに
 [FreeBSDの日本語マニュアル(2)](https://qiita.com/false-git@github/items/d1eb2f680801a1a75edb)
-のとおりに作業して、日本語マニュアルが utf8 で扱えるようにします。
+を参照して、日本語のマンページを utf8 で扱えるようにしてください。
 
-## fontforge と日本語のフォント ja-font-std を用意する
+## fontforge と日本語のフォント
+
+groff の ps ドライバ grops で使えるフォントの作成と追加の手順は
+http://www.schaffter.ca/mom/momdoc/appendices.html に説明されています。
+フォントは ttf から作りますが、使えないフォントもあります。
+
+次の例は ja-font-std をインストールし、
+その中の *.gs7 を PS の Fontname に直します。
 
 ```
 $ sudo pkg install fontforge ja-font-std
-```
-
-fontforge は依存が多いので気になるかもしれませんが、作業後削除できます。
-あるいは他所で作ってもってきてもいいと思います。
-
-## groff (grops) のフォントを作る
-
-詳しい説明は http://www.schaffter.ca/mom/momdoc/appendices.html にあります。
-
-1. ja-font-std の *.gs7 の名前を IPAMincho.ttf と IPAGothic.ttf にします。
-
-```
 $ ln -s /usr/local/share/fonts/std.ja_JP/Ryumin-Light.gs7 IPAMincho.ttf
 $ ln -s /usr/local/share/fonts/std.ja_JP/GothicBBB-Medium.gs7 IPAGothic.ttf
 ```
 
-2. fontforge のスクリプトで ttf から afm と t42 を作ります。
+ファイル名は PS の Fontname に直します。後で fontforge でイタリックや
+ボールどの派生フォントを作成すると、ファイルは、デフォルトでは PS の
+Fontname になるので、ja-font-std のフォントもこの名前に直します。
+
+PS の Fontname は、fontforge で [Element] - [Font Info...]
+(Ctrl+Shift+F) の Font Information で確認できます。
+
+## groff (grops) フォントの作成とインストール
+
+fontforge のスクリプトを使って ttf から afm と t42 を作り、そこから
+groff (grops) のフォントを作って、site-fonts にコピーします。
 
 ```
-$ cat > vi generate.pe <<EOF
+$ cat > generate.pe <<EOF
 Open(\$1);
 Generate(\$fontname + ".afm");
 Generate(\$fontname + ".t42");
 EOF
 $ fontforge -script generate.pe IPAMincho.ttf
-```
-
-3. groff (grops) のフォントを作ります。
-
-```
+$ ln -s $GROFF_FONT/devps/generate/textmap .
 $ perl `which afmtodit` -s -i0 -m IPAMincho.afm textmap MR
-```
-
-4. download ファイルを作ります。
-
-```
-$ echo IPAMincho IPAMincho.t42 >download
-```
-
-5. ファイルを groff の site-fonts にコピーします。
-
-```
+$ echo IPAMincho IPAMincho.t42 >>download
 $ sudo mkdir -p $GROFF_SITE_FONT/devps
 $ sudo install -m 644 MR IPAMincho.t42 download $GROFF_SITE_FONT/devps
 ```
 
+上で PS の Fontname を fontforge の Font Information で確認しましたが、
+GUI なしなら、この afm ファイル中の Fontname を参照してください。
+download ファイルは、ps に埋め込むフォントを列挙します。
+
 (後でスクリプトに)
 
-## 日本語のフォントをスペシャルフォントとして扱う
+## スペシャルフォントの利用
 
-フォント T (Times) のグリフの検索に M (Mincho) 追加します。
-スペシャルフォントは
+スペシャルフォントを使うと、たとえば、フォント T (Times) に M (Mincho)
+追加することができます。スペシャルフォントは
 [Special Fonts](https://www.gnu.org/software/groff/manual/html_node/Special-Fonts.html)
 に説明があります。
 
-1. fspecial で T* と M* を対応付けます。
-
-とりあえず、
+T* と M* は、次に示す ps.local (ファイル名は何でも) を作り、
+fspecial で 2つの対応を与えます。
 
 ```
 $ vi ps.local
@@ -80,7 +73,7 @@ $ vi ps.local
 .fspecial TBI MR
 ```
 
-2. ps.local は ps.tmac でインクルードします。
+作成した ps.local は ps.tmac でインクルードします。
 
 ```
 $ cp $GROFF_TMAC/ps.tmac .
@@ -88,10 +81,12 @@ $ echo .do mso ps.local >>ps.tmac
 $ sudo install -m 644 ps.tmac $GROFF_SITE_TMAC/
 ```
 
-3. MR (Roman) の他に Italic と Bold も使うなら、
-fontforge で .ttf を作成して groff の site-fonts にコピーします。
+MR (Mincho Roman、オリジナルフォント) に加え Italic や Bold も作るなら、
+fontforge でその ttf を作成し、更に afm と t42 や download ファイルも
+作成し、 groff にコピーします。
 
-M* の他に G* もあり、以下のフォントについて、上記を繰り返します。
+M* の他に G* もあるので、ひととおり作る場合は、以下のフォントについて、
+上記を繰り返してください。
 
 * MR IPAMincho.ttf
 * MI IPAMincho-Italic.ttf
@@ -102,9 +97,8 @@ M* の他に G* もあり、以下のフォントについて、上記を繰り�
 * GB IPAGothic-Bold.ttf
 * GBI IPAGothic-BoldItalic.ttf
 
-4. ps.local に追加分の Tx (Times-x) と Mx (Mincho-x) の対応を加えます。
-
-たとえば、
+それから ps.local にいま作成したフォントの Tx と Mx の対応を追加します。
+追加後の ps.local の例を示します。
 
 ```
 vi ps.local
@@ -125,7 +119,7 @@ $ zcat /usr/share/man/ja/manx/コマンド名.x.gz | \
   $GROFF -S -man -dlocale=ja.UTF-8 -DUTF-8 -KEUC-JP -t > a.ps
 ```
 
-日本語のマンページ euc-jp から utf8 への変換に preconv を使いました。
+日本語のマンページ euc-jp から utf8 への変換には preconv を使いました。
 
 
 ## お好みで、たとえば、
@@ -152,7 +146,7 @@ $ vi mdoc_ja.local
 
 3. 日本語のマンページで nroff のために補正されているものを見直します。
 
-マンページの中に na で行揃えを抑止しているものがありますが、
+マンページの中に na で行揃えを抑制しているものがありますが、
 troff ではそう悪くはありません。na を n (nroff) のときだけにします。
 
 ```
