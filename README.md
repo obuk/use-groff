@@ -5,9 +5,9 @@
 FreeBSD で日本語マニュアルを、euc-jp より utf8 で使いたい人向けですが、
 Linux でも同様かもしれません。
 
-はじめに [FreeBSDの日本語マニュアル(2)][1] を参照し日本語マニュアルを
-インストールします。
-[1]: https://qiita.com/false-git@github/items/d1eb2f680801a1a75edb
+はじめに
+[FreeBSDの日本語マニュアル(2)](https://qiita.com/false-git@github/items/d1eb2f680801a1a75edb)
+のとおりに作業して、日本語マニュアルが utf8 で扱えるようにします。
 
 ## fontforge と日本語のフォント ja-font-std を用意する
 
@@ -15,7 +15,8 @@ Linux でも同様かもしれません。
 $ sudo pkg install fontforge ja-font-std
 ```
 
-* fontforge は作業後削除できます。
+fontforge は依存が多いので気になるかもしれませんが、作業後削除できます。
+あるいは他所で作ってもってきてもいいと思います。
 
 ## groff (grops) のフォントを作る
 
@@ -63,12 +64,13 @@ $ sudo install -m 644 MR IPAMincho.t42 download $GROFF_SITE_FONT/devps
 ## 日本語のフォントをスペシャルフォントとして扱う
 
 フォント T (Times) のグリフの検索に M (Mincho) 追加します。
-スペシャルフォントは[Special Fonts][2] に説明があります。
-[2]: https://www.gnu.org/software/groff/manual/html_node/Special-Fonts.html
+スペシャルフォントは
+[Special Fonts](https://www.gnu.org/software/groff/manual/html_node/Special-Fonts.html)
+に説明があります。
 
 1. fspecial で T* と M* を対応付けます。
 
-とりあえず、すべて同じフォントを使います。
+とりあえず、
 
 ```
 $ vi ps.local
@@ -87,7 +89,9 @@ $ sudo install -m 644 ps.tmac $GROFF_SITE_TMAC/
 ```
 
 3. MR (Roman) の他に Italic と Bold も使うなら、
-fontforge で .ttf を作成して groff の site-fonts にコピーし、(上記の繰り返し)
+fontforge で .ttf を作成して groff の site-fonts にコピーします。
+
+M* の他に G* もあり、以下のフォントについて、上記を繰り返します。
 
 * MR IPAMincho.ttf
 * MI IPAMincho-Italic.ttf
