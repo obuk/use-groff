@@ -26,16 +26,16 @@ $ sudo install-font.sh MR /usr/local/share/fonts/std.ja_JP/Ryumin-Light
 $ sudo install-font.sh GR /usr/local/share/fonts/std.ja_JP/GothicBBB-Medium
 ```
 
-groff のフォントには MR と GR という名前を付けました。名前はファミリと
-スタイルを表わします。M と G がファミリ、R がスタイルです。
+MR と GR は groff のフォントです。名前はファミリとスタイルを表わします。
+M と G がファミリ、R がスタイルです。
 
 [Adding fonts to groff]: http://www.schaffter.ca/mom/momdoc/appendices.html#fonts
 
 ## フォントを組み合わせる
 
-groff は、デフォルトで T (Times) というフォントファミリを使いますが、
-このフォントに日本語の字体はありません。しかし、[Special Fonts][] とい
-う仕組みで日本語の字体を追加できます。例を示します。
+groff は、デフォルトで T (Times) を使いますが、このフォントに日本語の
+字体はありません。しかし、[Special Fonts][] で日本語の字体を追加できま
+す。例を示します。
 
 ```
 $ cp /usr/local/share/groff/current/tmac/ps.tmac .
@@ -43,30 +43,30 @@ $ patch <ps.tmac.patch
 $ sudo cp ps.tmac ps.local /usr/local/share/groff/site-tmac
 ```
 
-字体の追加は fspecial で指定します。
+字体の追加に fspecial を使います。
 
 ```
 $ vi ps.local
 .fspecial TR MR
-.fspecial TI MI MR
-.fspecial TB MB MR
-.fspecial TBI MBI MR
+.fspecial TI MI
+.fspecial TB MB
+.fspecial TBI MBI
 .fspecial HR GR
-.fspecial HI GI GR
-.fspecial HB GB GR
-.fspecial HBI GBI GR
+.fspecial HI GI
+.fspecial HB GB
+.fspecial HBI GBI
 ```
 
-たとえば TR (Times-Roman) は日本語の字体を MR (明朝) から補います。TI
-(Times-Italic) は MI (明朝のイタリック)、無ければ MR から補います。
+ここにはまだ作成していないフォント MI MB MBI GI GB GBI も使われていま
+す。作り方は次の「フォントにスタイルを追加する」で説明します。
 
 [Special Fonts]: https://www.gnu.org/software/groff/manual/html_node/Special-Fonts.html
 
 ## フォントにスタイルを追加する
 
-groff の基本のスタイルは R I B BI ですが、日本語のフォントには R のみ
-で、I B BI は用意されてないものが多いと思います。次の例は、足りないス
-タイルを fontforge で作ります。
+groff の基本のスタイルは R I B BI ですが、日本語のフォントは R のみで、
+I B BI は用意されてないものが多いと思います。例は、足りないスタイルを
+fontforge で作ります。
 
 ```
 $ generate-font.sh I Ryumin-Light
@@ -74,12 +74,13 @@ $ generate-font.sh B Ryumin-Light
 $ generate-font.sh BI Ryumin-Light
 ```
 
-MR と同様にインストールします。
+メモリ 1GB の VM でゴシックも作成しておよそ30分です。
+インストールは次のとおりです。
 
 ```
-$ install-font.sh MI IPAMincho-Italic.ttf
-$ install-font.sh MB IPAMincho-Bold.ttf
-$ install-font.sh MBI IPAMincho-BoldItalic.ttf
+$ sudo install-font.sh MI IPAMincho-Italic.ttf
+$ sudo install-font.sh MB IPAMincho-Bold.ttf
+$ sudo install-font.sh MBI IPAMincho-BoldItalic.ttf
 ```
 
 generate-font.sh は、与えられたフォントを指定のスタイル (I B BI) に変
@@ -109,6 +110,7 @@ man コマンドは、中でページや利用者のロケールから判定し�
 
 ```
 $ sudo cp line-gap.patch /usr/local/share/groff/site-tmac
+$ cd /usr/local/share/groff/site-tmac
 $ sudo patch <line-gap.patch
 ```
 
