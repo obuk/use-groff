@@ -4,24 +4,23 @@ set -eu
 
 PATH=/usr/local/bin:$PATH
 
-usage="usage: $(basename $0) [-av] [-s size] [-t .ext] style fontfile
-  style: R - Roman, I - Italic, B - Bold, BI - BoldItalic"
+usage="usage: $(basename $0) [-av] [-s size] [-t .ext] [-n subname] style fontfile"
 
-while getopts bis:t: OPT
+subname=""
+while getopts n:s:t: OPT
 do
     case $OPT in
         s) size=$OPTARG ;;
         t) type=$OPTARG ;;
-	*) usage; exit 2 ;;
+        n) subname=$OPTARG ;;
+	*) echo $usage >&2; exit 2 ;;
     esac
 done
 size=${size-1024}
 type=${type-.ttf}
 shift $((OPTIND - 1))
-[ $# -lt 2 ] && usage && exit 2
-style="$1"
-font="$2"
-subname=""
+style=${1:?"$usage"}
+font=${2:?"$usage"}
 transform=""
 case "$style" in
     R)  ;;
@@ -31,8 +30,9 @@ case "$style" in
 	transform="Skew(13)" ;;
     BI) subname="BoldItalic"
 	transform="ExpandStroke(50, 0, 1, 0, 1); Skew(13)" ;;
-    *)  usage; exit 2 ;;
+    *)  echo $usage >&2; exit 2 ;;
 esac
+[ -n "$subname" ] && subname="-$subname"
 temp=$(mktemp)
 cat > $temp <<EOF
 Open(\$1);
@@ -43,7 +43,7 @@ Simplify();
 CorrectDirection();
 ScaleToEm($size);
 RoundToInt();
-SetFontNames(\$fontname + "-$subname")
+SetFontNames(\$fontname + "$subname")
 RenameGlyphs("Adobe Glyph List");
 Generate(\$fontname + "$type");
 EOF
