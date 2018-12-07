@@ -7,8 +7,7 @@ GROFF_FONT=${GROFF_FONT-/usr/local/share/groff/current/font}
 SITE_FONT=${SITE_FONT-/usr/local/share/groff/site-font}
 AFMTODIT=${AFMTODIT-"-s"}
 
-usage="usage: $(basename $0) groff-fontname fontfile.{ttf,otf}
-e.g. $(basename $0) MR /usr/local/share/fonts/std.ja_JP/Ryumin-Light"
+usage="usage: $(basename $0) groff-fontname fontfile.{ttf,otf}"
 
 name=${1:?"$usage"}
 font=${2:?"$usage"}
@@ -40,7 +39,7 @@ temp=$(mktemp -d)
 	printf "$fontname\t$fontname.t42\n"
     ) | sort -u > download
 
-    sudo install -b -B.bak -m 644 $name $fontname.t42 download \
+    sudo install -m 644 $name $fontname.t42 download \
 	    $SITE_FONT/devps
 )
 
