@@ -5,7 +5,8 @@ utf8 を使用する環境の groff で日本語のマンページを ps で出�
 ライバです。
 
 確認に FreeBSD を使いました。Linux とはパッケージのインストール方法や
-ファイル名、ディレクトリ名が違いますが、基本的には同じだと思います。
+ファイル名、ディレクトリ名が違いますが、基本的には同じです。ubuntu で
+確認に使用したスクリプトを eg/setup-grops-ja-ubuntu.sh に置きます。
 
 ## はじめに
 
@@ -152,8 +153,8 @@ $ vi mdoc_ja.local
 
 ここでは行末揃えが働きやすくするためにテンやマルの字体に含まれるアキを
 空白に変え、フォントも等幅でなくプロポーショナルフォントをインストール
-し、サンプルを grops-pp.pl というスクリプトにまとめました。grops の
-DESC ファイルに prepro 行として追加して使います。
+します。サンプルを grops-pp.pl というスクリプトにまとめました。grops の
+DESC ファイルに prepro 行を追加して使います。
 
 ```
 GROFF_DEVPS_DIR=/usr/local/share/groff/current/font/devps
@@ -162,6 +163,6 @@ echo prepro grops-pp.pl >> DESC
 install -m 644 DESC $GROFF_DEVPS_DIR
 ```
 
-grops-pp.pl は単純な置換をしています。好みは人それぞれだと思います。
+grops-pp.pl は単純な置換なので、やりすぎるかもしれません。
 
 誤りや改善のご指摘がありましたら、お気軽にどうぞ。

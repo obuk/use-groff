@@ -25,9 +25,12 @@ sudo apt-get -y install git
 cd $WORK
 
 # install mincho and gothic fonts in regular style.
-sudo apt-get -y install fonts-ipafont
-MINCHO=/usr/share/fonts/*type/*/ipam.ttf
-GOTHIC=/usr/share/fonts/*type/*/ipag.ttf
+sudo apt-get -y install fonts-takao
+MINCHO=/usr/share/fonts/*type/*/*PMincho.ttf
+GOTHIC=/usr/share/fonts/*type/*/*PGothic.ttf
+#sudo apt-get -y install fonts-ipafont
+#MINCHO=/usr/share/fonts/*type/*/ipamp.ttf
+#GOTHIC=/usr/share/fonts/*type/*/ipagp.ttf
 sudo $ENV ./install-font.sh MR $MINCHO
 sudo $ENV ./install-font.sh GR $GOTHIC
 
