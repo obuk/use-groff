@@ -111,50 +111,74 @@ man コマンドは、中でページや利用者のロケールから判定し�
 日本語を扱うところに加えます。想像できると思いますが、欧文やコードが続
 くところは間延びするので、広げすぎもいけません。お好みでどうぞ。
 
-```
-$ sudo cp line-gap.patch /usr/local/share/groff/site-tmac
-$ cd /usr/local/share/groff/site-tmac
-$ sudo patch <line-gap.patch
-```
-
-以下は、line-gap.patch の内容です。
-
-
 * man マクロの行間を補正する
 
 ```
-$ vi man_ja.local
+$ vi man.local
+.if t \{\
+.  if "\*[locale]"japanese" \{\
 .am1 TH
-.  if t \{\
-.      nr VS +(\\n[VS]u * 50 / 100)
-.      ps \\n[PS]u
-.      vs \\n[VS]u
-.      ll \\n[LL]u
-.  \}
+.  nr VS (\\n[PS] * 180 / 100)
+.  vs \\n[VS]u
 ..
+.  \}
+.\}
 ```
 
 * mdoc マクロの行間を補正する
 
 ```
-$ vi mdoc_ja.local
-.if t .vs +(\n[.v]u * 50 / 100)
+$ vi mdoc.local
+.if t \{\
+.  if "\*[locale]"japanese" \{\
+.    vs (\n[.s]p * 180 / 100)
+.  \}
+.\}
+```
+
+* perl モジュールの pod から出力されるマンページの行間を補正する
+
+```
+=begin man
+
+.if t \{\
+.  nr VS (\n[PS] * 180 / 100)
+.  vs \n[VS]u
+.\}
+.am Vb
+.if t \{\
+.  nr VS_BAK \\n[VS]
+.  nr VS (\\n[PS] * 120 / 100)
+.  vs \\n[VS]u
+.\}
+..
+.am Ve
+.if t \{\
+.  nr VS \\n[VS_BAK]
+.  vs \\n[VS]u
+.\}
+..
+
+=end man
 ```
 
 ### 行末揃え
 
-日本語のマンページは行末揃えを抑止するものとそうでないものがあります。
-ハイフネーションも同様です。troff (ps 出力) は nroff (ターミナル出力)
-より、1行の文字数が多いこともあって、行末を揃えても見苦しくありません。
+日本語のマンページには行末揃えやハイフネーションを抑止しているものとそ
+うでないものがありますが、我慢できないほど悪くないので、試しに使う方法
+をまとめておきます。
 
-たとえば n (nroff ターミナルへの出力) ではいままでどおり行揃えを抑止し、
-それ以外は行末揃えを試すなら、行揃えを抑止する `.na` の前に `.if n` の
-条件を付けます。ハイフネーションも同様です。
+* 行末揃えやハイフネーションの抑止を n (nroff) に限る。
 
-ここでは行末揃えが働きやすくするためにテンやマルの字体に含まれるアキを
-空白に変え、フォントも等幅でなくプロポーショナルフォントをインストール
-します。サンプルを grops-pp.pl というスクリプトにまとめました。grops の
-DESC ファイルに prepro 行を追加して使います。
+```
+.if n .na
+.if n .hy 0
+```
+
+* 行末揃えがよく働くように、テンやマルの後に空白を加える。
+
+個々のマンページを直すより、スクリプトで直すのが簡単です。devps/DESC
+の prepro 行を使う例を示します。
 
 ```
 GROFF_DEVPS_DIR=/usr/local/share/groff/current/font/devps
@@ -163,6 +187,7 @@ echo prepro grops-pp.pl >> DESC
 install -m 644 DESC $GROFF_DEVPS_DIR
 ```
 
-grops-pp.pl は単純な置換なので、やりすぎるかもしれません。
+grops-pp.pl は単純な置換なので、やりすぎなら適宜修正してください。フォ
+ントは、等幅よりプロポーショナルフォントの方が適しているようです。
 
 誤りや改善のご指摘がありましたら、お気軽にどうぞ。

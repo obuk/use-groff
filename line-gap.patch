@@ -1,67 +1,23 @@
-*** /usr/local/share/groff/site-tmac/man.local	Tue Dec  4 14:40:25 2018
---- man.local	Sat Dec  1 20:37:14 2018
-***************
-*** 3,7 ****
-  .\" This file is loaded after an-old.tmac.
-  .\" Put any local modifications to an-old.tmac here.
-  .if "\*[locale]"ja.UTF-8" \{\
-! .mso ja.tmac
-! .\}
-\ No newline at end of file
---- 3,9 ----
-  .\" This file is loaded after an-old.tmac.
-  .\" Put any local modifications to an-old.tmac here.
-  .if "\*[locale]"ja.UTF-8" \{\
-! .  mso man_ja.local
-! .  mso ja.tmac
-! .\}
-! .
-*** /usr/local/share/groff/site-tmac/man_ja.local	Wed Dec  5 16:59:10 2018
---- man_ja.local	Sat Dec  1 20:35:54 2018
-***************
-*** 0 ****
---- 1,14 ----
-+ .\" -*- nroff -*-
-+ .\"
-+ .\" man_ja.local
-+ .\"
-+ .
-+ .\" reconfigure line gap.  see https://www.w3.org/TR/jlreq/
-+ .am1 TH
-+ .  if t \{\
-+ .      nr VS +(\\n[VS]u * 50 / 100)
-+ .      ps \\n[PS]u
-+ .      vs \\n[VS]u
-+ .      ll \\n[LL]u
-+ .  \}
-+ ..
-*** /usr/local/share/groff/site-tmac/mdoc.local	Tue Dec  4 14:40:25 2018
---- mdoc.local	Sat Dec  1 20:37:39 2018
-***************
-*** 84,89 ****
-  .\}\}
-  .ds default-operating-system FreeBSD-11.2
-  .if "\*[locale]"ja.UTF-8" \{\
-! .mso mdoc_ja.local
-! .mso ja.tmac
-  .\}
---- 84,90 ----
-  .\}\}
-  .ds default-operating-system FreeBSD-11.2
-  .if "\*[locale]"ja.UTF-8" \{\
-! .  mso mdoc_ja.local
-! .  mso ja.tmac
-  .\}
-+ .
-*** /usr/local/share/groff/site-tmac/mdoc_ja.local	Tue Dec  4 14:40:25 2018
---- mdoc_ja.local	Sat Dec  1 20:37:58 2018
-***************
-*** 82,84 ****
---- 82,88 ----
-  .ds volume-ds-7 \[u591A]\[u65B9]\[u9762]\[u306E]\[u60C5]\[u5831]\[u30DE]\[u30CB]\[u30E5]\[u30A2]\[u30EB]
-  .ds volume-ds-8 \[u30B7]\[u30B9]\[u30C6]\[u30E0]\[u7BA1]\[u7406]\[u8005]\[u30DE]\[u30CB]\[u30E5]\[u30A2]\[u30EB]
-  .ds volume-ds-9 \[u30AB]\[u30FC]\[u30CD]\[u30EB]\[u958B]\[u767A]\[u8005]\[u30DE]\[u30CB]\[u30E5]\[u30A2]\[u30EB]
-+ .
-+ .\" reconfigure line gap.  see https://www.w3.org/TR/jlreq/
-+ .if t .vs +(\n[.v]u * 50 / 100)
-+ .
+--- man.local.bak	2018-12-23 23:37:31.167309000 +0900
++++ man.local	2018-12-23 23:51:31.075920000 +0900
+@@ -4,0 +5,10 @@
++.
++.\" reconfigure line gap.
++.if t \{\
++.  if "\*[locale]"japanese" \{\
++.am1 TH
++.  nr VS (\\n[PS] * 180 / 100)
++.  vs \\n[VS]u
++..
++.  \}
++.\}
+--- mdoc.local.bak	2018-12-23 23:37:45.093011000 +0900
++++ mdoc.local	2018-12-23 23:51:40.518703000 +0900
+@@ -86,0 +87,7 @@
++.
++.\" reconfigure line gap.
++.if t \{\
++.  if "\*[locale]"japanese" \{\
++.    vs (\n[.s]p * 180 / 100)
++.  \}
++.\}
