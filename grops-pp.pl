@@ -42,9 +42,12 @@ while (<STDIN>) {
   depreconv() if $preconv;
   $t = $_, next unless defined $t;
   $t .= $_, next if /^[$q]/ && $t =~ /^[^.]/ && $t =~ /[$q]$/;
-  s/^([.]\s*)(na|hy\s+0)$/${1}if n .$2/;
-  s/([$p])([^$p\s])/$1 $2/gx if /^[^.]/;
   ($t, $_) = ($_, $t);
+  s/^([.]\s*)(na|hy\s+0)$/${1}if n .$2/;
+  unless (/^([.]|\\&)/) {
+    s/([$p])([^$p\s])/$1 $2/g;
+    #s{[$q]+}{join "\\:", split //, $&}eg;
+  }
   preconv() if $preconv;
   say;
 }
