@@ -43,7 +43,7 @@ Simplify();
 CorrectDirection();
 ScaleToEm($size);
 RoundToInt();
-SetFontNames(\$fontname + "$subname")
+SetFontNames(\$fontname + "$subname");
 RenameGlyphs("Adobe Glyph List");
 Generate(\$fontname + "$type");
 EOF
