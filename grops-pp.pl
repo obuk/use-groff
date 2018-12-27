@@ -32,6 +32,10 @@ my $t;
 
 #say STDERR "# @ARGV";
 my $preconv;
+if (@ARGV && $ARGV[0] =~ /^-/) {
+  shift;
+  exec @ARGV;
+}
 if (@ARGV && $ARGV[0] =~ /troff/) {
   $preconv = 1;
   open STDOUT, "|-", @ARGV or die "$0: $!; running @ARGV\n";
