@@ -65,7 +65,7 @@ exit($? >> 8);
 
 
 sub preconv {
-  s/[^\x00-\xff]/"\\[u".uc(unpack("H*", encode("UCS-2BE", $&)))."]"/eg;
+  s/[^[:ascii:]]/"\\[u".uc(unpack("H*", encode("UCS-2BE", $&)))."]"/eg;
 }
 
 sub depreconv {
