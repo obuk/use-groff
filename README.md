@@ -5,8 +5,9 @@ utf8 を使用する環境の groff で日本語のマンページを ps で出�
 ライバです。
 
 確認に FreeBSD を使いました。Linux とはパッケージのインストール方法や
-ファイル名、ディレクトリ名が違いますが、基本的には同じです。ubuntu で
-確認に使用したスクリプトを eg/setup-grops-ja-ubuntu.sh に置きます。
+ファイル名、ディレクトリ名が違いますが、基本的には同じです。
+
+* ubuntu で試したスクリプトは: eg/setup-grops-ja-ubuntu.sh
 
 ## はじめに
 
@@ -15,6 +16,8 @@ at wizard-limit.net さんの [FreeBSDの日本語マニュアル(2)][] です�
 らを参照してください。
 
 [FreeBSDの日本語マニュアル(2)]: https://qiita.com/false-git@github/items/d1eb2f680801a1a75edb
+
+* ubuntu ではこの部分を省略します。
 
 ## 日本語のフォントの追加
 
@@ -52,6 +55,10 @@ $ vi ps.local
 .fspecial TI MI
 .fspecial TB MB
 .fspecial TBI MBI
+.fspecial CR MR
+.fspecial CI MI
+.fspecial CB MB
+.fspecial CBI MBI
 .fspecial HR GR
 .fspecial HI GI
 .fspecial HB GB
@@ -86,7 +93,7 @@ $ sudo install-font.sh MBI IPAMincho-BoldItalic.ttf
 
 generate-font.sh は、与えられたフォントを指定のスタイル (I B BI) に変
 形します。出力されるファイル名は、ps の fontname + .ttf です。途中でエ
-ラーメッセージが出力されていますが、フォントは作られているようです。
+ラーメッセージが出力されますが、フォントは作られると思います。
 
 
 ## 日本語の ps を出力する
@@ -165,17 +172,16 @@ $ vi mdoc.local
 ### 行末揃え
 
 日本語のマンページには行末揃えやハイフネーションを抑止しているものとそ
-うでないものがありますが、我慢できないほど悪くないので、試しに使う方法
-をまとめておきます。
+うでないものがあります。試しに使う方法を示します。
 
-* 行末揃えやハイフネーションの抑止を n (nroff) に限る。
+1. 行末揃えやハイフネーションの抑止を n (nroff) に限る。
 
 ```
 .if n .na
 .if n .hy 0
 ```
 
-* 行末揃えがよく働くように、テンやマルの後に空白を加える。
+2. 行末揃えのために、テンやマルの後に空白を加える。
 
 個々のマンページを直すより、スクリプトで直すのが簡単です。devps/DESC
 の prepro 行を使う例を示します。
@@ -187,7 +193,6 @@ echo prepro grops-pp.pl >> DESC
 install -m 644 DESC $GROFF_DEVPS_DIR
 ```
 
-grops-pp.pl は単純な置換なので、やりすぎなら適宜修正してください。フォ
-ントは、等幅よりプロポーショナルフォントの方が適しているようです。
+grops-pp.pl は単純な置換です。お好みで修正してください。
 
 誤りや改善のご指摘がありましたら、お気軽にどうぞ。
