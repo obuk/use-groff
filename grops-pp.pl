@@ -20,28 +20,51 @@ and add prepro line to your devps/DESC.
 
 use strict;
 use warnings;
+
+our $VERSION = "0.02";
+
 use feature 'say';
 use open qw/:locale :std/;
 use utf8;
 use Encode;
+
+use Getopt::Long qw(:config no_ignore_case require_order);
+use File::Basename;
+my $usage = join ' ', "usage:", basename($0),
+  "[--help] [--version|-v] [--preconv|-p] [command|file...]";
+GetOptions(
+  "help" => \ my $help,
+  "version|v" => \ my $version,
+  "preconv|p" => \ my $preconv,
+) or die "$usage\n";
+
+if ($help) {
+  say $usage;
+  exit 0;
+}
+
+if ($version) {
+  say join ' ', basename($0), "version", $VERSION;
+  if (@ARGV) {
+    exec @ARGV;
+    die basename($0), ": can't exec: @ARGV\n";
+  }
+  exit 0;
+}
 
 # see the cflags defined /usr/local/share/groff/current/tmac/ja.tmac.
 my $p = "、。，．：；？！）〕］｝」』】";
 my $q = "\x{3041}-\x{3096}\x{30A0}-\x{30FF}\x{4E00}-\x{9FFF}";
 my $t;
 
-#say STDERR "# @ARGV";
-my $preconv;
-if (@ARGV && $ARGV[0] =~ /^-/) {
-  shift;
-  exec @ARGV;
-}
 if (@ARGV && $ARGV[0] =~ /troff/) {
-  $preconv = 1;
-  open STDOUT, "|-", @ARGV or die "$0: $!; running @ARGV\n";
+  if (open STDOUT, "|-", @ARGV) {
+    @ARGV = ();
+    $preconv = 1;
+  }
 }
 
-while (<STDIN>) {
+while (<>) {
   chomp;
   depreconv() if $preconv;
   $t = $_, next unless defined $t;
