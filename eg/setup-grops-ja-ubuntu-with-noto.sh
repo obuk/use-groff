@@ -5,7 +5,6 @@
 set -eu
 
 WORK=${WORK-work}
-TRANSFORMS="Italic Bold BoldItalic"
 
 GROFF_FONT=/usr/share/groff/current/font
 GROFF_TMAC=/usr/share/groff/current/tmac
@@ -17,7 +16,7 @@ install_font () {
 	 ./install-font.sh $*
 }
 
-sudo apt-get -y install groff
+sudo apt-get -y install groff fontforge
 
 sudo apt-get -y install git
 [ -d $WORK ] || git clone https://github.com/obuk/using-grops $WORK
@@ -38,12 +37,12 @@ install_font GB $GOTHIC-Bold.ttf
 
 cp $GROFF_TMAC/ps.tmac .
 patch <ps.tmac.patch
-sudo install -m644 ps.tmac ./eg/ps.local $SITE_TMAC
+sudo install -m644 ps.tmac ps.local line-gap.patch $SITE_TMAC
 
-# install pre-grops.pl to support japanese justification
+# install pre-grops.pl
 sudo apt-get -y install libyaml-syck-perl
-sudo install eg/pre-grops.pl /usr/local/bin/
-sudo install eg/pre-grops.rc /etc/groff/
+sudo install pre-grops.pl /usr/local/bin/
+sudo install pre-grops.rc /etc/groff/
 
 (sed /^prepro/d $GROFF_FONT/devps/DESC; echo prepro pre-grops.pl) >DESC
-sudo install 644 DESC $GROFF_FONT/devps/DESC
+sudo install -m 644 DESC $GROFF_FONT/devps/
