@@ -55,7 +55,7 @@ my $t;
 sub preproc {
 while (<>) {
   chomp;
-  depreconv() if $preconv;
+  unconv() if $preconv;
   $t = $_, next unless defined $t;
   $t .= $_, next if /^[$q]/ && $t =~ /^[^.]/ && $t =~ /[$q]$/;
   ($t, $_) = ($_, $t);
@@ -63,11 +63,11 @@ while (<>) {
   unless (/^([.]|\\&)/) {
     s/([$p])([^$p\s])/$1 $2/g;
   }
-  preconv() if $preconv;
+  conv() if $preconv;
   say;
 }
 if ($_ = $t) {
-  preconv() if $preconv;
+  conv() if $preconv;
   say;
 }
 }
@@ -77,12 +77,12 @@ close STDOUT;
 exit($? >> 8);
 
 
-sub preconv {
-  s/[^[:ascii:]]/"\\[u".uc(unpack("H*", encode("UCS-2BE", $&)))."]"/eg;
+sub conv {
+  s/[^[:ascii:]]/sprintf "\\[u%04X]", unpack "U", $&/eg;
 }
 
-sub depreconv {
-  s/\\\[u([0-9A-F]+)\]/decode("UCS-2BE", pack("H*", $1))/eg;
+sub unconv {
+  s/\\\[u([0-9A-F]+)\]/pack "U*", hex $1/eg;
 }
 
 sub parse_option {
