@@ -1,0 +1,17 @@
+.\" -*- nroff -*-
+.\"
+.\" ps.local
+.\"
+.
+.fspecial TR MR
+.fspecial TI MI
+.fspecial TB MB
+.fspecial TBI MBI
+.fspecial CR MR
+.fspecial CI MI
+.fspecial CB MB
+.fspecial CBI MBI
+.fspecial HR GR
+.fspecial HI GI
+.fspecial HB GB
+.fspecial HBI GBI
