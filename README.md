@@ -7,7 +7,8 @@ utf8 を使用する環境の groff で日本語のマンページを ps で出�
 確認に FreeBSD を使いました。Linux とはパッケージのインストール方法や
 ファイル名、ディレクトリ名が違いますが、基本的には同じです。
 
-* ubuntu で試したスクリプトは: eg/setup-grops-ja-ubuntu.sh
+* ubuntu で確認に使用したスクリプトは、eg/setup-grops-ja-ubuntu.sh と
+  eg/setup-grops-ja-ubuntu-with-noto.sh です。
 
 ## はじめに
 
@@ -17,7 +18,7 @@ at wizard-limit.net さんの [FreeBSDの日本語マニュアル(2)][] です�
 
 [FreeBSDの日本語マニュアル(2)]: https://qiita.com/false-git@github/items/d1eb2f680801a1a75edb
 
-* ubuntu ではこの部分を省略します。
+* ubuntu はこの部分を省略できます。
 
 ## 日本語のフォントの追加
 
@@ -34,6 +35,9 @@ MR と GR は groff のフォントです。名前はファミリとスタイル
 M と G がファミリ、R がスタイルです。
 
 [Adding fonts to groff]: http://www.schaffter.ca/mom/momdoc/appendices.html#fonts
+
+* 新しい groff のマンページは、truetype フォントのインストール方法を説
+  明しています。
 
 ## フォントを組み合わせる
 
@@ -65,8 +69,8 @@ $ vi ps.local
 .fspecial HBI GBI
 ```
 
-ここにはまだ作成していないフォント MI MB MBI GI GB GBI も使われていま
-す。作り方は次の「フォントにスタイルを追加する」で説明します。
+日本語は斜体を使わないので、MI GI の代りに MR GR を使っても不都合が生
+じることはほとんどないだろうと思います。
 
 [Special Fonts]: https://www.gnu.org/software/groff/manual/html_node/Special-Fonts.html
 
@@ -174,25 +178,23 @@ $ vi mdoc.local
 日本語のマンページには行末揃えやハイフネーションを抑止しているものとそ
 うでないものがあります。試しに使う方法を示します。
 
-1. 行末揃えやハイフネーションの抑止を n (nroff) に限る。
+1. 行末揃えやハイフネーションを許します。（nroff はいままでどおり）
 
 ```
 .if n .na
 .if n .hy 0
 ```
 
-2. 行末揃えのために、テンやマルの後に空白を加える。
-
-個々のマンページを直すより、スクリプトで直すのが簡単です。devps/DESC
-の prepro 行を使う例を示します。
+2. 日本語の行末揃えのために句読点や括弧類の前後と文字間に伸縮可能なス
+   ペースを加えます。（詳細は [sample.7](sample.7) を参照）
 
 ```
 GROFF_DEVPS_DIR=/usr/local/share/groff/current/font/devps
-cp DEVPS_DIR/devps/DESC .
-echo prepro grops-pp.pl >> DESC
-install -m 644 DESC $GROFF_DEVPS_DIR
+sudo apt-get -y install libyaml-syck-perl
+sudo install pre-grops.pl /usr/local/bin/
+sudo install pre-grops.rc /etc/groff/
+(sed /^prepro/d $GROFF_DEVPS_DIR/DESC; echo prepro pre-grops.pl) >DESC
+sudo install -m 644 DESC $GROFF_DEVPS_DIR
 ```
-
-grops-pp.pl は単純な置換です。お好みで修正してください。
 
 誤りや改善のご指摘がありましたら、お気軽にどうぞ。
