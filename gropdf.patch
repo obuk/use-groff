@@ -1,0 +1,439 @@
+*** gropdf.old	Sun Aug  4 15:36:02 2019
+--- gropdf	Sun Aug  4 15:36:02 2019
+***************
+*** 23,28 ****
+--- 23,30 ----
+  use strict;
+  use Getopt::Long qw(:config bundling);
+  
++ my $use_suppl_font = 1;
++ 
+  use constant
+  {
+      WIDTH		=> 0,
+***************
+*** 30,35 ****
+--- 32,38 ----
+      PSNAME		=> 2,
+      ASSIGNED		=> 3,
+      USED		=> 4,
++     SUPPL		=> 5,
+  };
+  
+  my $gotzlib=0;
+***************
+*** 79,84 ****
+--- 82,88 ----
+  my $stream='';	# Current Text/Graphics stream
+  my $cftsz=10;	# Current font sz
+  my $cft;	# Current Font
++ my $cftsup=0;	# Current Font (supplemental)
+  my $lwidth=1;	# current linewidth
+  my $linecap=1;
+  my $linejoin=1;
+***************
+*** 390,396 ****
+  	push(@{$o->{WIDTH}},$wid);
+  	last if $#{$o->{DIFF}} >= 255;
+      }
+!     unshift(@{$o->{DIFF}},0);
+      my $p=GetObj($fontlst{$fontno}->{OBJ});
+  
+      if (exists($p->{LastChar}) and $p->{LastChar} > 255)
+--- 394,400 ----
+  	push(@{$o->{WIDTH}},$wid);
+  	last if $#{$o->{DIFF}} >= 255;
+      }
+!     unshift(@{$o->{DIFF}},0) if !$use_suppl_font;
+      my $p=GetObj($fontlst{$fontno}->{OBJ});
+  
+      if (exists($p->{LastChar}) and $p->{LastChar} > 255)
+***************
+*** 399,404 ****
+--- 403,442 ----
+  	splice(@{$o->{DIFF}},256);
+  	splice(@{$o->{WIDTH}},256);
+      }
++ 
++     if ($use_suppl_font) {
++ 	my $fnt = $o;
++ 	while ($fnt = $fnt->{NEXT}) {
++ 	    my (@d, @w);
++ 
++ 	    foreach my $cn (0..255) {
++ 		my $ch = $fnt->{NO}->[$cn + $fnt->{SUPPL} * 256];
++ 		if ($ch->[0] ne $ch->[1]) {
++ 		    my $g = $ch->[1];
++ 		    push @d, $fnt->{NAM}->{$g}->[PSNAME] || '/.notdef';
++ 		    push @w, $fnt->{NAM}->{$g}->[WIDTH] || 0;
++ 		} else {
++ 		    push @d, '/.notdef';
++ 		    push @w, 0;
++ 		}
++ 	    }
++ 
++ 	    my $obj = BuildObj($objct + 1, {
++ 		%{$p}{qw/Type Subtype BaseFont FontDescriptor/},
++ 		Widths => \@w,
++ 		FirstChar => 0,
++ 		LastChar => 255,
++ 		Encoding => BuildObj($objct + 2, {
++ 		    Type => '/Encoding',
++ 		    Differences => \@d,
++ 		}),
++ 	    });
++ 	    $objct += 2;
++ 
++ 	    my $q = GetObj(2);
++ 	    $q->{Resources}->{Font}->{$fnt->{NM}.'.'.$fnt->{SUPPL}} = $obj;
++ 	}
++     }
+  }
+  
+  foreach my $o (3..$objct)
+***************
+*** 2231,2236 ****
+--- 2269,2275 ----
+  	    $r[0]="u00".hex($r[3]) if $r[0] eq '---';
+  #	    next if $r[3] >255;
+  	    $fnt{NAM}->{$r[0]}=[$p[0],$r[3],'/'.$r[4],$r[3],0];
++ 	    $fnt{NAM}->{$r[0]}->[SUPPL] = 0; # if $use_suppl_font;
+  	    $fnt{NO}->[$r[3]]=[$r[0],$r[0]];
+  	    $lastnm=$r[0];
+  	    $lastchr=$r[3] if $r[3] > $lastchr;
+***************
+*** 2258,2263 ****
+--- 2297,2303 ----
+      $fnt{DIFF}=[];
+      $fnt{WIDTH}=[];
+      $fnt{NAM}->{''}=[0,-1,'/.notdef',-1,0];
++     $fnt{NAM}->{''}->[SUPPL] = 0; # if $use_suppl_font
+      $slant=-$fnt{'slant'} if exists($fnt{'slant'});
+      $fnt{'spacewidth'}=700 if !exists($fnt{'spacewidth'});
+  
+***************
+*** 2350,2355 ****
+--- 2390,2401 ----
+  	$fontlst{$fontno}->{FNT}=\%fnt;
+      }
+  
++     # if ($use_suppl_font) {
++     $fnt{NM} = 'F'.$fontno;
++     $fnt{SUPPL} = 0;
++     $fnt{REMAP} = [ 128..138, 145..255 ]; # ignore ligatures. see text.enc.
++     # }
++ 
+      if (defined($fnt{encoding}) and $fnt{encoding} eq 'text.enc' and $ucmap ne '')
+      {
+  	if ($textenccmap eq '')
+***************
+*** 2378,2383 ****
+--- 2424,2430 ----
+      Msg(1,"Failed to open '$file'") if !defined($f);
+  
+      $head=GetChunk($f,1,"currentfile eexec");
++     $body=$tail='';
+      $body=GetChunk($f,2,"00000000") if !eof($f);
+      $tail=GetChunk($f,3,"cleartomark") if !eof($f);
+  
+***************
+*** 2646,2652 ****
+  	if (defined($cft))
+  	{
+  	    $whtsz=$fontlst{$cft}->{FNT}->{spacewidth}*$cftsz;
+! 	    $stream.="/F$cft $cftsz Tf\n";
+  	}
+  	$stream.="$curkern Tc\n";
+      }
+--- 2693,2701 ----
+  	if (defined($cft))
+  	{
+  	    $whtsz=$fontlst{$cft}->{FNT}->{spacewidth}*$cftsz;
+! 	    $stream.="/F$cft";
+! 	    $stream.=".$cftsup" if $cftsup; # if $use_suppl_font;
+! 	    $stream.=" $cftsz Tf\n";
+  	}
+  	$stream.="$curkern Tc\n";
+      }
+***************
+*** 2663,2671 ****
+      if ($fontchg)
+      {
+  	PutLine(0);
+! 	$whtsz=$fontlst{$cft}->{FNT}->{spacewidth}*$cftsz;
+! 	$stream.="/F$cft $cftsz Tf\n" if $cftsz and defined($cft);
+! 	$fontchg=0;
+      }
+  
+      $mode='t';
+--- 2712,2725 ----
+      if ($fontchg)
+      {
+  	PutLine(0);
+! 	if (defined($cft))
+! 	{
+! 	    $whtsz=$fontlst{$cft}->{FNT}->{spacewidth}*$cftsz;
+! 	    $stream.="/F$cft";
+! 	    $stream.=".$cftsup" if $cftsup; # if $use_suppl_font;
+! 	    $stream.=" $cftsz Tf\n";
+! 	    $fontchg=0;
+! 	}
+      }
+  
+      $mode='t';
+***************
+*** 3323,3328 ****
+--- 3377,3387 ----
+      my $par=shift;
+      my $fnt=$fontlst{$cft}->{FNT};
+  
++     # if ($use_suppl_font) {
++     my $sup=0;
++     ($par,$sup)=@$par if ref $par;
++     # }
++ 
+      if ($kernadjust != $curkern)
+      {
+  	PutLine();
+***************
+*** 3336,3344 ****
+      foreach my $j (0..length($par2)-1)
+      {
+  	my $cn=ord(substr($par2,$j,1));
+  	my $chnm=$fnt->{NAM}->{$fnt->{NO}->[$cn]->[1]};
+  
+! 	if ($chnm->[USED]==0)
+  	{
+  	    $chnm->[USED]=1;
+  	}
+--- 3395,3404 ----
+      foreach my $j (0..length($par2)-1)
+      {
+  	my $cn=ord(substr($par2,$j,1));
++ 	$cn+=$sup*256; # if $use_suppl_font;
+  	my $chnm=$fnt->{NAM}->{$fnt->{NO}->[$cn]->[1]};
+  
+! 	if (!$chnm->[USED])
+  	{
+  	    $chnm->[USED]=1;
+  	}
+***************
+*** 3346,3355 ****
+  	{
+  	    # A glyph has already been remapped to this char, so find a spare
+  
+! 	    my $cn2=RemapChr($cn,$fnt,$fnt->{NO}->[$cn]->[0]);
+  	    $stream.="% MMM Remap $cn to $cn2\n" if $debug;
+  
+! 	    if ($cn2)
+  	    {
+  		substr($par2,$j,1)=chr($cn2);
+  
+--- 3406,3416 ----
+  	{
+  	    # A glyph has already been remapped to this char, so find a spare
+  
+! 	    my $cn2;
+! 	    ($cn2, $sup) = RemapChr($cn,$fnt,$fnt->{NO}->[$cn]->[0]);
+  	    $stream.="% MMM Remap $cn to $cn2\n" if $debug;
+  
+! 	    #if ($cn2)
+  	    {
+  		substr($par2,$j,1)=chr($cn2);
+  
+***************
+*** 3386,3396 ****
+      # $nomove = width of char(s) added by 'C', 'N' or 'c'
+      # $w-flg  = 'w' seen since last t
+  
+      if ($fontchg)
+      {
+  	PutLine();
+! 	$whtsz=$fontlst{$cft}->{FNT}->{spacewidth}*$cftsz;
+! 	$stream.="/F$cft $cftsz Tf\n", $fontchg=0 if $fontchg && defined($cft);
+      }
+  
+      $gotT=1;
+--- 3447,3466 ----
+      # $nomove = width of char(s) added by 'C', 'N' or 'c'
+      # $w-flg  = 'w' seen since last t
+  
++     $fontchg=1 if $cftsup != $sup;
++     $cftsup = $sup;
++ 
+      if ($fontchg)
+      {
+  	PutLine();
+! 	if (defined($cft))
+! 	{
+! 	    $whtsz=$fontlst{$cft}->{FNT}->{spacewidth} * $cftsz;
+! 	    $stream.="/F$cft";
+! 	    $stream.=".$cftsup" if $cftsup; # if $use_suppl_font;
+! 	    $stream.=" $cftsz Tf\n";
+! 	    $fontchg=0;
+! 	}
+      }
+  
+      $gotT=1;
+***************
+*** 3491,3499 ****
+  {
+      my $par=shift;
+  
+!     my ($par2,$nm)=FindChar($par);
+! 
+!     do_t($par2);
+      $nomove=$fontlst{$cft}->{FNT}->{NAM}->{$par}->[WIDTH]*$cftsz ;
+  }
+  
+--- 3561,3567 ----
+  {
+      my $par=shift;
+  
+!     do_t(FindChar($par));
+      $nomove=$fontlst{$cft}->{FNT}->{NAM}->{$par}->[WIDTH]*$cftsz ;
+  }
+  
+***************
+*** 3504,3514 ****
+  
+      if (exists($fnt->{NAM}->{$chnm}))
+      {
+! 	my $ch=$fnt->{NAM}->{$chnm}->[ASSIGNED];
+! 	$ch=RemapChr($ch,$fnt,$chnm) if ($ch > 255);
+! 	$fnt->{NAM}->{$chnm}->[USED]=0 if $fnt->{NO}->[$ch]->[1] eq $chnm;
+! 
+! 	return(($ch<32)?sprintf("!|!|%03o",$ch):chr($ch),$widtbl->[$ch]);
+      }
+      else
+      {
+--- 3572,3588 ----
+  
+      if (exists($fnt->{NAM}->{$chnm}))
+      {
+! 	# if (!$use_suppl_font) {
+! 	# my $ch=$fnt->{NAM}->{$chnm}->[ASSIGNED];
+! 	# $ch=RemapChr($ch,$fnt,$chnm) if ($ch > 255);
+! 	# $fnt->{NAM}->{$chnm}->[USED]=0 if $fnt->{NO}->[$ch]->[1] eq $chnm;
+! 	# return (($ch<32)? sprintf("!|!|%03o",$ch):chr($ch),$widtbl->[$ch]);
+! 	# } else {
+! 	my ($ch,$sup)=@{$fnt->{NAM}->{$chnm}}[ASSIGNED,SUPPL];
+! 	($ch,$sup)=RemapChr($ch,$fnt,$chnm) if ($ch > 255);
+! 	$fnt->{NAM}->{$chnm}->[USED]=0 if $fnt->{NO}->[$ch+$sup*256]->[1] eq $chnm;
+! 	return [($ch<32)? sprintf("!|!|%03o",$ch) : chr($ch),$sup];
+! 	# }
+      }
+      else
+      {
+***************
+*** 3521,3527 ****
+      my $ch=shift;
+      my $fnt=shift;
+      my $chnm=shift;
+!     my $unused=0;
+  
+      foreach my $un (0..$#{$fnt->{NO}})
+      {
+--- 3595,3635 ----
+      my $ch=shift;
+      my $fnt=shift;
+      my $chnm=shift;
+!     my $unused;
+! 
+!     if ($use_suppl_font) {
+! 
+!         while (defined(my $un = shift @{$fnt->{REMAP}})) {
+!             my $ux = $un + $fnt->{SUPPL} * 256;
+!             next if $fnt->{NO}->[$ux]->[0] ne $fnt->{NO}->[$ux]->[1];
+!             my $glyph = $fnt->{NO}->[$ux]->[1];
+!             $unused = $un, last if !$fnt->{NAM}->{$glyph}->[USED];
+!         }
+! 
+!         if (!defined $unused) {
+!             if (!$fnt->{NEXT}) {
+!                 my $fnt2 = {
+! 		    %{$fnt}{qw/NM NO NAM/},
+!                     SUPPL => $fnt->{SUPPL} + 1,
+!                     REMAP => [ 0..255 ],
+!                 };
+!                 $fnt->{NEXT} = $fnt2;
+!             }
+!             return RemapChr($ch, $fnt->{NEXT}, $chnm);
+!         }
+! 
+! 	my $ux = $unused + $fnt->{SUPPL} * 256;
+! 	my $glyph = $fnt->{NO}->[$ux]->[1];
+! 	delete($fontlst{$cft}->{CACHE}->{$cftsz});
+!         @{$fnt->{NAM}->{$chnm}}[ASSIGNED, SUPPL] = ($unused, $fnt->{SUPPL});
+! 	$fnt->{NO}->[$ux]->[1] = $chnm;
+! 	$widtbl = CacheWid($cft);
+! 
+!         $stream .= "% AAA Assign $chnm ($ch) to $unused ($fnt->{SUPPL})\n" if $debug;
+! 
+! 	$ch = $unused;
+! 	return ($ch, $fnt->{SUPPL});
+!     }
+  
+      foreach my $un (0..$#{$fnt->{NO}})
+      {
+***************
+*** 3529,3535 ****
+  	$unused=$un,last if $fnt->{NO}->[$un]->[1] eq '';
+      }
+  
+!     if (!$unused)
+      {
+  	foreach my $un (128..255)
+  	{
+--- 3637,3643 ----
+  	$unused=$un,last if $fnt->{NO}->[$un]->[1] eq '';
+      }
+  
+!     if (!defined $unused)
+      {
+  	foreach my $un (128..255)
+  	{
+***************
+*** 3539,3545 ****
+  	}
+      }
+  
+!     if ($unused && $unused <= 255)
+      {
+  	my $glyph=$fnt->{NO}->[$unused]->[1];
+  	delete($fontlst{$cft}->{CACHE}->{$cftsz});
+--- 3647,3653 ----
+  	}
+      }
+  
+!     if (defined $unused && $unused <= 255)
+      {
+  	my $glyph=$fnt->{NO}->[$unused]->[1];
+  	delete($fontlst{$cft}->{CACHE}->{$cftsz});
+***************
+*** 3550,3561 ****
+  	$stream.="% AAA Assign $chnm ($ch) to $unused\n" if $debug;
+  
+  	$ch=$unused;
+! 	return($ch);
+      }
+      else
+      {
+  	Msg(0,"Too many glyphs used in font '$cft'");
+! 	return(32);
+      }
+  }
+  
+--- 3658,3669 ----
+  	$stream.="% AAA Assign $chnm ($ch) to $unused\n" if $debug;
+  
+  	$ch=$unused;
+! 	return($ch,0);
+      }
+      else
+      {
+  	Msg(0,"Too many glyphs used in font '$cft'");
+! 	return(32,0);
+      }
+  }
+  
