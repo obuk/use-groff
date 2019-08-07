@@ -1,5 +1,5 @@
-*** gropdf.old	Sun Aug  4 15:36:02 2019
---- gropdf	Sun Aug  4 15:36:02 2019
+*** gropdf.old	Wed Aug  7 20:57:28 2019
+--- gropdf	Wed Aug  7 20:57:28 2019
 ***************
 *** 23,28 ****
 --- 23,30 ----
@@ -242,10 +242,19 @@
   		substr($par2,$j,1)=chr($cn2);
   
 ***************
-*** 3386,3396 ****
-      # $nomove = width of char(s) added by 'C', 'N' or 'c'
-      # $w-flg  = 'w' seen since last t
+*** 3364,3369 ****
+--- 3425,3433 ----
+  	    }
+  	}
+      }
++     $fontchg=1 if $cftsup != $sup;
++     $cftsup = $sup;
++ 
+      my $wid=TextWid($par2,$fnt);
   
+      $par=reverse(split('',$par)) if $xrev and $par!~m/^!\|!\|(\d\d\d)/;
+***************
+*** 3389,3396 ****
       if ($fontchg)
       {
   	PutLine();
@@ -254,13 +263,7 @@
       }
   
       $gotT=1;
---- 3447,3466 ----
-      # $nomove = width of char(s) added by 'C', 'N' or 'c'
-      # $w-flg  = 'w' seen since last t
-  
-+     $fontchg=1 if $cftsup != $sup;
-+     $cftsup = $sup;
-+ 
+--- 3453,3466 ----
       if ($fontchg)
       {
   	PutLine();
