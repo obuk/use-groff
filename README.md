@@ -200,27 +200,20 @@ sudo install -m 644 DESC $GROFF_DEVPS_DIR
 
 ## PDF (gropdf)
 
-groff で日本語の PDF を出力するにはドライバを修正しなければなりません。
-原因は gropdf(1) に次のとおり説明されています。(groff 1.22.4)
+groff で pdf を出力すると次のメッセージが出力されます。
+
+```
+Too many glyphs used in font 'n'
+```
+
+gropdf(1) に次のとおり説明されています。(groff 1.22.4)
 
 Note that gropdf is currently only able to display the first 256
 glyphs in any font.  This restriction will be lifted in a later
 version.
 
-修正のためのパッチ [gropdf.patch](gropdf.patch) を同梱しました。使い方
-は次のとおりです。
-
-```
-cp /usr/local/bin/gropdf .
-patch <gropdf.patch
-sudo install gropdf /usr/local/bin
-```
-
-動くには動くがとても遅いので、我慢できないかもしれません。
-いまのところ、
-pdf が必要なら、一旦 ps を出力し、ps2pdf に変換するのがおすすめです。
-
-pdf で使うフォントのセットアップは [Adding fonts to groff][] に説明さ
-れているので、こちらを参照してください。
+修正できます [gropdf.patch](gropdf.patch) が、
+処理時間やファイルサイズを比べると、
+groff は ps を出力し gs で pdf に変換する方が良さそうです。
 
 誤りや改善のご指摘がありましたら、お気軽にどうぞ。
