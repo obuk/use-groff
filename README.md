@@ -200,6 +200,15 @@ sudo install -m 644 DESC $GROFF_DEVPS_DIR
 
 ## PDF (gropdf)
 
+修正は [gropdf.patch](gropdf.patch) にあります。
+
+処理時間やファイルサイズを比べると、
+groff で ps を出力し、gs で pdf に変換する方が良いかもしれません。
+
+修正内容は下記のとおりです。
+
+### Too many glyphs used
+
 groff で pdf を出力すると次のメッセージが出力されます。
 
 ```
@@ -212,8 +221,15 @@ Note that gropdf is currently only able to display the first 256
 glyphs in any font.  This restriction will be lifted in a later
 version.
 
-修正できます [gropdf.patch](gropdf.patch) が、
-処理時間やファイルサイズを比べると、
-groff は ps を出力し gs で pdf に変換する方が良さそうです。
+修正は、使用字体が256を越える度に辞書を増やすというもので、
+詳細はパッチを確認してください。
+
+### pdfmark
+
+日本語のしおりを出力するために、groff の unicode 文字 \[uXXXX] を
+8進数の並びに直します。gropdf と pdf.tmac を修正します。
+前者は上のパッチに含まれています。
+後者は、[pdf.tmac.patch](pdf.tmac.patch) のとおりで残念なものなので、
+詳しい方に助けて頂きたいと思っています。
 
 誤りや改善のご指摘がありましたら、お気軽にどうぞ。

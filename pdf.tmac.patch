@@ -1,0 +1,23 @@
+*** pdf.tmac	Mon Jul  8 23:34:17 2019
+--- pdf.tmac	Sat Aug 10 21:43:43 2019
+***************
+*** 250,256 ****
+  .         chop pdf:clean
+  .         asciify pdf:clean
+  .         length pdf:clean:len \\*[pdf:clean]
+! .         ds pdf:cleaned \\*[pdf:clean]
+  .         rm pdf:clean
+  .         ev
+  .         tr \[em]\[em]
+--- 250,260 ----
+  .         chop pdf:clean
+  .         asciify pdf:clean
+  .         length pdf:clean:len \\*[pdf:clean]
+! .   \" 
+! .   \" use pdf:cleaned instead of pdf:clean for now
+! .   \" because unicode characters ignored in bookmarks. xxxxx
+! .   \"
+! .         \"ds pdf:cleaned \\*[pdf:clean]
+  .         rm pdf:clean
+  .         ev
+  .         tr \[em]\[em]
