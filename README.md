@@ -226,7 +226,7 @@ version.
 
 ### pdfmark
 
-日本語のしおりを出力するために、groff の unicode 文字 \[uXXXX] を
+日本語のしおりを出力するために、groff の unicode 文字 \\[uXXXX] を
 8進数の並びに直します。gropdf と pdf.tmac を修正します。
 前者は上のパッチに含まれています。
 後者は、[pdf.tmac.patch](pdf.tmac.patch) のとおりで残念なものなので、
