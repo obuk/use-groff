@@ -1,5 +1,5 @@
-*** gropdf.old	Sat Aug 10 21:56:41 2019
---- gropdf	Sat Aug 10 21:56:41 2019
+*** gropdf.old	Mon Aug 12 17:18:58 2019
+--- gropdf	Mon Aug 12 17:18:59 2019
 ***************
 *** 23,28 ****
 --- 23,31 ----
@@ -94,22 +94,25 @@
   foreach my $o (3..$objct)
 ***************
 *** 902,907 ****
---- 941,952 ----
+--- 941,955 ----
   		    $t=~s/\\e/\\\\/g;
   		    $t=~m/(^.*\/Title \()(.*)(\).*)/;
   		    my ($pre,$title,$post)=($1,$2,$3);
-+                     if ($use_unicode_bookmark &&
-+                         $title =~ s/\\\[u([0-9A-F]+)\]/pack "U", hex $1/eg) {
++ 		    if ($use_unicode_bookmark &&
++ 			$title =~ s/\\\[u([0-9A-F]+)\]/pack "U", hex $1/eg) {
 + 		      $title = join '',
 + 			map { sprintf "\\%03o\\%03o", $_ >> 8, $_ & 0xff }
-+ 			0xfeff, grep !($_ & ~0xffff), unpack "U*", $title;
++ 			0xfeff,
++ 			map { $_ & ~0xffff? (($_ - 0x10000) / 0x400 + 0xD800,
++ 					     ($_ - 0x10000) % 0x400 + 0xDC00) : $_ }
++ 			unpack "U*", $title;
 + 		    }
   		    $title=~s/(?<!\\)\(/\\\(/g;
   		    $title=~s/(?<!\\)\)/\\\)/g;
   		    my @xwds=split(' ',"<< $pre$title$post >>");
 ***************
 *** 2231,2236 ****
---- 2276,2282 ----
+--- 2279,2285 ----
   	    $r[0]="u00".hex($r[3]) if $r[0] eq '---';
   #	    next if $r[3] >255;
   	    $fnt{NAM}->{$r[0]}=[$p[0],$r[3],'/'.$r[4],$r[3],0];
@@ -119,7 +122,7 @@
   	    $lastchr=$r[3] if $r[3] > $lastchr;
 ***************
 *** 2258,2263 ****
---- 2304,2310 ----
+--- 2307,2313 ----
       $fnt{DIFF}=[];
       $fnt{WIDTH}=[];
       $fnt{NAM}->{''}=[0,-1,'/.notdef',-1,0];
@@ -129,7 +132,7 @@
   
 ***************
 *** 2350,2355 ****
---- 2397,2408 ----
+--- 2400,2411 ----
   	$fontlst{$fontno}->{FNT}=\%fnt;
       }
   
@@ -144,7 +147,7 @@
   	if ($textenccmap eq '')
 ***************
 *** 2378,2383 ****
---- 2431,2437 ----
+--- 2434,2440 ----
       Msg(1,"Failed to open '$file'") if !defined($f);
   
       $head=GetChunk($f,1,"currentfile eexec");
@@ -161,7 +164,7 @@
   	}
   	$stream.="$curkern Tc\n";
       }
---- 2700,2708 ----
+--- 2703,2711 ----
   	if (defined($cft))
   	{
   	    $whtsz=$fontlst{$cft}->{FNT}->{spacewidth}*$cftsz;
@@ -182,7 +185,7 @@
       }
   
       $mode='t';
---- 2719,2732 ----
+--- 2722,2735 ----
       if ($fontchg)
       {
   	PutLine(0);
@@ -199,7 +202,7 @@
       $mode='t';
 ***************
 *** 3323,3328 ****
---- 3384,3394 ----
+--- 3387,3397 ----
       my $par=shift;
       my $fnt=$fontlst{$cft}->{FNT};
   
@@ -222,7 +225,7 @@
   	{
   	    $chnm->[USED]=1;
   	}
---- 3402,3411 ----
+--- 3405,3414 ----
       foreach my $j (0..length($par2)-1)
       {
   	my $cn=ord(substr($par2,$j,1));
@@ -245,7 +248,7 @@
   	    {
   		substr($par2,$j,1)=chr($cn2);
   
---- 3413,3423 ----
+--- 3416,3426 ----
   	{
   	    # A glyph has already been remapped to this char, so find a spare
   
@@ -259,7 +262,7 @@
   
 ***************
 *** 3364,3369 ****
---- 3432,3440 ----
+--- 3435,3443 ----
   	    }
   	}
       }
@@ -279,7 +282,7 @@
       }
   
       $gotT=1;
---- 3460,3473 ----
+--- 3463,3476 ----
       if ($fontchg)
       {
   	PutLine();
@@ -305,7 +308,7 @@
       $nomove=$fontlst{$cft}->{FNT}->{NAM}->{$par}->[WIDTH]*$cftsz ;
   }
   
---- 3568,3574 ----
+--- 3571,3577 ----
   {
       my $par=shift;
   
@@ -326,7 +329,7 @@
       }
       else
       {
---- 3579,3595 ----
+--- 3582,3598 ----
   
       if (exists($fnt->{NAM}->{$chnm}))
       {
@@ -353,7 +356,7 @@
   
       foreach my $un (0..$#{$fnt->{NO}})
       {
---- 3602,3642 ----
+--- 3605,3645 ----
       my $ch=shift;
       my $fnt=shift;
       my $chnm=shift;
@@ -404,7 +407,7 @@
       {
   	foreach my $un (128..255)
   	{
---- 3644,3650 ----
+--- 3647,3653 ----
   	$unused=$un,last if $fnt->{NO}->[$un]->[1] eq '';
       }
   
@@ -421,7 +424,7 @@
       {
   	my $glyph=$fnt->{NO}->[$unused]->[1];
   	delete($fontlst{$cft}->{CACHE}->{$cftsz});
---- 3654,3660 ----
+--- 3657,3663 ----
   	}
       }
   
@@ -443,7 +446,7 @@
       }
   }
   
---- 3665,3676 ----
+--- 3668,3679 ----
   	$stream.="% AAA Assign $chnm ($ch) to $unused\n" if $debug;
   
   	$ch=$unused;
