@@ -1,5 +1,5 @@
-*** gropdf.old	Mon Aug 12 17:18:58 2019
---- gropdf	Mon Aug 12 17:18:59 2019
+*** gropdf.old	Tue Aug 13 00:22:57 2019
+--- gropdf	Tue Aug 13 00:22:57 2019
 ***************
 *** 23,28 ****
 --- 23,31 ----
@@ -99,7 +99,7 @@
   		    $t=~m/(^.*\/Title \()(.*)(\).*)/;
   		    my ($pre,$title,$post)=($1,$2,$3);
 + 		    if ($use_unicode_bookmark &&
-+ 			$title =~ s/\\\[u([0-9A-F]+)\]/pack "U", hex $1/eg) {
++ 			$title =~ s/\\\[u([0-9A-F_]+)\]/join '', map { pack "U", hex } split '_', $1/eg) {
 + 		      $title = join '',
 + 			map { sprintf "\\%03o\\%03o", $_ >> 8, $_ & 0xff }
 + 			0xfeff,
