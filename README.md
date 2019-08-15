@@ -202,9 +202,6 @@ sudo install -m 644 DESC $GROFF_DEVPS_DIR
 
 修正は [gropdf.patch](gropdf.patch) にあります。
 
-処理時間やファイルサイズを比べると、
-groff で ps を出力し、gs で pdf に変換する方が良いかもしれません。
-
 修正内容は下記のとおりです。
 
 ### Too many glyphs used
