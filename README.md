@@ -226,10 +226,20 @@ version.
 
 ### pdfmark
 
-日本語のしおりを出力するために、groff の unicode 文字 \\[uXXXX] を
-8進数の並びに直します。gropdf と pdf.tmac を修正します。
-前者は上のパッチに含まれています。
-後者は、[pdf.tmac.patch](pdf.tmac.patch) のとおりで残念なものなので、
-詳しい方に助けて頂きたいと思っています。
+日本語のしおりを出力するために、ドライバの中で groff の unicode 文字
+\\[uXXXX] を UTF-16 にエンコードします。
+
+マクロの修正もありますが、[pdf.tmac.patch](pdf.tmac.patch) のとおり、
+ひどいものです。詳しい方に助けて頂きたいと思っています。
+
+groff が出力する pdf のサイズを小さくするために、それから、firefox で
+表示するために gs を通す例を示します。オプションの -dPrinted=false を
+忘れるとハイパーリンクが働きません。注意してください。
+
+```
+/usr/local/bin/groff -Tpdf -Dutf8 -pt -mja -ms -mspdf sample.ms \\
+| gs -sDEVICE=pdfwrite -dPrinted=false -dNOPAUSE -dQUIET -dBATCH \\
+  -sOutputFile=- - >a.pdf
+```
 
 誤りや改善のご指摘がありましたら、お気軽にどうぞ。
