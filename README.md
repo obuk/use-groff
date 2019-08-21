@@ -207,19 +207,19 @@ sudo install -m 644 DESC $GROFF_DEVPS_DIR
 ### Too many glyphs used
 
 groff で pdf を出力すると次のメッセージが出力されます。
+使用字体が256を越える度に辞書を増やします。
+詳細はパッチを確認してください。
 
 ```
 Too many glyphs used in font 'n'
 ```
 
-gropdf(1) に次のとおり説明されています。(groff 1.22.4)
+gropdf(1) に次のとおり説明されているので、
+待つという選択肢もあるかもしれません。(groff 1.22.4)
 
 Note that gropdf is currently only able to display the first 256
 glyphs in any font.  This restriction will be lifted in a later
 version.
-
-修正は、使用字体が256を越える度に辞書を増やすというもので、
-詳細はパッチを確認してください。
 
 ### pdfmark
 
@@ -234,8 +234,8 @@ groff が出力する pdf のサイズを小さくするために、それから
 忘れるとハイパーリンクが働きません。注意してください。
 
 ```
-/usr/local/bin/groff -Tpdf -Dutf8 -pt -mja -ms -mspdf sample.ms \\
-| gs -sDEVICE=pdfwrite -dPrinted=false -dNOPAUSE -dQUIET -dBATCH \\
+/usr/local/bin/groff -Tpdf -Dutf8 -pt -mja -ms -mspdf sample.ms \
+| gs -sDEVICE=pdfwrite -dPrinted=false -dNOPAUSE -dQUIET -dBATCH \
   -sOutputFile=- - >a.pdf
 ```
 
