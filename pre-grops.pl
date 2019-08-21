@@ -30,16 +30,16 @@ use Encode;
 use File::Basename;
 use File::Spec::Functions qw/rootdir catdir catfile/;
 use POSIX qw(isatty);
-#use Unicode::Normalize;
 use YAML::Syck qw/Load Dump/;
 
 sub run {
   my $self = bless {}, shift;
 
-  # see grops(1) and troff(1) to parse options.
-  my @prepro = parse_option(qr/^-([bcFIpPw])(.*)/, qr/^-([glmv]+)$/);
+  eval { require Unicode::Normalize };
+
+  my @prepro = parse_option(map qr/$_/, $self->rc("parse_option"));
   my @troff = shift @ARGV if @ARGV;
-  push @troff, parse_option(qr/^-([dfFImMnorTwW])(.*)/, qr/^-([abcivzCERU]+)/);
+  push @troff, parse_option(map qr/$_/, $self->rc("troff.parse_option"));
 
   # show subprograms version
   say join ' ', basename($0), "version", $VERSION
@@ -99,7 +99,7 @@ sub prepro {
   $self->puts($prologue) if $prologue;
 
   my $mode_request = $self->rc('mode_request');
-  my @mode = ($self->rc('mode_default') || 3);
+  my @mode = ($self->rc('mode_default') // 3);
   my $stop_tweaking;
 
   while (1) {
@@ -288,16 +288,22 @@ sub nr {
 
 
 sub conv {
-  s/[^[:ascii:]]/sprintf "\\[u%04X]", unpack "U", $&/eg;
+  if (__PACKAGE__->can('NFD')) {
+    s/[^[:ascii:]]/
+      my @u = unpack "U*", NFD($&);
+      sprintf "\\[u".join('_', ("%04X") x @u)."]", @u;
+    /eg;
+  } else {
+    s/[^[:ascii:]]/sprintf "\\[u%04X]", unpack "U*", $&/eg;
+  }
 }
 
 
 sub unconv {
-  s/\\\[u([0-9A-F]+)\]/pack "U*", hex $1/eg;
   if (__PACKAGE__->can('NFC')) {
-    s{\\\[u([0-9A-F]+(?:\s*[_u][0-9A-F]+)+)\]}{
-      NFC(join "", map { pack "U*", hex } split /\s*[_u]/, $1)
-    }eg;
+    s/\\\[u([0-9A-F_]+)\]/NFC(join '', map { pack "U", hex } split '_', $1)/eg;
+  } else {
+    s/\\\[u([0-9A-F]+)\]/pack "U", hex $1/eg;
   }
 }
 
@@ -312,8 +318,10 @@ sub rc_regex {
 sub rc {
   my $self = shift;
   $self->{rc} //= loadrc();
+  my $me = basename($0, '.pl');
   my @list = map flatten(
-    eval join '->', '$self', map "{'$_'}", 'rc', split /[.]/), @_;
+    eval(join '->', '$self', map "{'$_'}", 'rc', $me, split /[.]/) //
+    eval(join '->', '$self', map "{'$_'}", 'rc', split /[.]/)), @_;
   wantarray ? @list : join '', @list;
 }
 

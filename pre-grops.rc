@@ -1777,19 +1777,17 @@ warichu_closing_brackets: &cl-29
 
 # End of Appendix A
 
-# chars_japanese: the list of characters for inserting zero-width
-# space between japanese characters.
-chars_japanese:
-  - *cl-09                 # A.9 Iteration marks
-  - *cl-10                 # A.10 Prolonged sound mark
-  - *cl-11                 # A.11 Small kana
-  - *cl-15                 # A.15 Hiragana
-  - *cl-16                 # A.16 Katakana
-  #
-  - '[\[u4E00]-\[u9FFF]]'  # kanji
+kanji: &ll-91
+  - '[\[u4E00]-\[u9FFF]]'
+
+voicing_marks: &ll-92
+  - \[u3099]
+  - \[u309A]
+  - \[u309B]
+  - \[u309C]
 
 # chars_not_starting: the list of characters not starting a line.
-chars_not_starting:
+chars_not_starting: &ll-93
   - *cl-02                 # A.2 Closing brackets
   - *cl-03                 # A.3 Hyphens
   - *cl-04                 # A.4 Dividing punctuation marks
@@ -1803,8 +1801,23 @@ chars_not_starting:
   - *cl-11                 # A.11 Small kana
 
 # chars_not_ending: the list of characters not ending a line.
-chars_not_ending:
+chars_not_ending: &ll-94
   - *cl-01                 # A.1 Opening brackets
+
+# chars_japanese: the list of characters for inserting zero-width
+# space between japanese characters.
+chars_japanese:
+  - *cl-09                 # A.9 Iteration marks
+  - *cl-10                 # A.10 Prolonged sound mark
+  - *cl-11                 # A.11 Small kana
+  - *cl-15                 # A.15 Hiragana
+  - *cl-16                 # A.16 Katakana
+  #
+  - *ll-91                 # Kanji
+  # 2019-08-15
+  - *ll-92		   # Voicing marks
+  - *ll-93                 # chars_not_starting
+  - *ll-94                 # chars_not_ending
 
 # mode_request: the regexpr of the request sets the Japanese
 # justification mode. $1 is the mode value.
@@ -1868,3 +1881,16 @@ qwnbsp: "\\c\n.zwnbsp 3\n"
 
 hwsp: ' '
 hwnbsp: \~
+
+# see grops(1), troff(1) to parse options
+troff:
+  parse_option: [ '^-([dfFImMnorTwW])(.*)', '^-([abcivzCERU]+)$' ]
+
+pre-grops:
+  parse_option: [ '^-([bcFIpPw])(.*)', '^-([glmv]+)$' ]
+
+pre-grotty:
+  parse_option: [ '^-([F])(.*)', '^-([bBcdfhioruUv]+)$' ]
+
+pre-gropdf:
+  parse_option: [ '^-([FIpuy])(.*)', '^-([delsv]+)$' ]
