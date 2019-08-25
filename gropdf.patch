@@ -1,5 +1,5 @@
-*** gropdf.old	Wed Aug 21 16:17:01 2019
---- gropdf	Wed Aug 21 16:17:01 2019
+*** gropdf.old	Sun Aug 25 22:41:59 2019
+--- gropdf	Sun Aug 25 22:42:00 2019
 ***************
 *** 22,27 ****
 --- 22,31 ----
@@ -52,7 +52,7 @@
       if (exists($p->{LastChar}) and $p->{LastChar} > 255)
 ***************
 *** 399,404 ****
---- 405,444 ----
+--- 405,443 ----
   	splice(@{$o->{DIFF}},256);
   	splice(@{$o->{WIDTH}},256);
       }
@@ -64,10 +64,9 @@
 + 
 + 	    foreach my $cn (0..255) {
 + 		my $ch = $fnt->{NO}->[$cn + $fnt->{SUPPL} * 256];
-+ 		if ($ch->[0] && $ch->[1] && $ch->[0] ne $ch->[1]) {
-+ 		    my $g = $ch->[1];
-+ 		    push @d, $fnt->{NAM}->{$g}->[PSNAME] || '/.notdef';
-+ 		    push @w, $fnt->{NAM}->{$g}->[WIDTH] || 0;
++ 		if ($ch && $ch->[1] && $fnt->{NAM}->{$ch->[1]}->[USED]) {
++ 		    push @d, $fnt->{NAM}->{$ch->[1]}->[PSNAME] || '/.notdef';
++ 		    push @w, $fnt->{NAM}->{$ch->[1]}->[WIDTH] || 0;
 + 		} else {
 + 		    push @d, '/.notdef';
 + 		    push @w, 0;
@@ -95,7 +94,7 @@
   foreach my $o (3..$objct)
 ***************
 *** 902,907 ****
---- 942,954 ----
+--- 941,953 ----
   		    $t=~s/\\e/\\\\/g;
   		    $t=~m/(^.*\/Title \()(.*)(\).*)/;
   		    my ($pre,$title,$post)=($1,$2,$3);
@@ -111,7 +110,7 @@
   		    my @xwds=split(' ',"<< $pre$title$post >>");
 ***************
 *** 2191,2196 ****
---- 2238,2251 ----
+--- 2237,2250 ----
       my $ascent=0;
       my $charset='';
   
@@ -128,7 +127,7 @@
   	chomp;
 ***************
 *** 2230,2236 ****
---- 2285,2297 ----
+--- 2284,2296 ----
   	    $r[0]='u0020' if $r[3] == 32;
   	    $r[0]="u00".hex($r[3]) if $r[0] eq '---';
   #	    next if $r[3] >255;
@@ -144,7 +143,7 @@
   	    $lastchr=$r[3] if $r[3] > $lastchr;
 ***************
 *** 2258,2263 ****
---- 2319,2325 ----
+--- 2318,2324 ----
       $fnt{DIFF}=[];
       $fnt{WIDTH}=[];
       $fnt{NAM}->{''}=[0,-1,'/.notdef',-1,0];
@@ -162,7 +161,7 @@
   	$fontlst{$fontno}->{FNT}=\%fnt;
   	$obj[$objct]->{STREAM}=$t1stream;
   
---- 2369,2376 ----
+--- 2368,2375 ----
   			);
   
   	$objct+=3;
@@ -181,7 +180,7 @@
   	$fontlst{$fontno}->{FNT}=\%fnt;
       }
   
---- 2407,2414 ----
+--- 2406,2413 ----
   			);
   
   	$objct+=2;
@@ -192,7 +191,7 @@
   
 ***************
 *** 2378,2383 ****
---- 2440,2446 ----
+--- 2439,2445 ----
       Msg(1,"Failed to open '$file'") if !defined($f);
   
       $head=GetChunk($f,1,"currentfile eexec");
@@ -202,7 +201,7 @@
   
 ***************
 *** 2590,2595 ****
---- 2653,2659 ----
+--- 2652,2658 ----
   
   #	IsText();
       $cft="$par";
@@ -219,7 +218,7 @@
   	}
   	$stream.="$curkern Tc\n";
       }
---- 2710,2718 ----
+--- 2709,2717 ----
   	if (defined($cft))
   	{
   	    $whtsz=$fontlst{$cft}->{FNT}->{spacewidth}*$cftsz;
@@ -240,7 +239,7 @@
       }
   
       $mode='t';
---- 2729,2742 ----
+--- 2728,2741 ----
       if ($fontchg)
       {
   	PutLine(0);
@@ -257,7 +256,7 @@
       $mode='t';
 ***************
 *** 3302,3307 ****
---- 3373,3379 ----
+--- 3372,3378 ----
   sub TextWid
   {
       my $txt=shift;
@@ -267,7 +266,7 @@
       my $ck=0;
 ***************
 *** 3309,3314 ****
---- 3381,3387 ----
+--- 3380,3386 ----
       foreach my $c (split('',$txt))
       {
   	my $cn=ord($c);
@@ -277,7 +276,7 @@
       }
 ***************
 *** 3322,3327 ****
---- 3395,3403 ----
+--- 3394,3402 ----
   {
       my $par=shift;
       my $fnt=$fontlst{$cft}->{FNT};
@@ -309,7 +308,7 @@
   	    {
   		substr($par2,$j,1)=chr($cn2);
   
---- 3412,3427 ----
+--- 3411,3426 ----
       foreach my $j (0..length($par2)-1)
       {
   	my $cn=ord(substr($par2,$j,1));
@@ -335,7 +334,7 @@
   
       $par=reverse(split('',$par)) if $xrev and $par!~m/^!\|!\|(\d\d\d)/;
   
---- 3436,3442 ----
+--- 3435,3441 ----
   	    }
   	}
       }
@@ -353,7 +352,7 @@
       }
   
       $gotT=1;
---- 3461,3474 ----
+--- 3460,3473 ----
       if ($fontchg)
       {
   	PutLine();
@@ -379,7 +378,7 @@
       $nomove=$fontlst{$cft}->{FNT}->{NAM}->{$par}->[WIDTH]*$cftsz ;
   }
   
---- 3569,3575 ----
+--- 3568,3574 ----
   {
       my $par=shift;
   
@@ -400,7 +399,7 @@
       }
       else
       {
---- 3580,3588 ----
+--- 3579,3587 ----
   
       if (exists($fnt->{NAM}->{$chnm}))
       {
@@ -419,7 +418,7 @@
   
       foreach my $un (0..$#{$fnt->{NO}})
       {
---- 3595,3634 ----
+--- 3594,3633 ----
       my $ch=shift;
       my $fnt=shift;
       my $chnm=shift;
@@ -469,7 +468,7 @@
       {
   	foreach my $un (128..255)
   	{
---- 3636,3642 ----
+--- 3635,3641 ----
   	$unused=$un,last if $fnt->{NO}->[$un]->[1] eq '';
       }
   
@@ -486,7 +485,7 @@
       {
   	my $glyph=$fnt->{NO}->[$unused]->[1];
   	delete($fontlst{$cft}->{CACHE}->{$cftsz});
---- 3646,3652 ----
+--- 3645,3651 ----
   	}
       }
   
@@ -508,7 +507,7 @@
       }
   }
   
---- 3657,3668 ----
+--- 3656,3667 ----
   	$stream.="% AAA Assign $chnm ($ch) to $unused\n" if $debug;
   
   	$ch=$unused;
