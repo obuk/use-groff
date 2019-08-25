@@ -6,6 +6,8 @@ PATH=/usr/local/bin:$PATH
 GROFF_FONT=${GROFF_FONT-/usr/local/share/groff/current/font}
 SITE_FONT=${SITE_FONT-/usr/local/share/groff/site-font}
 AFMTODIT=${AFMTODIT-"-s"}
+TEXTMAP=${TEXTMAP:-$GROFF_FONT/devps/generate/textmap}
+TEXTENC=${TEXTENC:-""}
 
 usage="usage: $(basename $0) groff-fontname fontfile.{ttf,otf}"
 
@@ -24,13 +26,19 @@ temp=$(mktemp -d)
       Generate(\$fontname + \".t42\");"
     fontname=$(basename *.afm .afm)
 
-    afmtodit="$AFMTODIT"
+    if [ -f "$TEXTENC" ]; then
+	cp $TEXTENC .
+	AFMTODIT="$AFMTODIT -e$(basename $TEXTENC)"
+    fi
+    if [ -f "$TEXTMAP" ]; then
+	cp $TEXTMAP .
+    fi
+    afmtodit="$(set -- $AFMTODIT; if [ ! -x $1 ]; then echo afmtodit; fi) $AFMTODIT"
     case "$name" in
 	*I) afmtodit="$afmtodit -i50" ;;  # use italic correction
 	*) afmtodit="$afmtodit -i0 -m" ;; # improve spacing with eqn(1)
     esac
-    textmap=$GROFF_FONT/devps/generate/textmap
-    afmtodit $afmtodit $fontname.afm $textmap $name
+    $afmtodit $fontname.afm $(basename $TEXTMAP) $name
 
     mkdir -p $SITE_FONT/devps
     (
