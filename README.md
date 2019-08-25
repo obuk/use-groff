@@ -239,4 +239,13 @@ groff が出力する pdf のサイズを小さくするために、それから
   -sOutputFile=- - >a.pdf
 ```
 
+## CJK 互換漢字
+
+groff は「視」と「視」を区別できません。ps や pdf への出力だけでなく
+tty (utf8) への出力も同様です。tty では2つの文字がどちらも「視」になり
+ます。ps や pdf は groff のフォントの影響も受けるので「視」になること
+もあります。修正するには troff と afmtodit を直します。
+[patch-afmtodit.tables](patch-afmtodit.tables),
+[patch-uniuni.cpp](patch-uniuni.cpp)
+
 誤りや改善のご指摘がありましたら、お気軽にどうぞ。
