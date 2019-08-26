@@ -229,9 +229,38 @@ version.
 マクロの修正もありますが、[pdf.tmac.patch](pdf.tmac.patch) のとおり、
 ひどいものです。詳しい方に助けて頂きたいと思っています。
 
-groff が出力する pdf のサイズを小さくするために、それから、firefox で
-表示するために gs を通す例を示します。オプションの -dPrinted=false を
-忘れるとハイパーリンクが働きません。注意してください。
+### フォントの埋め込み
+
+groff で日本語フォントを埋め込むと、pdf のファイルサイズが大きくなります。
+対処は、groff のフォントディレクトリの download ファイル中のパス (.t42)
+の先頭に * を置き、埋め込みを抑止します。
+
+download の例
+```
+<TAB>Mincho-Regular<TAB>*Mincho-Regular.t42
+<TAB>Mincho-Bold<TAB>*Mincho-Bold.t42
+<TAB>Gothic-Regular<TAB>*Gothic-Regular.t42
+<TAB>Gothic-Bold<TAB>*Gothic-Bold.t42
+```
+
+groff で埋め込みを抑止しても、後で gs を使って始末できます。そうできるように
+gs のフォントディレクトリに .t42 をリンクして groff 用の Fontmap (Fontmap.GROFF) を作成します。
+
+Fontmap.GROFF の例
+```
+/Mincho-Regular  (Mincho-Regular.t42);
+/Mincho-Bold     (Mincho-Bold.t42);
+/Gothic-Regular  (Gothic-Regular.t42);
+/Gothic-Bold     (Gothic-Bold.t42);
+```
+
+そして gs の Fontmap に次の行を加えます。
+
+```
+(Fontmap.GROFF) .runlibfile
+```
+
+groff と gs をパイプでつないで pdf を作成するコマンド例を示します。
 
 ```
 /usr/local/bin/groff -Tpdf -Dutf8 -pt -mja -ms -mspdf sample.ms \
