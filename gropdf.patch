@@ -1,5 +1,5 @@
-*** gropdf.old	Sun Aug 25 22:41:59 2019
---- gropdf	Sun Aug 25 22:42:00 2019
+*** gropdf.old	Thu Aug 29 14:13:38 2019
+--- gropdf	Thu Aug 29 14:13:38 2019
 ***************
 *** 22,27 ****
 --- 22,31 ----
@@ -437,7 +437,7 @@
 !                 my $fnt2 = {
 ! 		    %{$fnt}{qw/NM NO NAM/},
 !                     SUPPL => $fnt->{SUPPL} + 1,
-!                     REMAP => [ 0..255 ],
+!                     REMAP => [ 0..31, 33..255 ],
 !                 };
 !                 $fnt->{NEXT} = $fnt2;
 !             }
