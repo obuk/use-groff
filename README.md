@@ -40,6 +40,13 @@ M と G がファミリ、R がスタイルです。
 * 新しい groff のマンページは、truetype フォントのインストール方法を説
   明しています。
 
+install-font.sh は、gropdf と gs のフォントもインストールします。
+不要なら、次のように環境変数を使って抑止してください。
+
+```
+env PDF_ENABLE=no GS_ENABLE=no install-font.sh ...
+```
+
 ### フォントを組み合わせる
 
 groff は、デフォルトで T (Times) を使いますが、このフォントに日本語の
@@ -201,6 +208,14 @@ sudo install -m 644 DESC $GROFF_DEVPS_DIR
 ## PDF (gropdf)
 
 修正は [gropdf.patch](gropdf.patch) にあります。
+groff 1.22.4 の gropdf へのパッチです。以前のバージョンには使えません。
+出力例 [groff.7.pdf](groff.7.pdf) を示します。
+
+```
+/usr/bin/zcat /usr/share/man/ja.eucJP/man7/groff.7.gz | \
+/usr/local/bin/groff -Tpdf -pt -man -Keuc-jp -ddoc-locale='ja.UTF-8' | \
+/usr/local/bin/gs -sDEVICE=pdfwrite -dPrinted=false -dNOPAUSE -dQUIET -dBATCH -sOutputFile=- -
+```
 
 修正内容は下記のとおりです。
 
@@ -228,6 +243,20 @@ version.
 
 マクロの修正もありますが、[pdf.tmac.patch](pdf.tmac.patch) のとおり、
 ひどいものです。詳しい方に助けて頂きたいと思っています。
+
+たとえば、マンページの見出しをしおりに使うには、man.local で .SH と .SS
+に .pdfhref を追加します。
+
+```
+.am SH
+.  pdfhref O 1 -- \\$*
+..
+.am SS
+.  pdfhref O 2 -- \\$*
+..
+```
+
+pdfhref の説明は、groff パッケージの pdfmark.pdf を参照してください。
 
 ### フォントの埋め込み
 
