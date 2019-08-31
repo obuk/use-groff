@@ -28,8 +28,8 @@ patch <gropdf.patch
 
 sudo install -m755 gropdf $PATH_GROPDF.p0
 
-(grep -v ^postproc /usr/share/groff/current/font/devpdf/DESC
- echo postproc $PATH_GROPDF.p0) >DESC
+(grep -v ^postpro /usr/share/groff/current/font/devpdf/DESC
+ echo postpro $PATH_GROPDF.p0) >DESC
 sudo install -m644 DESC /usr/share/groff/current/font/devpdf/
 
 # ubuntu
