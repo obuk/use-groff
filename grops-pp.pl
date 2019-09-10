@@ -21,14 +21,13 @@ and add prepro line to your devps/DESC.
 use strict;
 use warnings;
 
-our $VERSION = "0.04";
+our $VERSION = "0.05";
 
 use feature 'say';
 use open qw/:locale :std/;
 use utf8;
 use Encode;
 use File::Basename;
-use POSIX qw(isatty);
 
 my $usage = join ' ', "usage:", basename($0), "prepro-opts troff troff-opts";
 my @prepro = parse_option(qr/^-([bcFIpPw])(.*)/, qr/^-([glmv]+)$/);
@@ -72,7 +71,7 @@ if ($_ = $t) {
 }
 }
 
-preproc() if @ARGV || !isatty(*STDIN); # xxxxx
+preproc() if !$version;
 close STDOUT;
 exit($? >> 8);
 
@@ -91,7 +90,7 @@ sub parse_option {
   my @option;
   while (@ARGV) {
     $_ = shift @ARGV;
-    unshift(@ARGV, $_), last if /^[^-]/;
+    unshift(@ARGV, $_), last if /^[-]$/ || /^[^-]/;
     if (/$r1/) {
       push @option, "-$1".$sep.(defined $2 && $2 ne '' ? $2 : shift @ARGV);
     } elsif (/$r2/) {

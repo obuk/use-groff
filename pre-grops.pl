@@ -21,7 +21,7 @@ and add prepro line to your devps/DESC.
 use strict;
 use warnings;
 
-our $VERSION = "0.05";
+our $VERSION = "0.06";
 
 use feature qw/say/;
 use open qw/:locale :std/;
@@ -29,7 +29,6 @@ use utf8;
 use Encode;
 use File::Basename;
 use File::Spec::Functions qw/rootdir catdir catfile/;
-use POSIX qw(isatty);
 use YAML::Syck qw/Load Dump/;
 
 sub run {
@@ -54,7 +53,7 @@ sub run {
 
   my $tee = $self->rc('tee');
   open STDOUT, "|-", "tee", $tee or die "can't open $tee: $!" if $tee;
-  $self->prepro() if @ARGV || !isatty(*STDIN); # xxxxx
+  $self->prepro() if !grep /-v/, @prepro;
   close STDOUT;
   exit($? >> 8);
 }
@@ -72,7 +71,7 @@ sub parse_option {
   my @option;
   while (@ARGV) {
     $_ = shift @ARGV;
-    unshift(@ARGV, $_), last if /^[^-]/;
+    unshift(@ARGV, $_), last if /^[-]$/ || /^[^-]/;
     if (/$_[0]/) {
       push @option, "-$1".$sep.(defined $2 && $2 ne '' ? $2 : shift @ARGV);
     } elsif (/$_[1]/) {
@@ -231,8 +230,8 @@ sub getline {
   my @t;
   while (1) {
     unless (defined $self->unget()) {
-      last if eof;
-      chomp($_ = <>);
+      last unless defined ($_ = <>);
+      chomp;
       unconv() if $self->{use_conv};
     }
     if (@t) {
