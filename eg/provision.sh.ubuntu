@@ -110,17 +110,57 @@ setup-grops-ja-takao () {
     (grep -v ^prepro /usr/share/groff/current/font/devps/DESC
      echo prepro grops-pp.pl) >DESC
     sudo install -m644 DESC /usr/share/groff/current/font/devps/
-    sudo install -m644 line-gap.patch /etc/groff
+    sudo install -m644 $WORK/line-gap.patch /etc/groff
 }
 
 setup-gropdf-ubuntu () {
     sudo -u vagrant env WORK=$WORK $WORK/eg/setup-gropdf-ubuntu.sh
 }
 
+install-groff-current ()
+{
+    sudo apt-get -y install autoconf libtool texinfo bison pkgconf \
+	 libuchardet-dev libxaw7-dev
+
+    git clone https://git.savannah.gnu.org/git/groff.git
+
+    (
+	cd groff
+	./bootstrap
+	./configure --prefix=/usr/local
+	make
+	sudo make install
+    )
+
+    local GROFF_FONT=/usr/share/groff/current/font
+    local GROFF_LOCAL_FONT=${GROFF_FONT/usr/usr\/local}
+    for dev in devps devpdf; do
+	sudo cp $GROFF_FONT/$dev/DESC $GROFF_LOCAL_FONT/$dev
+    done
+
+    # Save site setup by sharing site-font and site-tmac:
+    # GROFF_TMAC_PATH=/etc/groff
+    # GROFF_FONT_PATH=/usr/share/groff/site-font
+
+    # To run groff package installed with apt-get:
+    # GROFF_BIN_PATH=/usr/bin
+
+    # examples outputs pdf:
+    # GROFF_TYPESETTER=pdf man -L ja -t 7 groff
+    # zcat /usr/share/man/ja/man7/groff.7.gz | groff -Tpdf -mja -man -Dutf8
+    # pdfmom -P-d -Tpdf mom-pdf.mom
+
+    # Use gs to embed fonts:
+    # | gs -sDEVICE=pdfwrite -dPrinted=false -dNOPAUSE -dQUIET -dBATCH -sOutputFile=- - 
+}
+
+
 [ -d $WORK ] || git clone https://github.com/obuk/use-groff $WORK
 
 setup-grops-ja-takao	# with fonts-takao, and generate I B BI fonts
 setup-gropdf-ubuntu
+
+# install-groff-current
 
 [ -f /var/run/reboot-required ] && echo -n "vagrant reload; " >&2
 echo "vagrant ssh -- -Y" >&2
