@@ -1,25 +1,21 @@
-*** gropdf.old	Wed Sep 11 20:30:21 2019
---- gropdf	Wed Sep 11 20:30:21 2019
+*** gropdf.old	Thu Aug 29 14:13:38 2019
+--- gropdf	Thu Aug 29 14:13:38 2019
 ***************
 *** 22,27 ****
---- 22,35 ----
+--- 22,31 ----
   
   use strict;
   use Getopt::Long qw(:config bundling);
 + use Encode;
-+ use File::Find;
 + 
 + my $use_suppl_font = 1;
 + my $use_unicode_bookmark = 1;
-+ my $D1_off_by_one = 1;
-+ my $D2_reduce_remapping = 1;
-+ my $D3_unicodefy = 1;
   
   use constant
   {
 ***************
 *** 30,35 ****
---- 38,44 ----
+--- 34,40 ----
       PSNAME		=> 2,
       ASSIGNED		=> 3,
       USED		=> 4,
@@ -29,7 +25,7 @@
   my $gotzlib=0;
 ***************
 *** 79,84 ****
---- 88,94 ----
+--- 84,90 ----
   my $stream='';	# Current Text/Graphics stream
   my $cftsz=10;	# Current font sz
   my $cft;	# Current Font
@@ -37,27 +33,6 @@
   my $lwidth=1;	# current linewidth
   my $linecap=1;
   my $linejoin=1;
-***************
-*** 203,208 ****
---- 213,220 ----
-  my $unicodemap;
-  my @idirs;
-  
-+ my %AGL_to_unicode;
-+ 
-  #Load_Config();
-  
-  GetOptions("F=s" => \$fd, 'I=s' => \@idirs, 'l' => \$frot, 'p=s' => \$fpsz, 'd!' => \$debug, 'v' => \$version, 'version' => \$version, 'e' => \$embedall, 'y=s' => \$Foundry, 's' => \$stats, 'u:s' => \$unicodemap);
-***************
-*** 245,250 ****
---- 257,263 ----
-  
-  LoadDownload();
-  LoadDesc();
-+ LoadAGL_to_unicode() if $D3_unicodefy;
-  
-  my $unitwidth=$desc{unitwidth};
-  my $papersz=$desc{papersize};
 ***************
 *** 390,396 ****
   	push(@{$o->{WIDTH}},$wid);
@@ -67,17 +42,17 @@
       my $p=GetObj($fontlst{$fontno}->{OBJ});
   
       if (exists($p->{LastChar}) and $p->{LastChar} > 255)
---- 403,409 ----
+--- 396,402 ----
   	push(@{$o->{WIDTH}},$wid);
   	last if $#{$o->{DIFF}} >= 255;
       }
-!     unshift(@{$o->{DIFF}},0) if !$use_suppl_font || $D1_off_by_one;
+!     unshift(@{$o->{DIFF}},0) if !$use_suppl_font;
       my $p=GetObj($fontlst{$fontno}->{OBJ});
   
       if (exists($p->{LastChar}) and $p->{LastChar} > 255)
 ***************
 *** 399,404 ****
---- 412,451 ----
+--- 405,443 ----
   	splice(@{$o->{DIFF}},256);
   	splice(@{$o->{WIDTH}},256);
       }
@@ -87,7 +62,6 @@
 + 	while ($fnt = $fnt->{NEXT}) {
 + 	    my (@d, @w);
 + 
-+ 	    unshift @d, 0 if $D1_off_by_one;
 + 	    foreach my $cn (0..255) {
 + 		my $ch = $fnt->{NO}->[$cn + $fnt->{SUPPL} * 256];
 + 		if ($ch && $ch->[1] && $fnt->{NAM}->{$ch->[1]}->[USED]) {
@@ -119,126 +93,30 @@
   
   foreach my $o (3..$objct)
 ***************
-*** 626,631 ****
---- 673,695 ----
-      Msg(1,"Failed to open 'download'") if !$found;
-  }
-  
-+ # D3. Use %AGL_to_unicode in afmtodit instead of asciify.
-+ sub LoadAGL_to_unicode
-+ {
-+     my @afmtodit;
-+     find({ wanted => sub { -x && /^afmtodit/ and push @afmtodit, $File::Find::name }, },
-+ 	 grep -d, map split($cfg{RT_SEP}, $_), grep defined,
-+ 	 $ENV{GROFF_BIN_DIR}, $ENV{PATH});
-+     if (@afmtodit) {
-+ 	open my $f, "<", $afmtodit[0];
-+ 	my $afmtodit = join '', <$f>;
-+ 	if ($afmtodit =~ /%AGL_to_unicode\s*=\s*(\(.*?\))\s*;/s) {
-+ 	    %AGL_to_unicode = eval $1;
-+ 	}
-+     }
-+     Msg(0, "Could not find afmtodit") if !%AGL_to_unicode;
-+ }
-+ 
-  sub OpenFile
-  {
-      my $f=shift;
-***************
-*** 899,907 ****
-  		{
-  		    my $t=$1;
-  		    $t=~s/\\\) /\\\\\) /g;
-! 		    $t=~s/\\e/\\\\/g;
+*** 902,907 ****
+--- 941,953 ----
+  		    $t=~s/\\e/\\\\/g;
   		    $t=~m/(^.*\/Title \()(.*)(\).*)/;
   		    my ($pre,$title,$post)=($1,$2,$3);
-  		    $title=~s/(?<!\\)\(/\\\(/g;
-  		    $title=~s/(?<!\\)\)/\\\)/g;
-  		    my @xwds=split(' ',"<< $pre$title$post >>");
---- 963,985 ----
-  		{
-  		    my $t=$1;
-  		    $t=~s/\\\) /\\\\\) /g;
-! 		    #$t=~s/\\e/\\\\/g;
-  		    $t=~m/(^.*\/Title \()(.*)(\).*)/;
-  		    my ($pre,$title,$post)=($1,$2,$3);
-+ 		    if ($use_unicode_bookmark) {
-+ 			if ($D3_unicodefy) {
-+ 			    $title = unicodefy($title);
-+ 			} else {
-+ 			    $title =~ s/\\\[u([0-9A-F_]+)\]/join(
-+ 				'', map { pack "U", hex } split '_', $1)/eg;
-+ 			}
-+ 			if ($title =~ /[^[:ascii:]]/) {
-+ 			    $title = join '', map sprintf("\\%o", $_),
-+ 			    unpack "C*", encode("utf16", $title);
-+ 			}
-+ 		    } else {
-+ 			$t =~ s/\\e/\\\\/g;
++ 		    if ($use_unicode_bookmark &&
++ 			$title =~ s/\\\[u([0-9A-F_]+)\]/join(
++ 			    '', map { pack "U", hex } split '_', $1
++ 			  )/eg) {
++ 			$title = join '', map sprintf("\\%o", $_),
++ 			  unpack "C*", encode("utf16", $title);
 + 		    }
   		    $title=~s/(?<!\\)\(/\\\(/g;
   		    $title=~s/(?<!\\)\)/\\\)/g;
   		    my @xwds=split(' ',"<< $pre$title$post >>");
 ***************
-*** 1242,1247 ****
---- 1320,1367 ----
-      }
-  }
-  
-+ # decode groff_chars and remove escapes.
-+ sub unicodefy {
-+     local $_ = shift;
-+     my $output = '';
-+     while (length > 0) {
-+ 	if (s/^\\\[(.*?)\]// || s/^\\\((..)//) {
-+ 	    my ($ch, $fallback) = ($1, $&);
-+ 	    $output .= decode_groff_char_to_unicode($ch) // $fallback;
-+ 	} elsif (s/^\\[e\\]//) {
-+ 	    $output .= '\\';
-+ 	} elsif (s/^\\[ ~]// ||
-+ 		 s/^\\h('[^']*'|\[.*?\])//) {
-+ 	    $output .= ' ';
-+ 	} elsif (s/^\\[%0|^\/,:]// ||
-+ 		 s/^\\[a-zA-Z]('[^']*?'|\[.*?\])//) {
-+ 	    ;
-+ 	} elsif (s/^\\(.)//) {
-+ 	    $output .= $1;
-+ 	} else {
-+ 	    s/.//;
-+ 	    $output .= $&;
-+ 	}
-+     }
-+     $output;
-+ }
-+ 
-+ sub decode_groff_char_to_unicode {
-+     my ($name) = @_;
-+     if ($name =~ /^u([0-9A-F_]+)$/) {
-+ 	return join '', map { pack "U", hex } split '_', $1;
-+     }
-+     if (my $fnt = $fontlst{$cft}->{FNT}) {
-+ 	if (my $ch = $fnt->{NAM}->{$name}) {
-+ 	    my $psname = substr $ch->[PSNAME], 1;
-+ 	    if (my $u = $AGL_to_unicode{$psname}) {
-+ 		return pack "U", hex $u;
-+ 	    }
-+ 	}
-+     }
-+     undef;
-+ }
-+ 
-  sub FixPDFColour
-  {
-      my $o=shift;
-***************
 *** 2191,2196 ****
---- 2311,2324 ----
+--- 2237,2250 ----
       my $ascent=0;
       my $charset='';
   
 +     $fnt{NM} = 'F'.$fontno;
 +     $fnt{SUPPL} = 0;
-+     my @remap = (127..138, 145..255); # ignore ligatures. see text.enc.
++     my @remap = (128..138, 145..255); # ignore ligatures. see text.enc.
 +     $fnt{REMAP} = \@remap;
 +     my @used;
 +     $used[$_] = 1 for 0..255;
@@ -249,7 +127,7 @@
   	chomp;
 ***************
 *** 2230,2236 ****
---- 2358,2370 ----
+--- 2284,2296 ----
   	    $r[0]='u0020' if $r[3] == 32;
   	    $r[0]="u00".hex($r[3]) if $r[0] eq '---';
   #	    next if $r[3] >255;
@@ -265,7 +143,7 @@
   	    $lastchr=$r[3] if $r[3] > $lastchr;
 ***************
 *** 2258,2263 ****
---- 2392,2398 ----
+--- 2318,2324 ----
       $fnt{DIFF}=[];
       $fnt{WIDTH}=[];
       $fnt{NAM}->{''}=[0,-1,'/.notdef',-1,0];
@@ -283,7 +161,7 @@
   	$fontlst{$fontno}->{FNT}=\%fnt;
   	$obj[$objct]->{STREAM}=$t1stream;
   
---- 2442,2449 ----
+--- 2368,2375 ----
   			);
   
   	$objct+=3;
@@ -302,7 +180,7 @@
   	$fontlst{$fontno}->{FNT}=\%fnt;
       }
   
---- 2480,2487 ----
+--- 2406,2413 ----
   			);
   
   	$objct+=2;
@@ -313,7 +191,7 @@
   
 ***************
 *** 2378,2383 ****
---- 2513,2519 ----
+--- 2439,2445 ----
       Msg(1,"Failed to open '$file'") if !defined($f);
   
       $head=GetChunk($f,1,"currentfile eexec");
@@ -323,7 +201,7 @@
   
 ***************
 *** 2590,2595 ****
---- 2726,2732 ----
+--- 2652,2658 ----
   
   #	IsText();
       $cft="$par";
@@ -340,7 +218,7 @@
   	}
   	$stream.="$curkern Tc\n";
       }
---- 2783,2791 ----
+--- 2709,2717 ----
   	if (defined($cft))
   	{
   	    $whtsz=$fontlst{$cft}->{FNT}->{spacewidth}*$cftsz;
@@ -361,7 +239,7 @@
       }
   
       $mode='t';
---- 2802,2815 ----
+--- 2728,2741 ----
       if ($fontchg)
       {
   	PutLine(0);
@@ -378,7 +256,7 @@
       $mode='t';
 ***************
 *** 3302,3307 ****
---- 3446,3452 ----
+--- 3372,3378 ----
   sub TextWid
   {
       my $txt=shift;
@@ -388,7 +266,7 @@
       my $ck=0;
 ***************
 *** 3309,3314 ****
---- 3454,3460 ----
+--- 3380,3386 ----
       foreach my $c (split('',$txt))
       {
   	my $cn=ord($c);
@@ -398,7 +276,7 @@
       }
 ***************
 *** 3322,3327 ****
---- 3468,3476 ----
+--- 3394,3402 ----
   {
       my $par=shift;
       my $fnt=$fontlst{$cft}->{FNT};
@@ -416,11 +294,11 @@
 ! 	my $chnm=$fnt->{NAM}->{$fnt->{NO}->[$cn]->[1]};
   
 ! 	if ($chnm->[USED]==0)
-  	{
+! 	{
 ! 	    $chnm->[USED]=1;
 ! 	}
 ! 	elsif ($fnt->{NO}->[$cn]->[0] ne $fnt->{NO}->[$cn]->[1])
-! 	{
+  	{
 ! 	    # A glyph has already been remapped to this char, so find a spare
 ! 
 ! 	    my $cn2=RemapChr($cn,$fnt,$fnt->{NO}->[$cn]->[0]);
@@ -430,7 +308,7 @@
   	    {
   		substr($par2,$j,1)=chr($cn2);
   
---- 3485,3500 ----
+--- 3411,3426 ----
       foreach my $j (0..length($par2)-1)
       {
   	my $cn=ord(substr($par2,$j,1));
@@ -456,7 +334,7 @@
   
       $par=reverse(split('',$par)) if $xrev and $par!~m/^!\|!\|(\d\d\d)/;
   
---- 3509,3515 ----
+--- 3435,3441 ----
   	    }
   	}
       }
@@ -474,7 +352,7 @@
       }
   
       $gotT=1;
---- 3534,3547 ----
+--- 3460,3473 ----
       if ($fontchg)
       {
   	PutLine();
@@ -500,7 +378,7 @@
       $nomove=$fontlst{$cft}->{FNT}->{NAM}->{$par}->[WIDTH]*$cftsz ;
   }
   
---- 3642,3648 ----
+--- 3568,3574 ----
   {
       my $par=shift;
   
@@ -521,7 +399,7 @@
       }
       else
       {
---- 3653,3661 ----
+--- 3579,3587 ----
   
       if (exists($fnt->{NAM}->{$chnm}))
       {
@@ -540,7 +418,7 @@
   
       foreach my $un (0..$#{$fnt->{NO}})
       {
---- 3668,3726 ----
+--- 3594,3633 ----
       my $ch=shift;
       my $fnt=shift;
       my $chnm=shift;
@@ -548,41 +426,23 @@
 ! 
 !     if ($use_suppl_font) {
 ! 
-! 	# Reduce character remapping if not suppl font.
-! 	if ($D2_reduce_remapping &&
-! 	    !$fnt->{SUPPL} && !$fnt->{NAM}->{$chnm}->[USED]) {
-! 	    my ($l, $r) = (0, $#{$fnt->{REMAP}});
-! 	    while ($l <= $r) {
-! 		if ($fnt->{REMAP}->[my $m = int(($l + $r) / 2)] == $ch) {
-! 		    #$stream .= "% AAA Use $chnm ($ch) as is\n" if $debug;
-! 		    splice @{$fnt->{REMAP}}, $m, 1;
-! 		    $fnt->{NAM}->{$chnm}->[USED] = 1;
-! 		    return ($ch, $fnt->{SUPPL});
-! 		} elsif ($fnt->{REMAP}->[$m] > $ch) {
-! 		    $r = $m - 1;
-! 		} else {
-! 		    $l = $m + 1;
-! 		}
-! 	    }
-! 	}
-! 
-! 	while (defined(my $un = shift @{$fnt->{REMAP}})) {
-! 	    my $ux = $un + $fnt->{SUPPL} * 256;
+!         while (defined(my $un = shift @{$fnt->{REMAP}})) {
+!             my $ux = $un + $fnt->{SUPPL} * 256;
 ! 	    my $glyph = $fnt->{NO}->[$ux]->[1];
-! 	    $unused = $un, last if !$glyph || !$fnt->{NAM}->{$glyph}->[USED];
-! 	}
+!             $unused = $un, last if !$glyph || !$fnt->{NAM}->{$glyph}->[USED];
+!         }
 ! 
-! 	if (!defined $unused) {
-! 	    if (!$fnt->{NEXT}) {
-! 		my $fnt2 = {
+!         if (!defined $unused) {
+!             if (!$fnt->{NEXT}) {
+!                 my $fnt2 = {
 ! 		    %{$fnt}{qw/NM NO NAM/},
-! 		    SUPPL => $fnt->{SUPPL} + 1,
-! 		    REMAP => [ 0..31, 33..255 ],
-! 		};
-! 		$fnt->{NEXT} = $fnt2;
-! 	    }
-! 	    return RemapChr($ch, $fnt->{NEXT}, $chnm);
-! 	}
+!                     SUPPL => $fnt->{SUPPL} + 1,
+!                     REMAP => [ 0..31, 33..255 ],
+!                 };
+!                 $fnt->{NEXT} = $fnt2;
+!             }
+!             return RemapChr($ch, $fnt->{NEXT}, $chnm);
+!         }
 ! 
 ! 	my $ux = $unused + $fnt->{SUPPL} * 256;
 ! 	my $glyph = $fnt->{NO}->[$ux]->[1];
@@ -591,8 +451,7 @@
 ! 	$fnt->{NO}->[$ux]->[1] = $chnm;
 ! 	$widtbl = CacheWid($cft);
 ! 
-! 	$stream .= "% AAA Assign $chnm ($ch) to $unused".
-! 	    ($fnt->{SUPPL}? ".$fnt->{SUPPL}" : '')."\n" if $debug;
+!         $stream .= "% AAA Assign $chnm ($ch) to $unused ($fnt->{SUPPL})\n" if $debug;
 ! 
 ! 	$ch = $unused;
 ! 	return ($ch, $fnt->{SUPPL});
@@ -609,7 +468,7 @@
       {
   	foreach my $un (128..255)
   	{
---- 3728,3734 ----
+--- 3635,3641 ----
   	$unused=$un,last if $fnt->{NO}->[$un]->[1] eq '';
       }
   
@@ -626,7 +485,7 @@
       {
   	my $glyph=$fnt->{NO}->[$unused]->[1];
   	delete($fontlst{$cft}->{CACHE}->{$cftsz});
---- 3738,3744 ----
+--- 3645,3651 ----
   	}
       }
   
@@ -648,7 +507,7 @@
       }
   }
   
---- 3749,3760 ----
+--- 3656,3667 ----
   	$stream.="% AAA Assign $chnm ($ch) to $unused\n" if $debug;
   
   	$ch=$unused;
