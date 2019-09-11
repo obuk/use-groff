@@ -146,9 +146,8 @@ install-groff-current ()
     # GROFF_BIN_PATH=/usr/bin
 
     # examples outputs pdf:
-    # GROFF_TYPESETTER=pdf man -L ja -t 7 groff
     # zcat /usr/share/man/ja/man7/groff.7.gz | groff -Tpdf -mja -man -Dutf8
-    # pdfmom -P-d -Tpdf mom-pdf.mom
+    # pdfmom mom-pdf.mom
 
     # Use gs to embed fonts:
     # | gs -sDEVICE=pdfwrite -dPrinted=false -dNOPAUSE -dQUIET -dBATCH -sOutputFile=- - 
