@@ -22,7 +22,7 @@ s|[@](\w+)[@]|$c{$1}//$&|eg, print while <>;
 END
 
 PATH_GROPDF=`which gropdf`
-GROPDF=${GROPDF:-"$(basename $PATH_GROPDF)-$(date +%M%d)"}
+GROPDF=${GROPDF:-"$(basename $PATH_GROPDF)-$(date +%m%d)"}
 curl -L $GROPDF_CURRENT | perl -w $CONFIG_PL $PATH_GROPDF >gropdf
 rm -f $CONFIG_PL
 patch <gropdf.patch
