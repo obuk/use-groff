@@ -30,7 +30,7 @@ use Encode;
 use File::Basename;
 
 my $usage = join ' ', "usage:", basename($0), "prepro-opts troff troff-opts";
-my @prepro = parse_option(qr/^-([bcFIpPw])(.*)/, qr/^-([glmv]+)$/);
+my @prepro = parse_option(qr/^-([bcFIpPwy])(.*)/, qr/^-([deglmsv]+)$/);
 my $version = grep defined && $_ eq -v, @prepro;
 my @troff = @ARGV && shift @ARGV;
 push @troff, parse_option(qr/^-([dfFImMnorTwW])(.*)/, qr/^-([abcivzCERU]+)/);
