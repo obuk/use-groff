@@ -37,24 +37,23 @@ font=$(cd $(dirname $font) && echo $(pwd)/$(basename $font)) # abs_path
 temp=$(mktemp -d)
 
 (
+    if [ -f "$TEXTENC" ]; then
+	cp $TEXTENC $temp
+	AFMTODIT="$AFMTODIT -e$(basename $TEXTENC)"
+    fi
+    if [ -f "$TEXTMAP" ]; then
+	cp $TEXTMAP $temp
+    fi
+
     cd $temp
 
-    #fontname=$(fontforge -lang=ff -c "Open(\"$font\"); Print(\$fontname);")
+    fontname=$(fontforge -lang=ff -c "Open(\"$font\"); Print(\$fontname);")
     fontforge -lang=ff -c "Open(\"$font\");
       RenameGlyphs(\"Adobe Glyph List\");
       Generate(\$fontname + \".afm\");
       Generate(\$fontname + \".t42\");"
-    fontname=$(basename *.afm .afm)
 
-    if [ -f "$TEXTENC" ]; then
-	cp $TEXTENC .
-	AFMTODIT="$AFMTODIT -e$(basename $TEXTENC)"
-    fi
-    if [ -f "$TEXTMAP" ]; then
-	cp $TEXTMAP .
-    fi
-
-    afmtodit="$(set -- $AFMTODIT; if [ ! -x $1 ]; then echo afmtodit; fi) $AFMTODIT"
+    afmtodit="$(set -- $AFMTODIT; if !(test -x "$1" || which $1 2>/dev/null >/dev/null); then echo afmtodit; fi) $AFMTODIT"
     case "$name" in
 	*I) afmtodit="$afmtodit -i50" ;;  # use italic correction
 	*) afmtodit="$afmtodit -i0 -m" ;; # improve spacing with eqn(1)
