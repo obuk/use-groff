@@ -299,7 +299,7 @@ groff と gs をパイプでつないで pdf を作成するコマンド例を�
 
 ## 異字体を使う
 
-groff は漢字を統合します。たとえば「視 uFA61」は「視 u8896」に統合され
+groff は漢字を統合します。たとえば「視 uFA61」は「視 u8996」に統合され
 ます。afmtodit は 2つの字体が 1文字にマップされるとき、次のようなメッ
 セージで警告します。
 
@@ -307,8 +307,7 @@ groff は漢字を統合します。たとえば「視 uFA61」は「視 u8896�
 both uniFA61 and uni8996 map to u8996 at /usr/local/bin/afmtodit line 6411.
 ```
 
-afmtodit は textmap で統合する、しない、あるいは、異字体セレクタを利用
-することを記述できるので、上の警告を止めることができます。例を示します。
+警告は、textmap で UVS の記述を追加すれば抑止できます。例を示します。
 
 ```
 cp /usr/local/share/groff/current/font/devps/generate/textmap .
@@ -337,5 +336,24 @@ uFA61   "
 u8996   1000,836,79     2       1101    uni8996
 u8996   1000,818,77     2       6303    uniFA61
 ```
+
+textmap は、[ttf の cmap テーブル][]から作成できます。
+手作業で作成するのは辛いのでスクリプトにまとめました。
+
+```
+make-textmap.pl textmap mincho.ttf >a.textmap
+sudo env TEXTMAP="a.textmap" install-font.sh MR mincho.ttf
+```
+
+スクリプトは、[Font::TTF][] に UVS を扱うコードを追加して使っています。
+プルリクしましたが、受け取って貰えるか分らないので、もし使うなら、下記
+の手順でインストールしてください。
+
+```
+cpanm https://github.com/obuk/font-ttf.git
+```
+
+[ttf の cmap テーブル]: https://docs.microsoft.com/en-us/typography/opentype/spec/cmap
+[Font::TTF]: https://metacpan.org/pod/Font::TTF
 
 誤りや改善のご指摘がありましたら、お気軽にどうぞ。
