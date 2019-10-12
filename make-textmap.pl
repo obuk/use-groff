@@ -4,7 +4,6 @@ use strict;
 use warnings;
 use File::Basename;
 use File::Spec::Functions;
-# cpanm https://github.com/obuk/font-ttf.git
 use Font::TTF::Font;
 
 my $prog = basename $0, '.pl';
@@ -37,11 +36,14 @@ $f->{cmap}->read;
 $f->{post}->read;
 
 print "# $ttf cmap\n";
+
 for (grep !$unicode_decomposed{sprintf "%04X", $_}, keys %{$f->{cmap}->find_ms->{val}}) {
     next unless my $gid = $f->{cmap}->ms_lookup($_);
-    print $f->{post}{VAL}[$gid], ' ', sprintf("u%04X", $_), "\n";
+    printf "%s u%04X\n", $f->{post}{VAL}[$gid], $_;
 }
-for (keys %{$f->{cmap}->find_uvs->{val}}) {
-    next unless my $gid = $f->{cmap}->uvs_lookup($_);
-    print $f->{post}{VAL}[$gid], ' ', sprintf("u%04X_%04X", split $;), "\n";
+for my $uvs (keys %{$f->{cmap}->find_uvs->{val}}) {
+    for (keys %{$f->{cmap}->find_uvs->{val}{$uvs}}) {
+        next unless my $gid = $f->{cmap}->uvs_lookup($uvs, $_);
+        printf "%s u%04X_%04X\n", $f->{post}{VAL}[$gid], $_, $uvs;
+    }
 }
