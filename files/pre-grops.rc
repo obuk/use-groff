@@ -1830,13 +1830,14 @@ mode_default: 3
 
 # dnl: uses escape \cxxxx to remove newlines in Japanese.  Specify
 # \cxxxx that seems not found in the input.
-dnl: \c:dnl
+dnl: "\\c:dnl"
+vdnl: "\\m[blue]\\s-2\\[u23CE]\\s+2\\m[]"
 
 # tee: filename to output via tee to capture troff input. (debug)
 #tee: /tmp/a.grops
 
 # prologue: defines macros for making stretchable spaces.
-prologue-macro: &prologue-1 |
+prologue: &prologue-1 |
   .if !d zwsp \{\
   .de zwsp
   .  nr zwsp.bak \\n[.ss]
@@ -1856,31 +1857,26 @@ prologue-macro: &prologue-1 |
   ..
   .\}
 
-prologue-escape: &prologue-2 |
-  .ds zwsp "\\j[0] \\j[]\""
-  .ds zwnbsp "\\j[0]\\~\\j[]\""
-  .ds qwsp "\\j[3] \\j[]\""
-  .ds qwnbsp "\\j[3]\\~\\j[]\""
-
-# Define six expandable spaces {zw,qw,hw}{nb,}sp.  The first two
-# characters of the name are the width (zero-width, quarter em width,
-# half em width).  The following nb (no-break) represents a
+# Define six stretchable/unstretchable spaces {zw,qw,hw}{nb,}sp.  The
+# first two characters of the name are the width (zero-width, quarter
+# em width, half em width).  The following nb (no-break) means
 # non-breaking space.
 
-prologue: *prologue-1
 zwsp: "\\c\n.zwsp\n"
 zwnbsp: "\\c\n.zwnbsp\n"
-qwsp: "\\c\n.zwsp 3\n"
-qwnbsp: "\\c\n.zwnbsp 3\n"
-
-#prologue: *prologue-2
-#zwsp: \*[zwsp]
-#zwnbsp: \*[zwnbsp]
-#qwsp: \*[qwsp]
-#qwnbsp: \*[qwnbsp]
-
+qwsp: "\\c\n.zwsp 6\n"
+qwnbsp: "\\c\n.zwnbsp 6\n"
 hwsp: ' '
 hwnbsp: \~
+
+# The following six definitions make the six spaces above visible.
+
+vhwsp: "\\m[blue]\\Z'\\h[0.1m]\\[u00BD]'\\[u2423]\\m[]"
+vqwsp: "\\m[blue]\\Z'\\h[0.1m]\\[u00BC]'\\[u2423]\\m[]"
+vhwnbsp: "\\m[red]\\Z'\\h[0.1m]\\[u00BD]'\\[u2423]\\m[]"
+vqwnbsp: "\\m[red]\\Z'\\h[0.1m]\\[u00BC]'\\[u2423]\\m[]"
+vzwsp: "\\m[blue]\\[bv]\\h[-0.2m]\\[bv]\\m[]"
+vzwnbsp: "\\m[red]\\[bv]\\h[-0.2m]\\[bv]\\m[]"
 
 # see grops(1), troff(1) to parse options
 troff:

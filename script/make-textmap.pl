@@ -41,6 +41,11 @@ for (grep !$unicode_decomposed{sprintf "%04X", $_}, keys %{$f->{cmap}->find_ms->
     next unless my $gid = $f->{cmap}->ms_lookup($_);
     printf "%s u%04X\n", $f->{post}{VAL}[$gid], $_;
 }
+
+exit 0 unless $f->{cmap}->find_uvs;
+
+print "# $ttf cmap uvs\n";
+
 for my $uvs (keys %{$f->{cmap}->find_uvs->{val}}) {
     for (keys %{$f->{cmap}->find_uvs->{val}{$uvs}}) {
         next unless my $gid = $f->{cmap}->uvs_lookup($uvs, $_);

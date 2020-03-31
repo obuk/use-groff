@@ -1,0 +1,9 @@
+.\" -*- nroff -*-
+.
+.\" 128 DONT_BREAK_BEFORE
+.cflags 128 \C'[CJKprepunct]'
+.\" 256 DONT_BREAK_AFTER + 2 BREAK_BEFORE + 8 OVERLAPS_HORIZONTALLY
+.\"cflags 266 \C'[CJKpostpunct]'
+.cflags 10 \C'[CJKpostpunct]'
+.\" 512 INTER_CHAR_SPACE
+.cflags 512 \C'[CJKnormal]'

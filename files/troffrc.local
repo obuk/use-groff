@@ -1,0 +1,7 @@
+.\" -*- nroff -*-
+.
+.\" load ja.tmac if "-ddoc-locale=ja.UTF-8" is on the command line.
+.\" and -dlocale works the same as -ddoc-locale.
+.
+.if d locale .ds doc-locale \*[locale]\"
+.if "\*[doc-locale]"ja.UTF-8" .mso ja.tmac\""

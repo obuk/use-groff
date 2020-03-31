@@ -2,12 +2,25 @@
 
 set -eu
 
-PREFIX=${PREFIX:-/usr/local}
-GROFF_BIN_PATH=${GROFF_BIN_PATH:-$PREFIX/bin}
+GROFF_VERSION=$(groff -v |sed -n '/.*version */{s///p;q;}')
 
-GROFF_SHARE=${GROFF_SHARE:-$PREFIX/share/groff}
-SITE_FONT=${SITE_FONT:-$GROFF_SHARE/site-font}
-GROFF_FONT=${GROFF_FONT:-$GROFF_SHARE/current/font}
+case `uname` in
+    Linux)
+	PREFIX=/usr
+        GROFF_TMAC="${GROFF_TMAC:-$PREFIX/share/groff/$GROFF_VERSION/tmac}"
+        SITE_TMAC="${SITE_TMAC:-$PREFIX/share/groff/site-tmac}"
+        GROFF_FONT="${GROFF_FONT:-$PREFIX/share/groff/$GROFF_VERSION/font}"
+        SITE_FONT="${SITE_FONT:-$PREFIX/share/groff/site-font}"
+        ;;
+    *)
+	PREFIX=/usr/local
+        GROFF_TMAC="${GROFF_TMAC:-$PREFIX/share/groff/$GROFF_VERSION/tmac}"
+        SITE_TMAC="${SITE_TMAC:-$PREFIX/share/groff/site-tmac}"
+        GROFF_FONT="${GROFF_FONT:-$PREFIX/share/groff/$GROFF_VERSION/font}"
+        SITE_FONT="${SITE_FONT:-$PREFIX/share/groff/site-font}"
+        ;;
+esac
+
 TYPE42_FONT=${TYPE42_FONT:-$SITE_FONT/devps}
 
 AFMTODIT=${AFMTODIT:-"-s"}

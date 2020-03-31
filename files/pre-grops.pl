@@ -83,27 +83,58 @@ sub parse_option {
   @option;
 }
 
-
 sub prepro {
   my ($self) = @_;
 
-  for (qw/hw zw qw/) {
-    my ($sp, $nbsp) = ("${_}sp", "${_}nbsp");
-    $self->{sp}{$self->{$_} = $self->pua} = $self->rc($_) // ' '  for $sp;
-    $self->{sp}{$self->{$_} = $self->pua} = $self->rc($_) // '\~' for $nbsp;
-    $self->{nbsp}{$self->{$sp}} = $self->{$nbsp};
+  my %sp = (hwsp => ' ', hwnbsp => '\~');
+  my %vsp = ();
+
+  for my $sp (qw/sp nbsp/) {
+    for my $xw (qw/hw zw qw/) {
+      for ($xw.$sp) {
+        $sp{$_} = $self->rc($_);
+        $vsp{$_} = $self->rc("v".$_);
+      }
+    }
   }
+
+  for my $sp (qw/sp nbsp/) {
+    for my $xw (qw/hw zw qw/) {
+      for (grep defined $sp{$_}, $xw.$sp) {
+        $self->{sp}{$self->{$_} = $self->pua} = $sp{$_};
+      }
+    }
+  }
+  for my $xw (qw/hw zw qw/) {
+    $self->{nbsp}{$self->{$xw."sp"}} = $self->{$xw."nbsp"};
+  }
+
+  for my $sp (qw/sp nbsp/) {
+    for my $xw (qw/hw zw qw/) {
+      for (grep defined $vsp{$_}, $xw.$sp) {
+        #$self->{vsp}{$self->{$_}} = $self->{"zwnbsp"}.$vsp{$_}.$self->{"zw$sp"};
+        $self->{vsp}{$self->{$_}} = $self->{$_}.$vsp{$_};
+      }
+    }
+  }
+  #warn Dumper(\%sp);
 
   my $prologue = $self->rc('prologue');
   $self->puts($prologue) if $prologue;
 
   my $mode_request = $self->rc('mode_request');
   my @mode = ($self->rc('mode_default') // 3);
+  if (defined $ENV{PREPRODEBUG}) {
+    $mode[0] = $ENV{PREPRODEBUG} + 0;
+  }
   my $stop_tweaking;
+  my $tag = 0;
 
   while (1) {
-    last unless defined $self->getline();
-    if  (/$mode_request/m) {
+    last unless defined $self->getline($mode[-1]);
+    if ($mode[-1] < 0) {
+      ;
+    } elsif  (/$mode_request/m) {
       if (defined $1) {
         push @mode, $1;
       } elsif (@mode > 1) {
@@ -111,9 +142,20 @@ sub prepro {
       }
     } elsif (/^\.\s*fc(?:\s+(.)(.)?)?$/) {
       $stop_tweaking = grep defined, $1, $2; # between TS and TE
+    } elsif (/^\.\s*TP\b/) {
+      $tag = 1;
     } else {
-      s/^(\.\s*)(na|hy\s+0)$/${1}if n .$2/;
-      $self->tweak($mode[-1] // 0) unless /^[.]/ || $stop_tweaking;
+      #s/^(\.\s*)(na|hy\s+0)$/${1}if n .$2/;
+      #s/^(\.\s*)(na)$/${1}if n .$2/;
+      if (!$stop_tweaking) {
+        if (!/^[.]/) {
+          if ($tag > 0) {
+            $tag--;
+          } else {
+            $self->tweak($mode[-1]);
+          }
+        }
+      }
     }
     $self->puts();
   }
@@ -168,17 +210,26 @@ sub tweak {
   my $ne = $self->rc_regex('chars_not_ending');
 
   my $dnl = $self->rc_regex('dnl');
+  my $vdnl = $self->rc('vdnl');
+  # = "\\m[red]\\[u23CE]\\m[]";
 
   if ($m & 1) {
     # 1. put a half-space or a quarter-space before and after
     # punctuation marks
-    s/($lp)/$self->{hwsp}$1/g;              # before opening_brackets
+    #s/($lp)/$self->{hwsp}$1/g;              # before opening_brackets
     s/($es|$pm|$sb|$rp)/$1$self->{hwsp}/g;  # after closing_brackets, ...
     s/($md)/$self->{qwsp}$1$self->{qwsp}/g; # before and after
 
+    # before opening_brackets
+    s/($ja)($dnl\n)($lp)/$1$self->{hwsp}$2$3/g;
+    $self->{bob} ||= $self->pua;
+    s/($lp)/$self->{bob}$1/g;
+    s/(\\[\*\$a-zA-Z]?)$self->{bob}($lp)/$1$2/g; # groff 2char esc
+    s/$self->{bob}/$self->{hwsp}/g;
+
     # 2. remove spaces between punctuations
-    s/($lp)$self->{hwsp}+/$1/g;             # before opening_brackets
-    s/$self->{hwsp}+($es|$pm|$sb|$rp)/$1/g; # after closing_brackets, ...
+    s/($lp)$self->{hwsp}+/$1/g;             # after opening_brackets
+    s/$self->{hwsp}+($es|$pm|$sb|$rp)/$1/g; # before closing_brackets, ...
   }
 
   if ($m & 2) {
@@ -193,21 +244,28 @@ sub tweak {
   } elsif ($m & 2) {
     # 4b. use ZWSP instead of \: above.
     s/($ja$dnl\n)($ja)/$1$self->{zwsp}$2/g;
+  } else {
+    if ($m & 8) {
+      s/($dnl\n)/$vdnl$1/g;
+    }
   }
 
   # 5. replace breakable space to unbreakable space to restrict
-  # characters placed at the staring and ending a line
-  my $sp = '(?:'.join('|', %{$self->{nbsp}}).')';
-  s/($sp)($ns)/$self->{nbsp}{$1}$2/g;       # not starting a line
-  s/($ne)($sp)/$1$self->{nbsp}{$2}/g;       # not ending a line
+  # characters placed at the staring and ending
+  my $sp = '(?:'.join('|', keys %{$self->{sp}}).')';
+  s/($sp)($ns)/$self->{nbsp}{$1}$2/g;       # not starting line
+  s/($ne)($sp)/$1$self->{nbsp}{$2}/g;       # not ending line
 
-  # 6. remove spaces at starting a line and ending a line
-  s/^$sp+//g;
-  s/$sp+$//g;
+  # 6. remove spaces at starting and ending line XXXXX
+  #s/^$sp+//g;
+  #s/$sp+$//g;
 
   # 7. if multiple spaces are connected, ...
-  s/$self->{hwsp}*($self->{qwsp})+$self->{hwsp}*/$1/g;
-  s/$self->{hwsp}*($self->{zwsp})+$self->{hwsp}*/$1/g;
+  my $hwsp = qr/[$self->{hwsp}$self->{hwnbsp}]/;
+  my $qwsp = qr/[$self->{qwsp}$self->{qwnbsp}]/;
+  my $zwsp = qr/[$self->{zwsp}$self->{zwnbsp}]/;
+  s/$hwsp*($qwsp|$zwsp)+$hwsp*/$1/g;
+  s/($hwsp)+/$1/g;
 
   # 8. if the zero-width space is aligned with the user-entered space, ...
   my $groffspace = qr/\s|\\(?:[\x{20}0|^&)\/,~:]|h(?:'[^']*'|\[[^\]]*\]))/;
@@ -216,15 +274,13 @@ sub tweak {
 
   if ($m & 8) {
     # 9. make spaces visible
-    my $open_box = "\x{2423}";
-    my $sp = '(?:'.join('|', keys %{$self->{sp}}).')';
-    s/($sp+)/$open_box$1/g;
+    my $vsp = '(?:'.join('|', keys %{$self->{vsp}}).')';
+    s/$vsp/$self->{vsp}{$&}/g;   # xxxxx
   }
 }
 
-
 sub getline {
-  my $self = shift;
+  my ($self, $mode) = @_;
   my $ja = $self->rc_regex('chars_japanese');
   my $dnl = $self->rc('dnl');
   my @t;
@@ -234,6 +290,7 @@ sub getline {
       chomp;
       unconv() if $self->{use_conv};
     }
+    return wantarray? ($_, $self->nr) : $_ if $mode < 0;
     if (@t) {
       if ($t[-1] =~ /\\$/) {
         push @t, $_;
@@ -309,7 +366,7 @@ sub unconv {
 
 sub rc_regex {
   my ($self, $keyword) = @_;
-  my @list = map { s/[\`\'\"\*\.\\]/\\$&/g; $_; } $self->rc($keyword);
+  my @list = map { s/[\`\'\"\*\.\\\(\)\{\}]|(?:^[\[\]]$)/\\$&/g; $_; } $self->rc($keyword);
   @list ? "(?:" . join('|', @list) . ")" : undef;
 }
 
@@ -327,13 +384,14 @@ sub rc {
 
 sub flatten {
   my @list;
+  my %seen;
   for (@_) {
     if (ref) {
       die "rc: ?HASH" unless ref eq 'ARRAY';
-      push @list, flatten(@$_);
+      push @list, grep !$seen{$_}++, flatten(@$_);
     } elsif (defined) {
       unconv();
-      push @list, $_;
+      push @list, grep !$seen{$_}++, $_;
     }
   }
   @list;

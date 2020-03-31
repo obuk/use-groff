@@ -1,0 +1,25 @@
+.\" -*- nroff -*-
+.\" (man.local)
+.
+.\" Expand line gap in japanese.
+.if t \{\
+.  if "\*[locale]"japanese" \{\
+.am1 TH
+.  nr VS (\\n[PS] * 180 / 100)
+.  vs \\n[VS]u
+..
+.  \}
+.\}
+.
+.\" Default heading font
+.ds HF HB\"
+.
+.\" Use headings as bookmarks.
+.if t \{\
+.am SH
+.  pdfhref O 1 -- \\$*\"
+..
+.am SS
+.  pdfhref O 2 -- \\$*\"
+..
+.\}

@@ -1,0 +1,189 @@
+# setup ps/pdf devices to use groff in japanese
+
+include use-groff.mk
+
+VPATH=	${UG}/files/${OS} ${UG}/files
+
+FILES=	${TMP}/gropdf ${TMP}/ps.local ${TMP}/pdf.tmac ${TMP}/ja.local	\
+	${TMP}/man.local ${TMP}/mdoc.local ${TMP}/troffrc.local
+
+LOCAL_BIN?=	/usr/local/bin
+
+#PREGROPS?=	${LOCAL_BIN}/grops-pp.pl
+#PREGROPDF?=	${LOCAL_BIN}/grops-pp.pl
+PREGROPS?=	${LOCAL_BIN}/pre-grops.pl
+PREGROPDF?=	${LOCAL_BIN}/pre-gropdf.pl
+PAPERSIZE?=	a4
+
+BUILDFOUNDRIES?=	${GROFF_FONT}/devpdf/util/BuildFoundries
+
+TMP?=	./tmp
+
+ifeq ("$(OS)", "freebsd")
+setup::		ghostscript9-agpl-base.pkg gsfonts.pkg perl5.pkg
+endif
+
+ifeq ("$(OS)", "ubuntu")
+GS_FONTS?=	gsfonts.pkg
+setup::		${GS_FONTS}
+all::		fix-foundry
+fix-foundry:	${GS_FONTS}
+	if [ -x ${GROFF_FONT}/devpdf/util/BuildFoundries ]; then \
+		sudo ${GROFF_FONT}/devpdf/util/BuildFoundries ${GROFF_FONT}/devpdf 2>foundry.err; \
+		if grep -q '^Warning:.* Unable to locate font.*,a010015l.pfb' foundry.err; then \
+			sed '/foundry||(gs)/s||&:/usr/share/fonts/type1/gsfonts|' \
+				${GROFF_FONT}/devpdf/Foundry  >foundry.new; \
+			[ -s foundry.new ]; \
+			sudo install -b -m644 foundry.new ${GROFF_FONT}/devpdf/Foundry; \
+		fi; \
+		sudo ${GROFF_FONT}/devpdf/util/BuildFoundries ${GROFF_FONT}/devpdf 2>foundry.err; \
+		if grep -q ^Warning: foundry.err; then false; fi; \
+	fi
+
+clean::
+	rm -f foundry.new foundry.err
+endif
+
+# copy ${FILES} to ${TMP} directory and apply patches.
+all::	tmpdir $(FILES)
+
+ifeq ("$(OS)", "ubuntu")
+all::	libfile-spec-native-perl.pkg
+endif
+install::	all
+	cd ${TMP}; sudo install -m 644 *.local *.tmac troffrc ${SITE_TMAC}
+	cd ${TMP}; sudo install -m 755 gropdf ${GROPDF}
+
+tmpdir:
+	rm -rf ${TMP}
+	mkdir -p ${TMP}
+
+clean::
+	rm -rf ${TMP}
+
+install::	grops-pp.pl
+	sudo install -m 755 $<  ${LOCAL_BIN}
+
+install::	pre-grops.pl
+	sudo install -m 755 $< ${LOCAL_BIN}
+	sudo ln -sf pre-grops.pl ${LOCAL_BIN}/pre-gropdf.pl
+
+install::	pre-grops.rc
+	sudo install -m 644 $< ${SITE_TMAC}
+	sudo ln -sf pre-grops.rc ${SITE_TMAC}/pre-gropdf.rc
+
+ifeq ("${OS}", "ubuntu")
+install::	libyaml-syck-perl.pkg
+endif
+ifeq ("${OS}", "freebsd")
+install::	p5-YAML-Syck.pkg
+endif
+
+# update dev{ps,pdf}/DESC
+INSTALL_DESC=	\
+	D=${GROFF_FONT}/$$(basename $< | tr . /); \
+	diff -c $$D $< || sudo install -m 644 -b $< $$D
+
+install::	update-DESC-devps update-DESC-devpdf
+
+update-DESC-devps:	${TMP}/devps.DESC
+	$(INSTALL_DESC)
+
+update-DESC-devpdf:	${TMP}/devpdf.DESC
+	$(INSTALL_DESC)
+
+.PHONY:	${TMP}/devps.DESC
+${TMP}/devps.DESC:	${GROFF_FONT}/devps/DESC
+	(sed -e /^papersize/d -e /^prepro/d $<; \
+	 echo papersize ${PAPERSIZE}; \
+	 echo prepro ${PREGROPS}; \
+	) > $@
+
+.PHONY:	${TMP}/devpdf.DESC
+${TMP}/devpdf.DESC:	${GROFF_FONT}/devpdf/DESC
+	(sed -e /^papersize/d -e /^prepro/d -e /^postpro/d $<; \
+	 echo papersize ${PAPERSIZE}; \
+	 echo prepro ${PREGROPDF}; \
+	 echo postpro ${GROPDF}; \
+	) > $@
+
+
+# gropdf
+
+GROPDF_HEAD?=	http://git.savannah.gnu.org/cgit/groff.git/plain/src/devices/gropdf/gropdf.pl
+
+GROPDF_CFG=	\
+	use strict; \
+	my %cfg = (PERL => (scalar <ARGV>) =~ /(\/\S*)/); \
+	/^\$$cfg\{(\w+)\}\s*=/ and eval while <ARGV>; \
+	$$cfg{VERSION} = $$cfg{GROFF_VERSION}; \
+	$$cfg{GROFF_FONT_DIR} = $$cfg{GROFF_FONT_PATH}; \
+	s|[@](\w+)[@]|$$cfg{$$1}//$$&|eg, print while <>;
+
+GROPDF?=	${LOCAL_BIN}/gropdf$(shell cat $(abspath gropdf.suffix))
+
+gropdf.suffix:
+	date +-%m%d >$@
+
+gropdf.dist:	$(MAKEFILE_LIST)
+	curl -Ls ${GROPDF_HEAD} >$@
+
+clean::
+	rm -f gropdf.suffix
+	rm -f gropdf.dist
+
+${TMP}/gropdf:	gropdf.patch gropdf.dist gropdf.suffix
+	cat gropdf.dist | perl -w -e '${GROPDF_CFG}' ${GROFF_BIN}/gropdf >$@
+	patch -d ${TMP} <$<
+
+${TMP}/%:	%.patch
+	cp ${GROFF_TMAC}/`basename $@` $@
+	patch -d ${TMP} <$<
+
+define merge_local
+${TMP}/$(strip $(1)):	$(1)
+	if [ ! -f ${SITE_TMAC}/$(strip $(1)).dist ]; then \
+	  sudo cp -p ${SITE_TMAC}/$(strip $(1)) ${SITE_TMAC}/$(strip $(1)).dist; \
+	fi
+	cat ${SITE_TMAC}/$(strip $(1)).dist $$< >$$@
+endef
+
+$(eval $(call merge_local, man.local))
+$(eval $(call merge_local, mdoc.local))
+
+define add_mso_local
+${TMP}/$(strip $(1)):	$(1)
+	${ADD_MSO_LOCAL} ${GROFF_TMAC}/$(strip $(2)) >${TMP}/$(strip $(2))
+	cp $$< $$@
+endef
+
+$(eval $(call add_mso_local, troffrc.local, troffrc))
+$(eval $(call add_mso_local, %.local, $$*.tmac))
+
+
+# mdoc
+install::	mdoc-ja.UTF-8
+	sudo install -m644 mdoc-ja.UTF-8 ${GROFF_TMAC}/mdoc/ja.UTF-8
+
+OPERATING_SYSTEM?=	$(shell uname -sr | sed -E -e 's/-.*//' -e 's/[[:space:]]/\\\\~/g')
+
+mdoc-ja.UTF-8:	mdoc-ja.eucJP groff.pkg
+	(iconv -f eucJP -t UTF-8 $< | sed '1s/japanese[^;]*/utf-8/' | preconv; \
+	echo .ds default-operating-system ${OPERATING_SYSTEM}; \
+	) > $@.tmp
+	(if grep -q '^[.]ds doc-section-name' ${GROFF_TMAC}/mdoc/doc-common; then \
+	   sed -E '/^([.][[:alpha:]]+) ([[:alpha:]][^[:space:]])/s//\1 doc-\2/' $@.tmp; \
+	 else \
+	   cat $@.tmp; \
+	fi) >$@
+
+mdoc-ja.eucJP:	tmac-20030521_2.tar.gz
+	tar xzOf $< tmac-20030521_2/mdoc/ja.eucJP >$@
+
+tmac-20030521_2.tar.gz:	$(MAKEFILE_LIST)
+	[ -f $@ ] || curl -LOs http://distcache.FreeBSD.org/local-distfiles/hrs/$@
+
+clean::
+	rm -f tmac-20030521_2.tar.gz
+	rm -f mdoc-ja.eucJP
+	rm -f mdoc-ja.UTF-8

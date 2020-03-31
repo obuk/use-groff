@@ -1,0 +1,18 @@
+Vagrant.configure("2") do |config|
+  config.vm.box = "bento/freebsd-12"
+  config.ssh.shell = "sh"
+  config.vm.provider :virtualbox do |vb|
+    #vb.gui = true
+    vb.memory = 2048
+    vb.cpus = 2
+  end
+  # use synced_folder with nfs
+  #config.vm.network "private_network", ip: '172.16.3.35' # if nfs
+  config.vm.network "private_network", ip: 'xx.xx.xx.xx' # if nfs
+  config.vm.synced_folder ".", "/vagrant", type: "nfs"
+  config.vm.provision :shell, inline: <<-SHELL
+  sudo pkg install -y bash gmake
+  sudo chpass -s /usr/local/bin/bash vagrant
+  sudo -u vagrant -i gmake -C /vagrant clean install
+  SHELL
+end
