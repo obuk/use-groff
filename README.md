@@ -4,6 +4,7 @@ groff をインストールした ubuntu box を作ります。
 groff で日本語の ps と pdf を出力できます。
 
 ```
+ln -sf Vagrantfile.ubuntu Vagrantfile
 vagrant up
 vagrant ssh
 cd /vagrant
