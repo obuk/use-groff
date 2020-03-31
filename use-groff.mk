@@ -4,6 +4,7 @@ _use_groff:=	1
 
 # default
 all::
+setup::		groff.pkg git.pkg
 
 UG?=		.
 ADD_MSO_LOCAL?=	${UG}/script/add-mso-local.pl

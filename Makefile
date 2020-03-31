@@ -7,8 +7,6 @@
 
 include use-groff.mk
 
-setup:: git.pkg groff.pkg
-
 all::	setup
 
 install:: all
