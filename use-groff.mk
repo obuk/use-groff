@@ -44,10 +44,12 @@ AFMTODIT?=	perl ${GROFF_BIN}/afmtodit -s
 
 # perl
 
+PERL_VERSION?=	5.30.2
+
 .SUFFIXES:	.stamp
 
 plenv.stamp:
-	bash -l -c '${INSTALL_PLENV}'
+	bash -l -c 'env PERL_VERSION=${PERL_VERSION} ${INSTALL_PLENV}'
 	@touch $@
 
 #	bash -l -c 'type $* >/dev/null 2>&1 || ${INSTALL_PLENV}'

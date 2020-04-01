@@ -17,7 +17,7 @@ if ! xplenv >/dev/null 2>/dev/null; then
     echo 'eval "$(plenv init -)"' >> ~/.profile
 fi
 
-if [ -n "${PERL_VERSION}" ]; then
+if [ -n "${PERL_VERSION:-}" ]; then
     PLENV_GLOBAL="${PLENV_GLOBAL:-yes}"
 elif [ -f .perl-version ]; then
     PERL_VERSION=`cat .perl-version`
