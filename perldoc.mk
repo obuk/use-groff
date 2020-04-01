@@ -18,7 +18,10 @@ pod2manja.tmac:
 clean::
 	rm -f pod2manja.tmac
 
+LOCATE_DB?=	/var/lib/mlocate/mlocate.db
+
 install::	perldoc.sh
+	[ -f $(LOCATE_DB) ] || sudo updatedb
 	sudo install -m755 $< /usr/local/bin
 
 
