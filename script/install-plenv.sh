@@ -17,12 +17,14 @@ if ! xplenv >/dev/null 2>/dev/null; then
     echo 'eval "$(plenv init -)"' >> ~/.profile
 fi
 
-if [ -f .perl-version ]; then
+if [ -n "${PERL_VERSION}" ]; then
+    PLENV_GLOBAL="${PLENV_GLOBAL:-yes}"
+elif [ -f .perl-version ]; then
     PERL_VERSION=`cat .perl-version`
-    PLENV_GLOBAL=""
+    PLENV_GLOBAL="${PLENV_GLOBAL:-no}"
 else
     PERL_VERSION=`perl -e 'print substr($^V, 1), "\n"'`
-    PLENV_GLOBAL=yes
+    PLENV_GLOBAL="${PLENV_GLOBAL:-yes}"
 fi
 if ! xplenv versions |grep "$PERL_VERSION"; then
     xplenv install $PERL_VERSION
