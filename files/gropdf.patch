@@ -1,5 +1,5 @@
-*** gropdf.old	2020-03-19 05:57:53.892125429 +0000
---- gropdf	2020-03-19 05:57:53.896125355 +0000
+*** gropdf.old	2020-04-01 00:38:21.955832032 +0900
+--- gropdf	2020-04-01 00:38:21.963831909 +0900
 ***************
 *** 22,27 ****
 --- 22,35 ----
@@ -132,7 +132,7 @@
 !     if ($fnt->{SUPPL}) {
 !         my $p = GetObj($obj);
 !         $obj = BuildObj($objct + 1, {
-!             %{$p}{qw/Type Subtype BaseFont FontDescriptor/},
+!             (map +($_ => $p->{$_}), qw/Type Subtype BaseFont FontDescriptor/),
 !             Encoding => BuildObj($objct + 2, {
 !                 Type => '/Encoding',
 !             }),
@@ -957,7 +957,7 @@
 ! 	if (!defined $unused) {
 ! 	    if (!$fnt->{NEXT}) {
 ! 		my $fnt2 = {
-! 		    %{$fnt}{qw/NM NO NAM/},
+! 		    (map +($_ => $fnt->{$_}), qw/NM NO NAM/),
 ! 		    SUPPL => $fnt->{SUPPL} + 1,
 ! 		    REMAP => [ 0..31, 33..255 ],
 ! 		};
