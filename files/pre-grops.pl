@@ -112,12 +112,10 @@ sub prepro {
   for my $sp (qw/sp nbsp/) {
     for my $xw (qw/hw zw qw/) {
       for (grep defined $vsp{$_}, $xw.$sp) {
-        #$self->{vsp}{$self->{$_}} = $self->{"zwnbsp"}.$vsp{$_}.$self->{"zw$sp"};
         $self->{vsp}{$self->{$_}} = $self->{$_}.$vsp{$_};
       }
     }
   }
-  #warn Dumper(\%sp);
 
   my $prologue = $self->rc('prologue');
   $self->puts($prologue) if $prologue;
@@ -128,7 +126,7 @@ sub prepro {
     $mode[0] = $ENV{PREPRODEBUG} + 0;
   }
   my $stop_tweaking;
-  my $tag = 0;
+#  my $tag = 0;
 
   while (1) {
     last unless defined $self->getline($mode[-1]);
@@ -142,20 +140,10 @@ sub prepro {
       }
     } elsif (/^\.\s*fc(?:\s+(.)(.)?)?$/) {
       $stop_tweaking = grep defined, $1, $2; # between TS and TE
-    } elsif (/^\.\s*TP\b/) {
-      $tag = 1;
     } else {
       #s/^(\.\s*)(na|hy\s+0)$/${1}if n .$2/;
       #s/^(\.\s*)(na)$/${1}if n .$2/;
-      if (!$stop_tweaking) {
-        if (!/^[.]/) {
-          if ($tag > 0) {
-            $tag--;
-          } else {
-            $self->tweak($mode[-1]);
-          }
-        }
-      }
+      $self->tweak($mode[-1] // 0) unless /^[.]/ || $stop_tweaking;
     }
     $self->puts();
   }

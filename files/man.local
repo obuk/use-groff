@@ -17,9 +17,11 @@
 .\" Use headings as bookmarks.
 .if t \{\
 .am SH
-.  pdfhref O 1 -- \\$*\"
+.  pdfhref O 1 \\$*\"
 ..
 .am SS
-.  pdfhref O 2 -- \\$*\"
+.  pdfhref O 2 \\$*\"
 ..
 .\}
+.
+.\" End

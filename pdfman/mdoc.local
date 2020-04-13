@@ -1,0 +1,78 @@
+.\" -*- nroff -*-
+.\"
+.\" This file is loaded after doc.tmac.
+.\" Put any local modifications to doc.tmac here.
+.
+.if n \{\
+.  \" Debian: Map \(oq to ' rather than ` in nroff mode for devices other
+.  \" than utf8.
+.  if !'\*[.T]'utf8' \
+.    tr \[oq]'
+.
+.  \" Debian: Disable the use of SGR (ANSI colour) escape sequences by
+.  \" grotty.
+.  if '\V[GROFF_SGR]'' \
+.    output x X tty: sgr 0
+.
+.  \" Debian: Strictly, "-" is a hyphen while "\-" is a minus sign, and the
+.  \" former may not always be rendered in the form expected for things like
+.  \" command-line options.  Uncomment this if you want to make sure that
+.  \" manual pages you're writing are clear of this problem.
+.  \" if '\*[.T]'utf8' \
+.  \"   char - \[hy]
+.
+.  \" Debian: "\-" is more commonly used for option dashes than for minus
+.  \" signs in manual pages, so map it to plain "-" for HTML/XHTML output
+.  \" rather than letting it be rendered as "&minus;".
+.  ie '\*[.T]'html' \
+.    char \- \N'45'
+.  el \{\
+.    if '\*[.T]'xhtml' \
+.      char \- \N'45'
+.  \}
+.\}
+.\" -*- nroff -*-
+.\" (mdoc.local)
+.
+.\" Load mdoc/\*[doc-locale]
+.ie "\*[doc-locale]"ja.UTF-8" .mso mdoc/\*[doc-locale]\""
+.el .if d locale \{\
+.  if "\*[locale]"japanese" .mso mdoc/ja.UTF-8\""
+.\}
+.
+.\" Expand line gap in japanese.
+.\" And output headings as bookmarks.
+.if t \{\
+.am Sh
+.  if "\\*[locale]"japanese" \{\
+.    vs (\\n[.s]z * 18 / 10)p
+.  \}
+..
+.am Ss
+.  if "\\*[locale]"japanese" \{\
+.    vs (\\n[.s]z * 18 / 10)p
+.  \}
+..
+.am Pp
+.  if "\\*[locale]"japanese" \{\
+.    vs (\\n[.s]z * 18 / 10)p
+.  \}
+..
+.am Bd
+.  if "\\*[locale]"japanese" \{\
+.    vs (\\n[.s]z * 15 / 10)p
+.  \}
+..
+.am Bl
+.  if "\\*[locale]"japanese" \{\
+.    vs (\\n[.s]z * 15 / 10)p
+.  \}
+..
+.\}
+.
+.\" Specify fonts for various headings.
+.ds Sh-font \f[HB]\s[\n[.ps]u]
+.ds Sy-font \f[HB]\s[\n[.ps]u]
+.ds Sx-font \f[HB]\s[\n[.ps]u]
+.ds Tn-font-shape \f[HR]
+.

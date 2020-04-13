@@ -4,8 +4,8 @@ include use-groff.mk
 
 VPATH=	${UG}/files/${OS} ${UG}/files
 
-FILES=	${TMP}/gropdf ${TMP}/ps.local ${TMP}/pdf.tmac ${TMP}/ja.local	\
-	${TMP}/man.local ${TMP}/mdoc.local ${TMP}/troffrc.local
+FILES=	${TMP}/gropdf ${TMP}/ps.local ${TMP}/ja.local	\
+	${TMP}/man.local ${TMP}/mdoc.local ${TMP}/pdf.local ${TMP}/troffrc.local
 
 LOCAL_BIN?=	/usr/local/bin
 
@@ -136,9 +136,10 @@ ${TMP}/gropdf:	gropdf.patch gropdf.dist gropdf.suffix
 	cat gropdf.dist | perl -w -e '${GROPDF_CFG}' ${GROFF_BIN}/gropdf >$@
 	patch -d ${TMP} <$<
 
-${TMP}/%:	%.patch
-	cp ${GROFF_TMAC}/`basename $@` $@
+${TMP}/%.patched:	%.patch
+	cp ${GROFF_TMAC}/`basename $*` ${TMP}/$*
 	patch -d ${TMP} <$<
+	cp ${TMP}/$* $@
 
 define merge_local
 ${TMP}/$(strip $(1)):	$(1)
@@ -152,11 +153,18 @@ $(eval $(call merge_local, man.local))
 $(eval $(call merge_local, mdoc.local))
 
 define add_mso_local
-${TMP}/$(strip $(1)):	$(1)
-	${ADD_MSO_LOCAL} ${GROFF_TMAC}/$(strip $(2)) >${TMP}/$(strip $(2))
+${TMP}/$(strip $(1)):	$(1) $(3)
+	if [ -n "$(3)" ]; then \
+	  cp $(3) ${TMP}/$(strip $(2)); \
+	  ${ADD_MSO_LOCAL} ${TMP}/$(strip $(2)) >${TMP}/$(strip $(2)).tmp; \
+	  mv -f ${TMP}/$(strip $(2)).tmp ${TMP}/$(strip $(2)); \
+	else \
+	  ${ADD_MSO_LOCAL} ${GROFF_TMAC}/$(strip $(2)) >${TMP}/$(strip $(2)); \
+	fi
 	cp $$< $$@
 endef
 
+$(eval $(call add_mso_local, pdf.local, pdf.tmac, ${TMP}/pdf.tmac.patched))
 $(eval $(call add_mso_local, troffrc.local, troffrc))
 $(eval $(call add_mso_local, %.local, $$*.tmac))
 

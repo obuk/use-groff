@@ -11,13 +11,13 @@
 .\" And output headings as bookmarks.
 .if t \{\
 .am Sh
-.  pdfhref O 1 -- \\$*\"
+.  pdfhref O 1 \\$*\"
 .  if "\\*[locale]"japanese" \{\
 .    vs (\\n[.s]z * 18 / 10)p
 .  \}
 ..
 .am Ss
-.  pdfhref O 2 -- \\$*\"
+.  pdfhref O 2 \\$*\"
 .  if "\\*[locale]"japanese" \{\
 .    vs (\\n[.s]z * 18 / 10)p
 .  \}

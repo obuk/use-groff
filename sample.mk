@@ -18,26 +18,21 @@ GROFF_PATH?=	/usr/bin/groff
 GROFF?=		env GROFF_TMAC_PATH=/vagrant/files:/etc/groff \
 			GROFF_FONT_PATH=/usr/share/groff/site-font \
 			GROFF_BIN_PATH=$(dirname ${GROFF_PATH}) ${GROFF_PATH} \
-		-VV -man -mja -Tpdf -P-pa4 -dpaper=a4 -Kutf8
-
-UMAN_PL?=	for (@ARGV) { \
-			s/(.*?)(_([0-9]))?$$/"cat ".`man -w -L${lang} $$3 $$1`/e; \
-			s/^/z/ if /[.]g?z$$/; \
-			system $$_; \
-		}
+		-VV -mja -P-pa4 -dpaper=a4 -Kutf8
 
 .SUFFIXES: .pdf
 all::	gropdf_1.pdf groff_char_7.pdf groff_mdoc_7.pdf patch_1.pdf
 
 %_1.pdf:	setup
-	@#perl -e '$(UMAN_PL)' $(basename $@) | nkf -w | ${GROFF} | ${GS_PDFWRITE} > $@
-	man -Tpdf -L${lang} `echo $* |sed 's/\(.*\)_\([0-9]\)/\2 \1/'` | ${GS_PDFWRITE} > $@
+	zcat $$(man -w -L${lang} $$(echo $* |sed 's/\(.*\)_\([0-9]\)/\2 \1/')) | \
+	nkf -w | ${GROFF} -Tpdf -mandoc | ${GS_PDFWRITE} > $@
 %_7.pdf:	setup
-	@#perl -e '$(UMAN_PL)' $(basename $@) | nkf -w | ${GROFF} | ${GS_PDFWRITE} > $@
-	man -Tpdf -L${lang} `echo $* |sed 's/\(.*\)_\([0-9]\)/\2 \1/'` | ${GS_PDFWRITE} > $@
+	zcat $$(man -w -L${lang} $$(echo $* |sed 's/\(.*\)_\([0-9]\)/\2 \1/')) | \
+	nkf -w | ${GROFF} -Tpdf -mandoc | ${GS_PDFWRITE} > $@
 
 gropdf_1.pdf:	$(MAKEFILE_LIST)
-	man -Tpdf `echo $* |sed 's/\(.*\)_\([0-9]\)/\2 \1/'` | ${GS_PDFWRITE} > $@
+	zcat $$(man -w -L${lang} $$(echo $* |sed 's/\(.*\)_\([0-9]\)/\2 \1/')) | \
+	nkf -w | ${GROFF} -Tpdf -mandoc | ${GS_PDFWRITE} > $@
 
 clean::
 	rm -f gropdf_1.pdf
@@ -49,17 +44,11 @@ clean::
 all::	sample.pdf
 
 .PHONY:	sample.pdf
-sample.pdf:	sample.7 $(MAKEFILE_LIST)
-	${GROFF} $< | ${GS_PDFWRITE} > $@
+sample.pdf:	sample.7
+	${GROFF} -Tpdf -mandoc $< | ${GS_PDFWRITE} > $@
 
 clean::
 	rm -f sample.pdf
-
-all::	sample.pdf
-
-.PHONY:	pre-grops.pdf
-pre-grops.pdf:	pre-grops.1 $(MAKEFILE_LIST)
-	${GROFF} $< | ${GS_PDFWRITE} > $@
 
 clean::
 	rm -f pre-grops.pdf
