@@ -1838,22 +1838,35 @@ vdnl: "\\m[blue]\\s-2\\[u23CE]\\s+2\\m[]"
 
 # prologue: defines macros for making stretchable spaces.
 prologue: &prologue-1 |
-  .if !d zwsp \{\
-  .de zwsp
-  .  nr zwsp.bak \\n[.ss]
+  .if !d prepro-zwsp \{\
+  .de prepro-zwsp
+  .  nr prepro-zwsp.bak \\n[.ss]
   .  ie \\n[.$] .ss (\\n[.ss] * \\$1 / 12)
   .  el .ss 0
   .  nop \\& \\c
-  .  ss \\n[zwsp.bak]
+  .  ss \\n[prepro-zwsp.bak]
   ..
   .\}
-  .if !d zwnbsp \{\
-  .de zwnbsp
-  .  nr zwnbsp.bak \\n[.ss]
+  .if !d prepro-zwnbsp \{\
+  .de prepro-zwnbsp
+  .  nr prepro-zwnbsp.bak \\n[.ss]
   .  ie \\n[.$] .ss (\\n[.ss] * \\$1 / 12)
   .  el .ss 0
   .  nop \\&\\~\\c
-  .  ss \\n[zwnbsp.bak]
+  .  ss \\n[prepro-zwnbsp.bak]
+  ..
+  .\}
+  .if !d prepro-tp-more \{\
+  .de prepro-tp-more
+  .  di
+  .  it 999 an-trap
+  .  da an-div
+  .  nr an-div? 1
+  ..
+  .\}
+  .if !d prepro-tp-end \{\
+  .de prepro-tp-end
+  .  an-trap
   ..
   .\}
 
@@ -1862,10 +1875,10 @@ prologue: &prologue-1 |
 # em width, half em width).  The following nb (no-break) means
 # non-breaking space.
 
-zwsp: "\\c\n.zwsp\n"
-zwnbsp: "\\c\n.zwnbsp\n"
-qwsp: "\\c\n.zwsp 6\n"
-qwnbsp: "\\c\n.zwnbsp 6\n"
+zwsp: "\\c\n.prepro-zwsp\n"
+zwnbsp: "\\c\n.prepro-zwnbsp\n"
+qwsp: "\\c\n.prepro-zwsp 6\n"
+qwnbsp: "\\c\n.prepro-zwnbsp 6\n"
 hwsp: ' '
 hwnbsp: \~
 
@@ -1877,6 +1890,10 @@ vhwnbsp: "\\m[red]\\Z'\\h[0.1m]\\[u00BD]'\\[u2423]\\m[]"
 vqwnbsp: "\\m[red]\\Z'\\h[0.1m]\\[u00BC]'\\[u2423]\\m[]"
 vzwsp: "\\m[blue]\\[bv]\\h[-0.2m]\\[bv]\\m[]"
 vzwnbsp: "\\m[red]\\[bv]\\h[-0.2m]\\[bv]\\m[]"
+
+# XXXXX - stop 75950b6
+#tp_more: prepro-tp-more
+#tp_end:  prepro-tp-end
 
 # see grops(1), troff(1) to parse options
 troff:

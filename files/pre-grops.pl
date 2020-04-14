@@ -120,17 +120,23 @@ sub prepro {
   my $prologue = $self->rc('prologue');
   $self->puts($prologue) if $prologue;
 
+  my $tp_more = $self->rc('tp_more');
+  my $tp_end = $self->rc('tp_end');
+  my $tp = 0;
+
   my $mode_request = $self->rc('mode_request');
   my @mode = ($self->rc('mode_default') // 3);
   if (defined $ENV{PREPRODEBUG}) {
     $mode[0] = $ENV{PREPRODEBUG} + 0;
   }
   my $stop_tweaking;
-#  my $tag = 0;
-
   while (1) {
     last unless defined $self->getline($mode[-1]);
     if ($mode[-1] < 0) {
+      ;
+    } elsif (/^\.\s*(de|am|ig)/ .. /^\.\./) {
+      ;
+    } elsif (/^\.\\\"/) {
       ;
     } elsif  (/$mode_request/m) {
       if (defined $1) {
@@ -140,10 +146,17 @@ sub prepro {
       }
     } elsif (/^\.\s*fc(?:\s+(.)(.)?)?$/) {
       $stop_tweaking = grep defined, $1, $2; # between TS and TE
+    } elsif ($tp_more && $tp_end && /^\.\s*(TP|$tp_more|$tp_end)\b/) {
+      $tp = $1 eq 'TP';
     } else {
       #s/^(\.\s*)(na|hy\s+0)$/${1}if n .$2/;
       #s/^(\.\s*)(na)$/${1}if n .$2/;
       $self->tweak($mode[-1] // 0) unless /^[.]/ || $stop_tweaking;
+      if (!/^\./ || /^\./ && /\.\s*(SH|SS|SM|SB|BI|IB|RI|IR|BR|RB|R|B|I|pdf|EnvVar)\b/) {
+        if ($tp > 0 && --$tp == 0) {
+          $_ = join "\n", ".$tp_more", $_, ".$tp_end";
+        }
+      }
     }
     $self->puts();
   }
@@ -164,7 +177,9 @@ sub puts {
   } else {
     my $NR = $self->nr;
     my $sp = '(?:'.join('|', keys %{$self->{sp}}).')';
-    for (split /\n/) {
+    my @lines = split /\n/;
+    @lines = "" unless @lines;
+    for (@lines) {
       if (s/$sp/$self->{sp}{$&}/g) {
         my @line = split /\n/;
         if (@line > 1) {

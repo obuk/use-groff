@@ -148,6 +148,10 @@ sub add_links {
   my $me = $c->url_for(shift)->to_abs;
   my $lines = shift;
 
+  my $tp_more = $c->app->config('tp_more');
+  my $tp_end  = $c->app->config('tp_end');
+  my $tp = 0;
+
   my %tag;
   for (@$lines) {
     if (/^[.]\s*(SH|SS|Sh|Ss)\s+(.*?)\s*$/) {
@@ -163,26 +167,29 @@ sub add_links {
   my $re_aff = qr/(?:[>]|\\[fm](?:[^\(\[]|[(]..|\[[^\]]*\]))+/;
 
   my @ur;
-  my $tp = 0;
   for (@$lines) {
-    if (/^[.]\s*UR/ ... /^[.]\s*UE/) {
-      if (/^[.]\s*UR\s+(.*?)\s*$/) {
+    if (/^\.(de|am|ig)/ .. /^\.\./) {
+      next;
+    }
+
+    if (/^\.\s*UR/ ... /^\.\s*UE/) {
+      if (/^\.\s*UR\s+(.*?)\s*$/) {
         @ur = ($1);
         chomp($ur[-1]);
         s/^/.\\" /;
-      } elsif (/^[.]\s*UE\s+(.*?)\s*$/) {
+      } elsif (/^\.\s*UE\s+(.*?)\s*$/) {
 	my ($dest, $aff) = (shift(@ur), $1);
         s/^/.\\" /;
 	$_ .= pdfhref 'W', -D => $dest, -A => $aff, '--',
 	  "@ur\n";
       } else {
-	if (/^[.]\s*(B|I)\s+(.*?)\s*$/) {
+	if (/^\.\s*(B|I)\s+(.*?)\s*$/) {
 	  push @ur, "\\f$1$2\\fP";
-	} elsif (/^[.]\s*(SB)\s+(.*?)\s*$/) {
+	} elsif (/^\.\s*(SB)\s+(.*?)\s*$/) {
 	  push @ur, "\\'s-1'\\fB$2\\fP\\'s+1'";
-	} elsif (/^[.]\s*(SM)\s+(.*?)\s*$/) {
+	} elsif (/^\.\s*(SM)\s+(.*?)\s*$/) {
 	  push @ur, "\\s'-1'$2\\s'+1'";
-	} elsif (/^[.]\s*(BI|BR|IB|IR|RB|RI)\s+(.*?)\s*$/) {
+	} elsif (/^\.\s*(BI|BR|IB|IR|RB|RI)\s+(.*?)\s*$/) {
 	  my ($req, @args) = ($1, parse_args($2));
 	  while (@args) {
 	    my ($text, $aff) = splice @args, 0, 2;
@@ -196,7 +203,7 @@ sub add_links {
 	}
         s/^/.\\" /;
       }
-    } elsif (/^[.]\s*(Xr)\s+(.*?)\s*$/) {
+    } elsif (/^\.\s*(Xr)\s+(.*?)\s*$/) {
       my ($req, $text, $aff, $pre) = ($1, $2);
       my @args = parse_args($text);
       my @punct;
@@ -210,7 +217,7 @@ sub add_links {
 	$_ .= pdfhref 'W', -D => $dest, -P => $pre, -A => $aff, '--',
 	  "\\fB$name\\fR($sect)\n";
       }
-    } elsif (/^[.]\s*(Sh|Ss|SH|SS)\s+(.*?)\s*$/) {
+    } elsif (/^\.\s*(Sh|Ss|SH|SS)\s+(.*?)\s*$/) {
       my ($req, $text, $aff, $pre) = ($1, $2);
       my @args = parse_args($text);
       my @punct;
@@ -223,7 +230,7 @@ sub add_links {
 	$_ .= pdfhref 'M', -N => $tag, -P => $pre, -A => $aff,
 	  "$text\n";
       }
-    } elsif (/^[.]\s*(S[xy]|Tn)\s+(.*?)\s*$/) {
+    } elsif (/^\.\s*(S[xy]|Tn)\s+(.*?)\s*$/) {
       my ($req, $text, $aff, $pre) = ($1, $2);
       my @args = parse_args($text);
       my @punct;
@@ -246,7 +253,7 @@ sub add_links {
 	$_ .= $text . "\n" if $text;
       }
 
-    } elsif (/^[.]\s*(B|I)\s+(.*?)\s*$/) { # and SM, SB
+    } elsif (/^\.\s*(B|I)\s+(.*?)\s*$/) { # and SM, SB
       my ($req, @args) = ($1, parse_args($2));
       my $text = "@args";
       if (my $tag = $tag{$text}) {
@@ -255,7 +262,7 @@ sub add_links {
 	  "\\f$req$text\\fP\n";
       }
 
-    } elsif (/^[.]\s*(BI|BR|IB|IR|RB|RI)\s+(.*?)\s*$/) {
+    } elsif (/^\.\s*(BI|BR|IB|IR|RB|RI)\s+(.*?)\s*$/) {
       my ($req, @args) = ($1, parse_args($2));
       my @fnts = map substr($req, $_ % 2, 1), 0 .. $#args;
       my $save = $_;
@@ -289,12 +296,11 @@ sub add_links {
 	$_ = $save;
       }
 
-    } elsif (/^[.]\s*TS/ ... /^[.]\s*TE/) {
+    } elsif (/^\.\s*TS/ ... /^\.\s*TE/) {
 	;
-    } elsif (/^[.]\s*TP(?:\s.*)?$/) {
-      $_ .= ".TP*MORE\n";
+    } elsif (/^\.\s*TP(?:\s.*)?$/ && $tp_more && $tp_end) {
       $tp = 1;
-    } elsif (/^[.]/) {
+    } elsif (/^\./) {
       ;
     } else {
       if (s{(.*?)($re_pre)((?:\\%)?\w+[-\w]*)($re_aff)[(](\d\w*)[)](\S*)\s*}{
@@ -321,7 +327,7 @@ sub add_links {
 	;
       } elsif (s{(.*?)($re_pre)((?:https?|ftp)://\S*)\s*}{
 	my ($left, $pre, $dest) = ($1, $2, $3); $dest =~ s/\\[:&%]//g;
-	my $aff = do { $dest =~ s/(?:$re_aff|[.])+$//g ? $& : '' };
+	my $aff = do { $dest =~ s/(?:$re_aff|\.)+$//g ? $& : '' };
 	($left ? "$left\\c\n" : "").
 	  pdfhref 'W', -D => $dest, -P => $pre, -A => $aff, '--',
 	  "\\fB$dest\\fR\n";
@@ -330,9 +336,10 @@ sub add_links {
       }
     }
 
-    if (!/^[.]/ || /^[.]\s*(SH|SS|SM|SB|BI|IB|RI|IR|BR|RB|R|B|I|pdfhref)\b/m) {
-      if ($tp > 0 && --$tp == 0) {
-	$_ .= ".TP*END\n";
+    # XXXXX
+    if (!/^\./ || /^\./ && /\.(SH|SS|SM|SB|BI|IB|RI|IR|BR|RB|R|B|I|pdf|EnvVar)\b/m) {
+      if ($tp > 0 && --$tp == 0 && $tp_more && $tp_end) {
+        $_ = ".$tp_more\n" . $_ . ".$tp_end\n";
       }
     }
 

@@ -132,7 +132,7 @@ env PREPRODEBUG=8 groff -Tpdf -man -mja -Kutf8 sample.7 > sample.pdf
 .\"| gs -sDEVICE=pdfwrite -dPrinted=false -dNOPAUSE -dQUIET -dBATCH -sOutputFile=- -
 .
 .\" ------------------------------------------------------------------
-.SS 約物のスペースを groff の伸縮可能なスペースと組合せる
+.SS 約物のスペースを groff の伸縮可能なスペースと組合せる (PREPRODEBUG=9)
 .\" ------------------------------------------------------------------
 .
 約物に含まれるスペースが調整に使えるように groff のスペース（伸縮可能）
@@ -149,6 +149,8 @@ env PREPRODEBUG=8 groff -Tpdf -man -mja -Kutf8 sample.7 > sample.pdf
 .IP \(bu 4
 \[bv]\z）\h'1m'\[bv] \(-> \[bv]\z）\h'0.5m'\[bv] + \h'0.25m'\[u2423]
 .
+.PP
+結果は環境変数 \*(C`PREPRODEBUG=9\*(C' で確かめます。
 .
 .\" ------------------------------------------------------------------
 .SS 約物のスペースを確かめる
@@ -189,7 +191,7 @@ env PREPRODEBUG=8 groff -Tpdf -man -mja -Kutf8 sample.7 > sample.pdf
 るときは欧文の語間に注意してください。
 .
 .\" ------------------------------------------------------------------
-.SS 連続する約物を補正する (PREPRODEBUG=9)
+.SS 連続する約物を補正する
 .\" ------------------------------------------------------------------
 .
 .pdfhref W -D https://www.w3.org/TR/jlreq/ja/ -- \
@@ -238,6 +240,14 @@ env PREPRODEBUG=8 groff -Tpdf -man -mja -Kutf8 sample.7 > sample.pdf
 .PP
 役物のスペースの配置は、環境変数 \*(C`PREPRODEBUG=9\*(C' で確かめます。
 .
+.ig
+.PP
+.UR https://\:www.gnu.org/\:software/\:groff/\:manual/\:html_node/\:Ligatures-and-Kerning.html
+Ligatures and Kerning
+.UE
+も試しましたが、日本語の約物には使えませんでした。
+確か unicode の文字には使えない、といった類のエラーが出力されました。
+..
 .
 .\" ------------------------------------------------------------------
 .SS 文字間に伸縮可能なスペースを挟む (PREPRODEBUG=11)

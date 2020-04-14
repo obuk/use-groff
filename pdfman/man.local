@@ -47,12 +47,4 @@
 .\" Default heading font
 .ds HF HB\"
 .
-.de TP*MORE
-.  di
-.  it 999 an-trap
-.  da an-div
-.  nr an-div? 1
-..
-.de TP*END
-.  an-trap
 ..
