@@ -40,6 +40,7 @@ define install_font
 install::	$(1)
 $(1):	$(2).TTF $(2).textmap fontforge.pkg
 	sudo env TEXTMAP=$(strip $(2)).textmap AFMTODIT="${AFMTODIT}" \
+		GROFF_PREFIX="${GROFF_PREFIX}" \
 		${INSTALL_FONT} $(1) $(2).TTF
 endef
 

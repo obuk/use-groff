@@ -27,7 +27,8 @@ ifeq ("$(OS)", "freebsd")
 GROFF_PREFIX?=	/usr/local
 endif
 ifeq ("$(OS)", "ubuntu")
-GROFF_PREFIX?=	/usr
+#GROFF_PREFIX?=	/usr
+GROFF_PREFIX?=	$(shell which groff |sed 's/\/bin\/groff//')
 endif
 
 # groff

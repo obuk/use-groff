@@ -6,18 +6,18 @@ GROFF_VERSION=$(groff -v |sed -n '/.*version */{s///p;q;}')
 
 case `uname` in
     Linux)
-	PREFIX=/usr
-        GROFF_TMAC="${GROFF_TMAC:-$PREFIX/share/groff/$GROFF_VERSION/tmac}"
-        SITE_TMAC="${SITE_TMAC:-$PREFIX/share/groff/site-tmac}"
-        GROFF_FONT="${GROFF_FONT:-$PREFIX/share/groff/$GROFF_VERSION/font}"
-        SITE_FONT="${SITE_FONT:-$PREFIX/share/groff/site-font}"
+	GROFF_PREFIX=${GROFF_PREFIX:-/usr}
+        GROFF_TMAC="${GROFF_TMAC:-$GROFF_PREFIX/share/groff/$GROFF_VERSION/tmac}"
+        SITE_TMAC="${SITE_TMAC:-$GROFF_PREFIX/share/groff/site-tmac}"
+        GROFF_FONT="${GROFF_FONT:-$GROFF_PREFIX/share/groff/$GROFF_VERSION/font}"
+        SITE_FONT="${SITE_FONT:-$GROFF_PREFIX/share/groff/site-font}"
         ;;
     *)
-	PREFIX=/usr/local
-        GROFF_TMAC="${GROFF_TMAC:-$PREFIX/share/groff/$GROFF_VERSION/tmac}"
-        SITE_TMAC="${SITE_TMAC:-$PREFIX/share/groff/site-tmac}"
-        GROFF_FONT="${GROFF_FONT:-$PREFIX/share/groff/$GROFF_VERSION/font}"
-        SITE_FONT="${SITE_FONT:-$PREFIX/share/groff/site-font}"
+	GROFF_PREFIX=${GROFF_PREFIX:-/usr/local}
+        GROFF_TMAC="${GROFF_TMAC:-$GROFF_PREFIX/share/groff/$GROFF_VERSION/tmac}"
+        SITE_TMAC="${SITE_TMAC:-$GROFF_PREFIX/share/groff/site-tmac}"
+        GROFF_FONT="${GROFF_FONT:-$GROFF_PREFIX/share/groff/$GROFF_VERSION/font}"
+        SITE_FONT="${SITE_FONT:-$GROFF_PREFIX/share/groff/site-font}"
         ;;
 esac
 

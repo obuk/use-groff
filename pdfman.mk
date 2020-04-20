@@ -6,7 +6,7 @@ endif
 ifeq ("$(OS)", "freebsd")
 setup::	ja-nkf.pkg
 endif
-all::	setup
+all::	setup YAML-Syck.cpanm
 	cd pdfman; cpanm --installdeps .
 
 install::

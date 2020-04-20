@@ -1836,37 +1836,34 @@ vdnl: "\\m[blue]\\s-2\\[u23CE]\\s+2\\m[]"
 # tee: filename to output via tee to capture troff input. (debug)
 #tee: /tmp/a.grops
 
+# see grops(1), troff(1) to parse options
+troff:
+  parse_option: [ '^-([dfFImMnorTwW])(.*)', '^-([abcivzCERU]+)$' ]
+
+pre-grops:
+  parse_option: [ '^-([bcFIpPw])(.*)', '^-([glmv]+)$' ]
+
+pre-gropdf:
+  parse_option: [ '^-([FIpuy])(.*)', '^-([delsv]+)$' ]
+
 # prologue: defines macros for making stretchable spaces.
 prologue: &prologue-1 |
-  .if !d prepro-zwsp \{\
-  .de prepro-zwsp
-  .  nr prepro-zwsp.bak \\n[.ss]
+  .if !d zwsp \{\
+  .de zwsp
+  .  nr zwsp.bak \\n[.ss]
   .  ie \\n[.$] .ss (\\n[.ss] * \\$1 / 12)
   .  el .ss 0
   .  nop \\& \\c
-  .  ss \\n[prepro-zwsp.bak]
+  .  ss \\n[zwsp.bak]
   ..
   .\}
-  .if !d prepro-zwnbsp \{\
-  .de prepro-zwnbsp
-  .  nr prepro-zwnbsp.bak \\n[.ss]
+  .if !d zwnbsp \{\
+  .de zwnbsp
+  .  nr zwnbsp.bak \\n[.ss]
   .  ie \\n[.$] .ss (\\n[.ss] * \\$1 / 12)
   .  el .ss 0
   .  nop \\&\\~\\c
-  .  ss \\n[prepro-zwnbsp.bak]
-  ..
-  .\}
-  .if !d prepro-tp-more \{\
-  .de prepro-tp-more
-  .  di
-  .  it 999 an-trap
-  .  da an-div
-  .  nr an-div? 1
-  ..
-  .\}
-  .if !d prepro-tp-end \{\
-  .de prepro-tp-end
-  .  an-trap
+  .  ss \\n[zwnbsp.bak]
   ..
   .\}
 
@@ -1875,12 +1872,22 @@ prologue: &prologue-1 |
 # em width, half em width).  The following nb (no-break) means
 # non-breaking space.
 
-zwsp: "\\c\n.prepro-zwsp\n"
-zwnbsp: "\\c\n.prepro-zwnbsp\n"
-qwsp: "\\c\n.prepro-zwsp 6\n"
-qwnbsp: "\\c\n.prepro-zwnbsp 6\n"
 hwsp: ' '
 hwnbsp: \~
+
+## spaces-without-j: begin
+#zwsp: "\\c\n.zwsp\n"
+#zwnbsp: "\\c\n.zwnbsp\n"
+#qwsp: "\\c\n.zwsp 6\n"
+#qwnbsp: "\\c\n.zwnbsp 6\n"
+## spaces-without-j: end
+
+## spaces-with-j: begin
+#zwsp: "\\j[0] \\j[]"
+#zwnbsp: "\\j[0]\~\\j[]"
+#qwsp: "\\j[6] \\j[]"
+#qwnbsp: "\\j[6]\~\\j[]"
+## spaces-with-j: end
 
 # The following six definitions make the six spaces above visible.
 
@@ -1890,20 +1897,3 @@ vhwnbsp: "\\m[red]\\Z'\\h[0.1m]\\[u00BD]'\\[u2423]\\m[]"
 vqwnbsp: "\\m[red]\\Z'\\h[0.1m]\\[u00BC]'\\[u2423]\\m[]"
 vzwsp: "\\m[blue]\\[bv]\\h[-0.2m]\\[bv]\\m[]"
 vzwnbsp: "\\m[red]\\[bv]\\h[-0.2m]\\[bv]\\m[]"
-
-# XXXXX - stop 75950b6
-#tp_more: prepro-tp-more
-#tp_end:  prepro-tp-end
-
-# see grops(1), troff(1) to parse options
-troff:
-  parse_option: [ '^-([dfFImMnorTwW])(.*)', '^-([abcivzCERU]+)$' ]
-
-pre-grops:
-  parse_option: [ '^-([bcFIpPw])(.*)', '^-([glmv]+)$' ]
-
-pre-grotty:
-  parse_option: [ '^-([F])(.*)', '^-([bBcdfhioruUv]+)$' ]
-
-pre-gropdf:
-  parse_option: [ '^-([FIpuy])(.*)', '^-([delsv]+)$' ]

@@ -68,9 +68,20 @@ install::	pre-grops.pl
 	sudo install -m 755 $< ${LOCAL_BIN}
 	sudo ln -sf pre-grops.pl ${LOCAL_BIN}/pre-gropdf.pl
 
-install::	pre-grops.rc
+install::	${TMP}/pre-grops.rc
 	sudo install -m 644 $< ${SITE_TMAC}
 	sudo ln -sf pre-grops.rc ${SITE_TMAC}/pre-gropdf.rc
+
+${TMP}/pre-grops.rc:	pre-grops.rc
+	if [ "$$(echo '\j[0]\j[]' | ${GROFF_PREFIX}/bin/groff -Tutf8 | grep .)" = "" ]; then \
+		sed '/spaces-with-j: begin/,/spaces-with-j: end/s/^#//' $< >a.rc; \
+	else \
+		sed '/spaces-without-j: begin/,/spaces-without-j: end/s/^#//' $< >a.rc; \
+	fi
+	mv a.rc $@
+
+clean::
+	rm -f a.rc
 
 ifeq ("${OS}", "ubuntu")
 install::	libyaml-syck-perl.pkg
