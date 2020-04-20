@@ -12,27 +12,17 @@ lang?=		ja
 GS_PDFWRITE?=	gs -sDEVICE=pdfwrite -dPrinted=false -dNOPAUSE -dQUIET -dBATCH \
 		-sFONTPATH=${SITE_FONT}/devps:${GROFF_FONT}/devps -sOutputFile=- -
 
-#GROFF_PATH?=	/usr/local/bin/groff
-GROFF_PATH?=	/usr/bin/groff
+GROFF_ENV?=	GROFF_TMAC_PATH=/vagrant/files
+GROFF_PATH=	${GROFF_BIN}/groff
+GROFF?=		env ${GROFF_ENV} ${GROFF_PATH} -VV -P-pa4 -dpaper=a4 -Kutf8
 
-GROFF?=		env GROFF_TMAC_PATH=/vagrant/files:/etc/groff \
-			GROFF_FONT_PATH=/usr/share/groff/site-font \
-			GROFF_BIN_PATH=$(dirname ${GROFF_PATH}) ${GROFF_PATH} \
-		-VV -mja -P-pa4 -dpaper=a4 -Kutf8
+PDFMAN=		(path=$$(man -w -L${lang} $$(sed -e 's/\(.*\)_\([0-9]\)/\2 \1/')); \
+		mlang=$$(echo $$path | tr / '\n' | sed -n '/^${lang}$$/s//-m&/p'); \
+		(zcat $$path 2>/dev/null || cat $$path) | nkf -w | \
+		${GROFF} -Tpdf -P-d -mandoc -k $$mlang)
 
 .SUFFIXES: .pdf
 all::	gropdf_1.pdf groff_char_7.pdf groff_mdoc_7.pdf patch_1.pdf
-
-%_1.pdf:	setup
-	zcat $$(man -w -L${lang} $$(echo $* |sed 's/\(.*\)_\([0-9]\)/\2 \1/')) | \
-	nkf -w | ${GROFF} -Tpdf -mandoc | ${GS_PDFWRITE} > $@
-%_7.pdf:	setup
-	zcat $$(man -w -L${lang} $$(echo $* |sed 's/\(.*\)_\([0-9]\)/\2 \1/')) | \
-	nkf -w | ${GROFF} -Tpdf -mandoc | ${GS_PDFWRITE} > $@
-
-gropdf_1.pdf:	$(MAKEFILE_LIST)
-	zcat $$(man -w -L${lang} $$(echo $* |sed 's/\(.*\)_\([0-9]\)/\2 \1/')) | \
-	nkf -w | ${GROFF} -Tpdf -mandoc | ${GS_PDFWRITE} > $@
 
 clean::
 	rm -f gropdf_1.pdf
@@ -45,13 +35,10 @@ all::	sample.pdf
 
 .PHONY:	sample.pdf
 sample.pdf:	sample.7
-	${GROFF} -Tpdf -mandoc $< | ${GS_PDFWRITE} > $@
+	${GROFF} -Tpdf -mandoc -mja $< | ${GS_PDFWRITE} > $@
 
 clean::
 	rm -f sample.pdf
-
-clean::
-	rm -f pre-grops.pdf
 
 all::	perl.pdf
 
@@ -78,6 +65,9 @@ letter.mom:
 
 %.pdf:	%.mom
 	pdfmom $< >$@
+
+%.pdf:	setup
+	echo $* | ${PDFMAN} > $@
 
 clean::
 	rm -f a.pdf
