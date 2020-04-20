@@ -41,6 +41,16 @@
 .  nr VS (\\n[PS] * 180 / 100)
 .  vs \\n[VS]u
 ..
+.am EX
+.  nr VS_BAK \\n[VS]
+.  nr VS (\\n[PS] * 120 / 100)
+.  vs \\n[VS]u
+..
+.am EE
+.if t \{\
+.  nr VS \\n[VS_BAK]
+.  vs \\n[VS]u
+..
 .  \}
 .\}
 .
