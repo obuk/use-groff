@@ -2,7 +2,7 @@
 use strict;
 use warnings;
 use Mojolicious::Lite;
-use URI::Encode qw(uri_encode);
+use URI::Encode qw(uri_encode uri_decode);
 use File::Path qw(make_path);
 use File::Spec::Functions;
 use File::Basename;
@@ -87,6 +87,17 @@ sub man_where {
       $sect = $1;
     }
   }
+  unless ($where) {
+    if ($name =~ /issues/) {
+      if (my $issues = $c->app->config('issues')) {
+        if (-f $issues) {
+          $where = $issues;
+          $sect = $sect || 7;
+          $lang = 'ja';
+        }
+      }
+    }
+  }
   ($where, $sect, $lang);
 }
 
@@ -134,12 +145,13 @@ sub pdfhref {
     return join " ", ".pdfhref", uc($f),
       (map { $x{$_} ? ($_, $x{$_}) : () } qw/-N/),
       (grep defined $x{$_}, qw/-X -E/),
-      $text;
+      "\n";
   }
   if (uc($f) eq 'O') {
     return join " ", ".pdfhref", uc($f),
       $text;
   }
+  return "";
 
 }
 
@@ -148,13 +160,9 @@ sub add_links {
   my $me = $c->url_for(shift)->to_abs;
   my $lines = shift;
 
-  my $tp_more = $c->app->config('tp_more');
-  my $tp_end  = $c->app->config('tp_end');
-  my $tp = 0;
-
   my %tag;
   for (@$lines) {
-    if (/^[.]\s*(SH|SS|Sh|Ss)\s+(.*?)\s*$/) {
+    if (/^[.]\s*(SH|SS|Sh|Ss|IX)\s+(.*?)\s*$/) {
       my ($req, @args) = ($1, parse_args($2));
       my $text = "@args";
       $tag{$text} = uri_encode($text);
@@ -164,15 +172,15 @@ sub add_links {
   }
 
   my $re_pre = qr/(?:[<]|\\[fm](?:[^\(\[]|[(]..|\[[^\]]*\]))+/;
-  my $re_aff = qr/(?:[>]|\\[fm](?:[^\(\[]|[(]..|\[[^\]]*\]))+/;
+  my $re_aff = qr/(?:[>]|\\[fm](?:[^\(\[]|[(]..|\[[^\]]*\])|\\\|)+/;
 
   my @ur;
   for (@$lines) {
-    if (/^\.(de|am|ig)/ .. /^\.\./) {
-      next;
-    }
-
-    if (/^\.\s*UR/ ... /^\.\s*UE/) {
+    if (/^.\s*\\"/) {
+      ;
+    } elsif (/^\.\s*(de1?|dei1?|am1?|ami1?|ig)\b/ .. /^\.\./) {  # groff(7)
+      ;
+    } elsif (/^\.\s*UR/ ... /^\.\s*UE/) {
       if (/^\.\s*UR\s+(.*?)\s*$/) {
         @ur = ($1);
         chomp($ur[-1]);
@@ -180,7 +188,16 @@ sub add_links {
       } elsif (/^\.\s*UE\s+(.*?)\s*$/) {
 	my ($dest, $aff) = (shift(@ur), $1);
         s/^/.\\" /;
-	$_ .= pdfhref 'W', -D => $dest, -A => $aff, '--',
+        my $pre;
+        unless (@ur) {
+          ($ur[0] = uri_decode($dest)) =~ s/_/\\ /;
+          $pre = join "\\ ", grep defined && /./, $pre, "<";
+          $aff = join "\\ ", grep defined && /./, ">", $aff;
+        }
+        unless ($dest =~ m{^\w+://}) {
+          $dest = "https://$dest";
+        }
+	$_ .= pdfhref 'W', -D => $dest, -P => $pre, -A => $aff, '--',
 	  "@ur\n";
       } else {
 	if (/^\.\s*(B|I)\s+(.*?)\s*$/) {
@@ -226,9 +243,16 @@ sub add_links {
       $_ .= pdfhref 'O', 1, "$text\n" if $req =~ /Sh/i;
       $_ .= pdfhref 'O', 2, "$text\n" if $req =~ /Ss/i;
       if (my $tag = $tag{$text}) {
-        #s/^/.\\" /;
-	$_ .= pdfhref 'M', -N => $tag, -P => $pre, -A => $aff,
-	  "$text\n";
+	$_ .= pdfhref 'M', -N => $tag;
+      }
+    } elsif (/^\.\s*(IX)\s+(.*?)\s*$/) {
+      my ($req, $text, $type) = ($1, $2);
+      my @args = parse_args($text);
+      $type = shift @args if @args >= 2;
+      $text = "@args";
+      $_ .= pdfhref 'O', 3, "$text\n" if !$type || $type =~ /section/;
+      if (my $tag = $tag{$text}) {
+	$_ .= pdfhref 'M', -N => $tag;
       }
     } elsif (/^\.\s*(S[xy]|Tn)\s+(.*?)\s*$/) {
       my ($req, $text, $aff, $pre) = ($1, $2);
@@ -256,18 +280,27 @@ sub add_links {
     } elsif (/^\.\s*(B|I)\s+(.*?)\s*$/) { # and SM, SB
       my ($req, @args) = ($1, parse_args($2));
       my $text = "@args";
-      if (my $tag = $tag{$text}) {
+      my $fn = $req;
+      if ($text =~ s/^($re_pre)?((?:https?|ftp):\/\/\S+)($re_aff)?\s*//) {
+        my ($pre, $dest, $aff) = ($1, $2, $3);
         s/^/.\\" /;
-        $_ .= pdfhref 'L', -D => $tag, '--',
-	  "\\f$req$text\\fP\n";
+        $_ .= pdfhref 'W', -D => $dest, -P => $pre, -A => $aff, '--',
+          "\\f$fn$dest\\fP\n";
+        $_ .= $text . "\n" if $text;
+      } else {
+        if (my $tag = $tag{$text}) {
+          s/^/.\\" /;
+          $_ .= pdfhref 'L', -D => $tag, # -A => "\\c",
+            '--',
+            "\\f$fn$text\\fP\n";
+        }
       }
 
-    } elsif (/^\.\s*(BI|BR|IB|IR|RB|RI)\s+(.*?)\s*$/) {
+    } elsif (/^\./ && /\.\s*(BI|BR|IB|IR|RB|RI)\s+(.*?)\s*$/) {
       my ($req, @args) = ($1, parse_args($2));
       my @fnts = map substr($req, $_ % 2, 1), 0 .. $#args;
       my $save = $_;
       s/^/.\\" /;
-      my $pdfhref;
       while (@args) {
 	my ($text, $fn) = (shift @args, shift @fnts);
 	if ($text =~ /^(?:\\%)?\w/ &&
@@ -278,48 +311,59 @@ sub add_links {
 	    "\\f$fn$name\\fP\\f$fnts[0]($sect)\\fP\n";
 	  $_ .= $args[0] . "\n" if $args[0];
 	  shift @args; shift @fnts;
-	  $pdfhref++;
 	} elsif ($text =~ s/^($re_pre)?((?:https?|ftp):\/\/\S+)($re_aff)?\s*//) {
 	  my ($pre, $dest, $aff) = ($1, $2, $3);
 	  $_ .= pdfhref 'W', -D => $dest, -P => $pre, -A => $aff, '--',
 	    "\\f$fn$dest\\fP\n";
 	  $_ .= $text . "\n" if $text;
-	  $pdfhref++;
 	} else {
-	  s/\\c\n$//s;
-	  $_ .= "\\f$fn$text\\fP\\c\n";
-	}
+          if (my $tag = $tag{$text}) {
+            $_ .= pdfhref 'L', -D => $tag,
+              (@args ? (-A => "\\c") : ()),
+              '--',
+              "\\f$fn$text\\fP\n";
+          } else {
+            #s/\\c\n$//s;
+            $_ .= "\\f$fn$text\\fP".
+              (@args ? "\\c" : "").
+              "\n";
+          }
+        }
       }
-      if ($pdfhref) {
+      if (/^\.pdfhref\b/m) {
 	s/\\c\n$/\n/s;
       } else {
 	$_ = $save;
       }
-
     } elsif (/^\.\s*TS/ ... /^\.\s*TE/) {
 	;
-    } elsif (/^\.\s*TP(?:\s.*)?$/ && $tp_more && $tp_end) {
-      $tp = 1;
     } elsif (/^\./) {
       ;
     } else {
-      if (s{(.*?)($re_pre)((?:\\%)?\w+[-\w]*)($re_aff)[(](\d\w*)[)](\S*)\s*}{
+      if (s{(.*?)($re_pre)((?:\\%)?\w+(?:\\?-|\w)*)($re_aff)[(](\d\w*)[)](\S*)\s*}{
 	my ($left, $fb, $name, $fr, $sect, $aff) = ($1, $2, $3, $4, $5, $6);
         ($left ? "$left\\c\n" : "").
 	  pdfhref 'W', -D => "$me/$sect/$name", -A => $aff, "--",
 	  "$fb$name$fr($sect)\n"
 	}ge) {
 	;
-      } elsif (s{(.*?)($re_pre)((?:\\%)?\w+[-\w]*)[(](\d\w*)[)]($re_aff)(\S*)\s*}{
+      } elsif (s{(.*?)($re_pre)((?:\\%)?\w+(?:\\?-|\w)*)[(](\d\w*)[)]($re_aff)(\S*)\s*}{
 	my ($left, $fb, $name, $sect, $fr, $aff) = ($1, $2, $3, $4, $5, $6);
         ($left ? "$left\\c\n" : "").
 	  pdfhref 'W', -D => "$me/$sect/$name", -A => $aff, "--",
 	  "$fb$name$fr($sect)\n"
 	}ge) {
 	;
-      } elsif (s{(.*?)((?:\\%)?\w+[-\w]*)[(](\d\w*)[)](\S*)\s*}{
+      } elsif (s{(.*?[(].*?)((?:\\%)?\w+(?:\\?-|\w)*)[(](\d\w*)[)](\S*)\s*(.*?[)])\s*$}{
+	my ($left, $name, $sect, $aff, $more) = ($1, $2, $3, $4, $5);
+        $aff .= "\\~".$more if $more;
+        ($left ? "$left\\c\n" : "").
+	  pdfhref 'W', -D => "$me/$sect/$name", -A => $aff, "--",
+	  "$name($sect)\n"
+	}ge) {
+	;
+      } elsif (s{(.*?)((?:\\%)?\w+(?:\\?-|\w)*)[(](\d\w*)[)](\S*)\s*}{
 	my ($left, $name, $sect, $aff) = ($1, $2, $3, $4);
-	(my $name_clean = $name) =~ s/\\%//g;
         ($left ? "$left\\c\n" : "").
 	  pdfhref 'W', -D => "$me/$sect/$name", -A => $aff, "--",
 	  "$name($sect)\n"
@@ -333,13 +377,6 @@ sub add_links {
 	  "\\fB$dest\\fR\n";
 	}ge) {
 	;
-      }
-    }
-
-    # XXXXX
-    if (!/^\./ || /^\./ && /\.(SH|SS|SM|SB|BI|IB|RI|IR|BR|RB|R|B|I|pdf|EnvVar)\b/m) {
-      if ($tp > 0 && --$tp == 0 && $tp_more && $tp_end) {
-        $_ = ".$tp_more\n" . $_ . ".$tp_end\n";
       }
     }
 
