@@ -136,14 +136,14 @@ sub prepro {
       ;
     } elsif (/^\.\s*(de|am|ig)/ .. /^\.\./) {
       ;
-    } elsif (/^\.\\\"/) {
-      ;
     } elsif  (/$mode_request/m) {
       if (defined $1) {
         push @mode, $1;
       } elsif (@mode > 1) {
         pop @mode;
       }
+    } elsif (/^\.\\\"/) {
+      ;
     } elsif (/^\.\s*fc(?:\s+(.)(.)?)?$/) {
       $stop_tweaking = grep defined, $1, $2; # between TS and TE
     } elsif ($tp_more && $tp_end && /^\.\s*(TP|$tp_more|$tp_end)\b/) {
