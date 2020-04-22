@@ -16,7 +16,9 @@ setup::	autoconf.pkg libtool.pkg texinfo.pkg bison.pkg pkgconf.pkg \
 	cd groff && ./bootstrap && ./configure --prefix=${GROFF_PREFIX}
 
 clean::
-	-$(MAKE) -C groff $@
+	if [ -d groff ]; then \
+		$(MAKE) -C groff $@; \
+	fi
 
 all::	groff.diff setup
 	[ -d groff ]
