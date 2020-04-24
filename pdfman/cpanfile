@@ -9,7 +9,7 @@ on 'test' => sub {
  'Moo';
 requires 'Types::Standard';
 requires 'Mojolicious::Lite';
-requires 'URI::Encode';
+requires 'URI::Escape';
 requires 'File::Path';
 requires 'File::Spec::Functions';
 requires 'File::Basename';
