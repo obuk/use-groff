@@ -99,10 +99,10 @@ ifeq ("${OS}", "ubuntu")
 pkg.stamp:
 	[ ! -f $@ ] || sudo apt-get update
 	@if [ -f /var/run/reboot-required ]; then \
-		echo "# $(MAKE) -f use-groff.mk apt-upgrade" >&2; \
+		echo "# vagrant ssh -- $(MAKE) -C `pwd` -f use-groff.mk apt-upgrade" >&2; \
 		echo "# vagrant reload" >&2; \
 	fi
-	@[ ! -f /var/run/reboot-required ]
+	-@[ ! -f /var/run/reboot-required ]
 	@touch $@
 
 export DEBIAN_FRONTEND=noninteractive
