@@ -1883,10 +1883,14 @@ hwnbsp: \~
 ## spaces-without-j: end
 
 ## spaces-with-j: begin
-#zwsp: "\\j[0] \\j[]"
-#zwnbsp: "\\j[0]\~\\j[]"
-#qwsp: "\\j[6] \\j[]"
-#qwnbsp: "\\j[6]\~\\j[]"
+##zwsp: "\\j[0] \\j[]"
+##zwnbsp: "\\j[0]\~\\j[]"
+##qwsp: "\\j[6] \\j[]"
+##qwnbsp: "\\j[6]\~\\j[]"
+#zwsp: \*[zwsp]
+#zwnbsp: \*[zwnbsp]
+#qwsp: \*[qwsp]
+#qwnbsp: \*[qwnbsp]
 ## spaces-with-j: end
 
 # The following six definitions make the six spaces above visible.
