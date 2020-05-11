@@ -187,14 +187,15 @@ install::	mdoc-ja.UTF-8
 OPERATING_SYSTEM?=	$(shell uname -sr | sed -E -e 's/-.*//' -e 's/[[:space:]]/\\\\~/g')
 
 mdoc-ja.UTF-8:	mdoc-ja.eucJP groff.pkg
-	(iconv -f eucJP -t UTF-8 $< | sed '1s/japanese[^;]*/utf-8/' | preconv; \
-	echo .ds default-operating-system ${OPERATING_SYSTEM}; \
-	) > $@.tmp
-	(if grep -q '^[.]ds doc-section-name' ${GROFF_TMAC}/mdoc/doc-common; then \
-	   sed -E '/^([.][[:alpha:]]+) ([[:alpha:]][^[:space:]])/s//\1 doc-\2/' $@.tmp; \
-	 else \
-	   cat $@.tmp; \
-	fi) >$@
+	iconv -f eucJP -t UTF-8 $< | sed '1s/japanese[^;]*/utf-8/' > $@.tmp
+	if grep -q '^[.]ds doc-section-name' ${GROFF_TMAC}/mdoc/doc-common; then \
+	   perl -i.bak -lpe 's/^(\.\w+\s+)(.*)/$${1}doc-$$2/' $@.tmp; \
+	fi;
+	echo .ds default-operating-system ${OPERATING_SYSTEM} >> $@.tmp
+ifeq ("$(OS)", "ubuntu")
+	perl -i.bak -lpe 's/^(\.\w+\s+doc-section-name\s+).*/$${1}名前/' $@.tmp
+endif
+	preconv < $@.tmp > $@
 
 mdoc-ja.eucJP:	tmac-20030521_2.tar.gz
 	tar xzOf $< tmac-20030521_2/mdoc/ja.eucJP >$@
@@ -206,3 +207,4 @@ clean::
 	rm -f tmac-20030521_2.tar.gz
 	rm -f mdoc-ja.eucJP
 	rm -f mdoc-ja.UTF-8
+	rm -f mdoc-ja.UTF-8.tmp
