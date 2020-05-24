@@ -6,6 +6,7 @@ use URI::Escape qw(uri_escape_utf8 uri_unescape);
 use File::Path qw(make_path);
 use File::Spec::Functions;
 use File::Basename;
+use Encode;
 use utf8;
 
 binmode STDERR, ":utf8";
@@ -155,9 +156,11 @@ sub pdfhref {
   defined $x{-P} and $x{-P} =~ s/\\m(?:[^\(\[]|[(]..|[\[][^\]]*[\]])//g;
   defined $x{-A} and $x{-A} =~ s/\\m(?:[^\(\[]|[(]..|[\[][^\]]*[\]])//g;
 
+  my $ja = qr/[\x{3041}-\x{3096}\x{30A0}-\x{30FF}\x{4E00}-\x{9FFF}]/;
   my $text = "@_";
-  $text =~ s/(\/)(\w)/$1\\:$2/g;
+  $text =~ s/([\/#\-])(\w)/$1\\:$2/g;
   $text =~ s/(\.)(\w)/\\&$1$2/g;
+  $text =~ s/($ja)($ja)/$1\\:$2/g;
 
   if (uc($f) eq 'W') {
     return join " ", ".pdfhref", uc($f),
@@ -221,7 +224,7 @@ sub add_links {
 	my ($dest, $aff) = (shift(@ur), $1);
         s/^/.\\" /;
         (my $text = $dest) =~ s/^$me\/?//;
-        $text = uri_unescape($text);
+        $text = decode("utf8", uri_unescape($text));
         if ($aff) {
           if ($aff !~ /^[[:punct:]]/) {
             $aff = "\\ $aff";
@@ -360,7 +363,11 @@ sub add_links {
 
       s{(.*?)($re_pre)((?:https?|ftp)://\S*)\s*}{
 	my ($left, $pre, $dest) = ($1, $2, $3); $dest =~ s/\\[:&%]//g;
-	my $aff = do { $dest =~ s/$re_aff$//g ? $& : '' };
+	my $aff;
+        if ($pre) {
+          $aff = do { $dest =~ s/$re_aff$//g ? $& : '' }
+            ||   do { $dest =~ s/$re_aff.*$//g ? $& : '' };
+        }
 	($left ? "$left\\c\n" : "").
 	  pdfhref 'W', -D => $dest, -P => $pre, -A => $aff, '--',
 	  "\\fB$dest\\fR\n";
