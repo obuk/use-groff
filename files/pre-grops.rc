@@ -1848,22 +1848,22 @@ pre-gropdf:
 
 # prologue: defines macros for making stretchable spaces.
 prologue: &prologue-1 |
-  .if !d zwsp \{\
-  .de zwsp
-  .  nr zwsp.bak \\n[.ss]
+  .if !d pp-zwsp \{\
+  .de pp-zwsp
+  .  nr pp-zwsp.bak \\n[.ss]
   .  ie \\n[.$] .ss (\\n[.ss] * \\$1 / 12)
   .  el .ss 0
   .  nop \\& \\c
-  .  ss \\n[zwsp.bak]
+  .  ss \\n[pp-zwsp.bak]
   ..
   .\}
-  .if !d zwnbsp \{\
-  .de zwnbsp
-  .  nr zwnbsp.bak \\n[.ss]
+  .if !d pp-zwnbsp \{\
+  .de pp-zwnbsp
+  .  nr pp-zwnbsp.bak \\n[.ss]
   .  ie \\n[.$] .ss (\\n[.ss] * \\$1 / 12)
   .  el .ss 0
   .  nop \\&\\~\\c
-  .  ss \\n[zwnbsp.bak]
+  .  ss \\n[pp-zwnbsp.bak]
   ..
   .\}
 
@@ -1876,28 +1876,24 @@ hwsp: ' '
 hwnbsp: \~
 
 ## spaces-without-j: begin
-#zwsp: "\\c\n.zwsp\n"
-#zwnbsp: "\\c\n.zwnbsp\n"
-#qwsp: "\\c\n.zwsp 6\n"
-#qwnbsp: "\\c\n.zwnbsp 6\n"
+#zwsp: "\\c\n.pp-zwsp\n"
+#zwnbsp: "\\c\n.pp-zwnbsp\n"
+#qwsp: "\\c\n.pp-zwsp 6\n"
+#qwnbsp: "\\c\n.pp-zwnbsp 6\n"
 ## spaces-without-j: end
 
 ## spaces-with-j: begin
-##zwsp: "\\j[0] \\j[]"
-##zwnbsp: "\\j[0]\~\\j[]"
-##qwsp: "\\j[6] \\j[]"
-##qwnbsp: "\\j[6]\~\\j[]"
-#zwsp: \*[zwsp]
-#zwnbsp: \*[zwnbsp]
-#qwsp: \*[qwsp]
-#qwnbsp: \*[qwnbsp]
+#zwsp: "\\j[0] \\j[]"
+#zwnbsp: "\\j[0]\~\\j[]"
+#qwsp: "\\j[6] \\j[]"
+#qwnbsp: "\\j[6]\~\\j[]"
 ## spaces-with-j: end
 
 # The following six definitions make the six spaces above visible.
 
 vhwsp: "\\m[blue]\\Z'\\h[0.1m]\\[u00BD]'\\[u2423]\\m[]"
 vqwsp: "\\m[blue]\\Z'\\h[0.1m]\\[u00BC]'\\[u2423]\\m[]"
+vzwsp: "\\m[blue]\\[bv]\\h[-0.2m]\\[bv]\\m[]"
 vhwnbsp: "\\m[red]\\Z'\\h[0.1m]\\[u00BD]'\\[u2423]\\m[]"
 vqwnbsp: "\\m[red]\\Z'\\h[0.1m]\\[u00BC]'\\[u2423]\\m[]"
-vzwsp: "\\m[blue]\\[bv]\\h[-0.2m]\\[bv]\\m[]"
 vzwnbsp: "\\m[red]\\[bv]\\h[-0.2m]\\[bv]\\m[]"
