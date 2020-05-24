@@ -102,6 +102,7 @@ sub prepro {
     for my $xw (qw/hw zw qw/) {
       for (grep defined $sp{$_}, $xw.$sp) {
         $self->{sp}{$self->{$_} = $self->pua} = $sp{$_};
+        #$self->puts(sprintf ".ds $_ \\[u%X]", ord($self->{$_}));
       }
     }
   }
@@ -119,6 +120,7 @@ sub prepro {
 
   my $prologue = $self->rc('prologue');
   $self->puts($prologue) if $prologue;
+  $self->puts(".lf ".$self->nr);
 
   my $mode_request = $self->rc('mode_request');
   my @mode = ($self->rc('mode_default') // 3);
@@ -203,7 +205,6 @@ sub tweak {
 
   my $dnl = $self->rc_regex('dnl');
   my $vdnl = $self->rc('vdnl');
-  # = "\\m[red]\\[u23CE]\\m[]";
 
   if ($m & 1) {
     # 1. put a half-space or a quarter-space before and after
