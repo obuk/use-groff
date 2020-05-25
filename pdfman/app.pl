@@ -181,7 +181,7 @@ sub pdfhref {
   }
   if (uc($f) eq 'O') {
     return join " ", ".pdfhref", uc($f),
-      $text;
+      "@_";
   }
   return "";
 
