@@ -20,7 +20,10 @@ endif
 
 setup::
 
-${FONT_MR} ${FONT_GR}:	${FONT_PKG}
+${FONT_MR}:	${FONT_PKG}
+ifneq "${FONT_GR}" ""
+${FONT_GR}:	${FONT_PKG}
+endif
 
 FAM?=		M G
 
@@ -42,12 +45,16 @@ all::	${TTFS}
 $M-$R.ttf:	${FONT_MR}
 	ln -sf $< $@
 
+ifneq "$G" ""
 $G-$R.ttf:	${FONT_GR}
 	ln -sf $< $@
+endif
 
 clean::
 	rm -f $M-$R.ttf
+ifneq "$G" ""
 	rm -f $G-$R.ttf
+endif
 
 
 define install_font
@@ -68,7 +75,9 @@ $(foreach fam, ${FAM}, $(foreach sty, ${STY}, \
 
 clean::
 	rm -f $M-*.textmap
+ifneq "$G" ""
 	rm -f $G-*.textmap
+endif
 
 ${MAKE_TEXTMAP}:	Font-TTF.cpanm File-Spec.cpanm
 
@@ -87,4 +96,6 @@ clean::
 
 clean::
 	rm -f $M-*.TTF
+ifneq "$G" ""
 	rm -f $G-*.TTF
+endif

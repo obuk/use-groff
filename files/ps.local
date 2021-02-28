@@ -80,7 +80,7 @@
 .\"char \[u0021] \[u0021]\" ！
 .if (\w'\[uFF01]' > 0.8m) .char \[uFF01] \h'-0.25m'\z\[uFF01]\h'+0.5m'\" ！
 .\"char \[u003F] \[u003F]\" ？
-.if (\w'\[uFF1F]' > 0.8m) .char \[uFF1F] \h'-0.25m'\z\[uFF1F]\h'+0.5m'\" ？
+.if (\w'\[uFF1F]' > 0.8m) .char \[uFF1F] \h'-0.20m'\z\[uFF1F]\h'+0.8m'\" ？
 .\"char \[u203C] \[u203C]\" ‼
 .\"char \[u2047] \[u2047]\" ⁇
 .\"char \[u2048] \[u2048]\" ⁈

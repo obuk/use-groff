@@ -8,7 +8,7 @@ VPATH=  ${UG}/files/${OS} ${UG}/files
 
 ifeq ("$(OS)", "ubuntu")
 
-setup::	autoconf.pkg libtool.pkg texinfo.pkg bison.pkg pkgconf.pkg \
+setup::	automake.pkg autoconf.pkg libtool.pkg texinfo.pkg bison.pkg pkgconf.pkg \
 		libuchardet-dev.pkg libxaw7-dev.pkg
 	[ -d groff ] || git clone https://git.savannah.gnu.org/git/groff.git
 	cd groff && git reset --hard

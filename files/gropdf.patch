@@ -1,5 +1,22 @@
-*** gropdf.old	2020-04-18 02:19:31.623594344 +0000
---- gropdf	2020-04-18 02:19:31.631594228 +0000
+*** gropdf.old	2021-02-01 02:56:49.515011327 +0000
+--- gropdf	2021-02-01 02:56:49.519011259 +0000
+***************
+*** 2,8 ****
+  #
+  #	gropdf		: PDF post processor for groff
+  #
+! # Copyright (C) 2011-2020 Free Software Foundation, Inc.
+  #      Written by Deri James <deri@chuzzlewit.myzen.co.uk>
+  #
+  # This file is part of groff.
+--- 2,8 ----
+  #
+  #	gropdf		: PDF post processor for groff
+  #
+! # Copyright (C) 2011-2018 Free Software Foundation, Inc.
+  #      Written by Deri James <deri@chuzzlewit.myzen.co.uk>
+  #
+  # This file is part of groff.
 ***************
 *** 22,27 ****
 --- 22,35 ----
@@ -69,13 +86,10 @@
   my $unitwidth=$desc{unitwidth};
   my $papersz=$desc{papersize};
 ***************
-*** 378,404 ****
-  
-  PutObj($objct);
-  
-! foreach my $fontno (keys %fontlst)
+*** 381,404 ****
+  foreach my $fontno (sort keys %fontlst)
   {
-!     my $o=$fontlst{$fontno}->{FNT};
+      my $o=$fontlst{$fontno}->{FNT};
   
 !     foreach my $ch (@{$o->{NO}})
 !     {
@@ -97,26 +111,23 @@
       }
   }
   
---- 390,480 ----
-  
-  PutObj($objct);
-  
-! for (values %fontlst)
+--- 393,480 ----
+  foreach my $fontno (sort keys %fontlst)
   {
-!     my $f = $_->{FNT};
-!     rebuild_font($f);
+      my $o=$fontlst{$fontno}->{FNT};
++     rebuild_font($o);
   
 !     if ($use_suppl_font) {
-! 	my $g = $f;
+! 	my $g = $o;
 ! 	while ($g = $g->{NEXT}) {
 ! 	    rebuild_font($g);
 ! 	}
 !     }
 ! 
 !     if ($D4_charset >= 0) {
-! 	my @list = values %{$f->{NAM}};
+! 	my @list = values %{$o->{NAM}};
 !         @list = grep $_->[USED], @list if $D4_charset;
-! 	my $p = GetObj($_->{OBJ});
+! 	my $p = GetObj($fontlst{$fontno}->{OBJ});
 ! 	my $q = GetObj($p->{FontDescriptor});
 ! 	$q->{CharSet} = bless do {
 !             my %seen; [ grep defined && !$seen{$_}++, map $_->[PSNAME], @list ]
@@ -1008,3 +1019,14 @@
       }
   }
   
+***************
+*** 3597,3602 ****
+--- 3804,3811 ----
+  
+  
+  1;
++ ########################################################################
++ ### Emacs settings
+  # Local Variables:
+  # mode: CPerl
+  # End:

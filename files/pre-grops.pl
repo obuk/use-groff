@@ -49,6 +49,9 @@ sub run {
     $self->{use_conv} = 1;
     local $ENV{PATH} = join ':', grep defined, $ENV{GROFF_BIN_PATH}, $ENV{PATH};
     open STDOUT, "|-", @troff or die usage();
+  } elsif (@troff) {
+    unshift @ARGV, @troff;
+    @troff = ();
   }
 
   my $tee = $self->rc('tee');
@@ -102,7 +105,7 @@ sub prepro {
     for my $xw (qw/hw zw qw/) {
       for (grep defined $sp{$_}, $xw.$sp) {
         $self->{sp}{$self->{$_} = $self->pua} = $sp{$_};
-        #$self->puts(sprintf ".ds $_ \\[u%X]", ord($self->{$_}));
+        $self->puts(sprintf ".ds $_ \\[u%X]", ord($self->{$_}));
       }
     }
   }
@@ -120,7 +123,7 @@ sub prepro {
 
   my $prologue = $self->rc('prologue');
   $self->puts($prologue) if $prologue;
-  $self->puts(".lf ".$self->nr);
+  $self->puts("'lf ".$self->nr);
 
   my $mode_request = $self->rc('mode_request');
   my @mode = ($self->rc('mode_default') // 3);
@@ -128,6 +131,7 @@ sub prepro {
     $mode[0] = $ENV{PREPRODEBUG} + 0;
   }
   my $stop_tweaking;
+  my $cc = "[.']";
   while (1) {
     last unless defined $self->getline($mode[-1]);
     if  (/$mode_request/m) {
@@ -136,18 +140,18 @@ sub prepro {
       } elsif (@mode > 1) {
         pop @mode;
       }
-    } elsif (/^\.\\\"/) {
+    } elsif (/^$cc\\\"/) {
       ;
-    } elsif (/^\.\s*(de|am|ig)/ .. /^\.\./) {
+    } elsif (/^$cc\s*(de|am|ig)/ .. /^\.\./) {
       ;
-    } elsif (/^\.\s*fc(?:\s+(.)(.)?)?$/) {
+    } elsif (/^$cc\s*fc(?:\s+(.)(.)?)?$/) {
       $stop_tweaking = grep defined, $1, $2; # between TS and TE
     } elsif ($mode[-1] < 0) {
       ;
     } else {
       #s/^(\.\s*)(na|hy\s+0)$/${1}if n .$2/;
       #s/^(\.\s*)(na)$/${1}if n .$2/;
-      $self->tweak($mode[-1] // 0) unless /^[.]/ || $stop_tweaking;
+      $self->tweak($mode[-1] // 0) unless /^$cc/ || $stop_tweaking;
     }
     $self->puts();
   }
@@ -176,7 +180,7 @@ sub puts {
         if (@line > 1) {
           my @out;
           for (@line) {
-            push @out, ".lf $NR" if /^[^.]/;
+            push @out, "'lf $NR" if !/^[.']/;
             push @out, $_;
           }
           $_ = join "\n", @out;
@@ -250,7 +254,7 @@ sub tweak {
   s/($ne)($sp)/$1$self->{nbsp}{$2}/g;       # not ending line
 
   # 6. remove spaces at starting and ending line XXXXX
-  #s/^$sp+//g;
+  s/^$sp+//g;
   #s/$sp+$//g;
 
   # 7. if multiple spaces are connected, ...
@@ -296,11 +300,13 @@ sub getline {
       }
       $self->unget($_);
       $self->nr(-@t);
-      $_ = join "\n", @t;
+      my $chunk = '';
+      $chunk .= s/\\$//? $_ : $_ . "\n" for @t;
+      $_ = $chunk;
       return wantarray? ($_, $self->nr) : $_;
     }
     $. = $1 - 1 if /^\.\s*lf\s+(\d+)/;
-    if (/^[^.]/ || /\\$/) {
+    if (!/^[.']/ || /\\$/) {
       push @t, $_;
     } else {
       return wantarray? ($_, $self->nr) : $_;

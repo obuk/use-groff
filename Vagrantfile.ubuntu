@@ -11,9 +11,11 @@ Vagrant.configure("2") do |config|
   config.vm.provision :shell, inline: <<-SHELL
   sudo -u vagrant -i make -C /vagrant clean apt-upgrade
   sudo -u vagrant -i make -C /vagrant clean install
+  #sudo -u vagrant -i make -C /vagrant -f /vagrant/groff.mk setup
   #sudo -u vagrant -i make -C /vagrant -f /vagrant/groff.mk clean install
   #sudo -u vagrant -i make -C /vagrant clean install
   #sudo -u vagrant -i make -C /vagrant -f /vagrant/pdfman.mk clean all
+  #sudo -u vagrant -i make -C /vagrant -f /vagrant/perldoc-server.mk clean install install-pods
   SHELL
   #config.vm.network :forwarded_port, guest: 3000, host: 3000
 end

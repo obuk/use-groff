@@ -1819,9 +1819,16 @@ chars_japanese:
   - *ll-93                 # chars_not_starting
   - *ll-94                 # chars_not_ending
 
+wchars_japanese:
+  - *cl-11                 # A.11 Small kana
+  - *cl-15                 # A.15 Hiragana
+  - *cl-16                 # A.16 Katakana
+  #
+  - *ll-91                 # Kanji
+
 # mode_request: the regexpr of the request sets the Japanese
 # justification mode. $1 is the mode value.
-mode_request: '^\.\s*\\"\s*pp-ja*(?:\s+(\d+))?'
+mode_request: ^[.']\s*\\"\s*pp-ja*(?:\s+(\d+))?
 
 # mode_default: the default value of the Japanese justification mode.
 # Mode 1 inserts a space before or after puncts.  Mode 2 inserts a
@@ -1851,7 +1858,7 @@ prologue: &prologue-1 |
   .if !d pp-zwsp \{\
   .de pp-zwsp
   .  nr pp-zwsp.bak \\n[.ss]
-  .  ie \\n[.$] .ss (\\n[.ss] * \\$1 / 12)
+  .  ie \\n[.$] .ss (\\n[.ss] * \\$1 / \\n[.ss])
   .  el .ss 0
   .  nop \\& \\c
   .  ss \\n[pp-zwsp.bak]
@@ -1860,7 +1867,7 @@ prologue: &prologue-1 |
   .if !d pp-zwnbsp \{\
   .de pp-zwnbsp
   .  nr pp-zwnbsp.bak \\n[.ss]
-  .  ie \\n[.$] .ss (\\n[.ss] * \\$1 / 12)
+  .  ie \\n[.$] .ss (\\n[.ss] * \\$1 / \\n[.ss])
   .  el .ss 0
   .  nop \\&\\~\\c
   .  ss \\n[pp-zwnbsp.bak]
@@ -1872,14 +1879,16 @@ prologue: &prologue-1 |
 # em width, half em width).  The following nb (no-break) means
 # non-breaking space.
 
-hwsp: ' '
-hwnbsp: \~
+#hwsp: ' '
+#hwnbsp: \~
 
 ## spaces-without-j: begin
 #zwsp: "\\c\n.pp-zwsp\n"
 #zwnbsp: "\\c\n.pp-zwnbsp\n"
 #qwsp: "\\c\n.pp-zwsp 6\n"
 #qwnbsp: "\\c\n.pp-zwnbsp 6\n"
+#hwsp: "\\c\n.pp-zwsp 12\n"
+#hwnbsp: "\\c\n.pp-zwnbsp 12\n"
 ## spaces-without-j: end
 
 ## spaces-with-j: begin
@@ -1887,6 +1896,8 @@ hwnbsp: \~
 #zwnbsp: "\\j[0]\~\\j[]"
 #qwsp: "\\j[6] \\j[]"
 #qwnbsp: "\\j[6]\~\\j[]"
+#hwsp: "\\j[12] \\j[]"
+#hwnbsp: "\\j[12]\~\\j[]"
 ## spaces-with-j: end
 
 # The following six definitions make the six spaces above visible.
