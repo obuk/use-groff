@@ -13,7 +13,7 @@ Perldoc-Server?=	https://github.com/obuk/Perldoc-Server.git
 
 all::
 
-install::	Perldoc-Server.stamp
+install::	all Perldoc-Server.stamp
 
 Perldoc-Server.stamp:	mandoc.pkg nkf.pkg HTML-Spacing-JA.cpanm
 	[ -d $* ] || git clone ${$*}
