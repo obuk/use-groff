@@ -24,4 +24,59 @@
 ..
 .\}
 .
+.\" Support PDF link
+.nr mPDF 0
+.if \n(.g \
+.  if '\*(.T'pdf' \
+.    nr mPDF 1
+.
+.am UR
+.  if \\n[mPDF] \{\
+.    ev URL-div
+.    di URL-div
+.    pdfhref W -S -A \\c -D \\*(m1 \" separates markend to be sent later
+.  \}
+..
+.
+.\" End URL.
+.de UE
+.  ie \\n(mH \{\
+.    br
+.    di
+.    ev
+.
+.    \" Has there been one or more input lines for the link text?
+.    ie \\n(dn \{\
+.      do HTML-NS "<a href=""\\*(m1"">"
+.      \" Yes, strip off final newline of diversion and emit it.
+.      do chop URL-div
+.      do URL-div
+\c
+.      do HTML-NS </a>
+.    \}
+.    el \
+.      do HTML-NS "<a href=""\\*(m1"">\\*(m1</a>"
+\&\\$*\"
+.  \}
+.  el .ie \\n[mPDF] \{\
+.    br
+.    di
+.    ev
+.    ie \\n(dn \{\
+.      \" Yes, strip off final newline of diversion and emit it.
+.      do chop URL-div
+.      do URL-div
+\c
+.      pdfmarkend
+.    \}
+.    el \
+.      pdfhref W -A \\c -D \\*(m1 -- \\*(m1
+.    nop \&\\$*
+.  \}
+.  el \
+\\*(la\\*(m1\\*(ra\\$*\"
+.
+.  hy \\n(HY
+..
+.
 .\" End

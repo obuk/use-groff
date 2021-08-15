@@ -1,5 +1,5 @@
-*** pdf.tmac	Mon Jul  8 23:34:17 2019
---- pdf.tmac	Sat Aug 10 21:43:43 2019
+*** /usr/share/groff/current/tmac/pdf.tmac	2020-03-21 12:27:30.000000000 +0000
+--- tmp/pdf.tmac.patched	2021-08-15 14:08:53.503367763 +0000
 ***************
 *** 250,256 ****
   .         chop pdf:clean
@@ -21,3 +21,66 @@
   .         rm pdf:clean
   .         ev
   .         tr \[em]\[em]
+***************
+*** 407,415 ****
+  .   \"
+  .      nr pdf:href.ok 1
+  .   \"
+! .   \" Initialise -E and -X flags in the OFF state
+  .   \"
+  .      nr pdf:href-E 0
+  .      nr pdf:href-X 0
+  .   \"
+  .   \" Handle the case where subcommand is specified as "-class",
+--- 411,420 ----
+  .   \"
+  .      nr pdf:href.ok 1
+  .   \"
+! .   \" Initialise -E, -S and -X flags in the OFF state
+  .   \"
+  .      nr pdf:href-E 0
++ .      nr pdf:href-S 0
+  .      nr pdf:href-X 0
+  .   \"
+  .   \" Handle the case where subcommand is specified as "-class",
+***************
+*** 494,499 ****
+--- 499,505 ----
+  .als pdf:href.opt-F pdf:href.option   \" remote file specifier
+  .als pdf:href.opt-N pdf:href.option   \" reference name
+  .als pdf:href.opt-P pdf:href.option   \" prefixed text
++ .als pdf:href.opt-S pdf:href.flag     \" separate markend
+  .als pdf:href.opt-T pdf:href.option   \" bookmark "tag"
+  .als pdf:href.opt-X pdf:href.flag     \" cross reference
+  .\"
+***************
+*** 707,712 ****
+--- 713,721 ----
+  .   nr pdf:bm.width \\w'\\*[PDFHREF.DESC]'
+  .   nop \&\m[\\*[PDFHREF.TEXT.COLOUR]]\c
+  .   device pdf: markstart \\n[rst] \\n[rsb] \\n[PDFHREF.LEADING] \\*[pdf:href.link]
++ .
++ .   \" the markend must be sent by the user at the end of the link text. 
++ .   if !\\n[pdf:href-S] \
+  .   nop \&\\*[PDFHREF.DESC]\X'pdf: markend'\m[]\c
+  .   \"
+  .   \" Clean up the temporary registers and strings, used to
+***************
+*** 805,810 ****
+--- 814,829 ----
+  .de pdftransition
+  .nop \!x X pdf: transition \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8
+  ..
++ .de pdfmarkend
++ .  device pdf: markend
++ .  if '\\n[.m]'\\*[PDFHREF.TEXT.COLOUR]' \
++ .    nop \&\m[]\c
++ ..
++ .
++ .
++ .\" Load local modifications.
++ .do mso pdf.local
++ .
+  .\" Local Variables:
+  .\" mode: nroff
+  .\" End:
