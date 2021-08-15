@@ -9,10 +9,8 @@ FILES=	${TMP}/gropdf ${TMP}/ps.local ${TMP}/ja.local	\
 
 LOCAL_BIN?=	/usr/local/bin
 
-#PREGROPS?=	${LOCAL_BIN}/grops-pp.pl
-#PREGROPDF?=	${LOCAL_BIN}/grops-pp.pl
-PREGROPS?=	${LOCAL_BIN}/pre-grops.pl
-PREGROPDF?=	${LOCAL_BIN}/pre-gropdf.pl
+PREGROPS?=	${LOCAL_BIN}/pre-grops-ja.plenv
+PREGROPDF?=	${LOCAL_BIN}/pre-grops-ja.plenv
 PAPERSIZE?=	a4
 
 BUILDFOUNDRIES?=	${GROFF_FONT}/devpdf/util/BuildFoundries
@@ -61,34 +59,15 @@ tmpdir:
 clean::
 	rm -rf ${TMP}
 
-install::	grops-pp.pl
-	sudo install -m 755 $<  ${LOCAL_BIN}
-
-install::	pre-grops.pl
+install::	${TMP}/pre-grops-ja.plenv
 	sudo install -m 755 $< ${LOCAL_BIN}
-	sudo ln -sf pre-grops.pl ${LOCAL_BIN}/pre-gropdf.pl
 
-install::	${TMP}/pre-grops.rc
-	sudo install -m 644 $< ${SITE_TMAC}
-	sudo ln -sf pre-grops.rc ${SITE_TMAC}/pre-gropdf.rc
-
-${TMP}/pre-grops.rc:	pre-grops.rc
-	if [ "$$(echo '\j[0]\j[]' | ${GROFF_PREFIX}/bin/groff -Tutf8 | grep .)" = "" ]; then \
-		sed '/spaces-with-j: begin/,/spaces-with-j: end/s/^#//' $< >a.rc; \
-	else \
-		sed '/spaces-without-j: begin/,/spaces-without-j: end/s/^#//' $< >a.rc; \
-	fi
-	mv a.rc $@
-
-clean::
-	rm -f a.rc
-
-ifeq ("${OS}", "ubuntu")
-install::	libyaml-syck-perl.pkg
-endif
-ifeq ("${OS}", "freebsd")
-install::	p5-YAML-Syck.pkg
-endif
+${TMP}/pre-grops-ja.plenv:	App-grops-prepro.cpanm $(MAKEFILE_LIST)
+	echo "#!/bin/sh\n\
+	USER=\$${USER:-vagrant}\n\
+	HOME=\$$(getent passwd \$${USER} | cut -d: -f6)\n\
+	export PLENV_ROOT=\"\$${HOME}/.plenv\"\n\
+	exec \"\$${PLENV_ROOT}/libexec/plenv\" exec pre-grops-ja \"\$$@\"" >$@
 
 # update dev{ps,pdf}/DESC
 INSTALL_DESC=	\
