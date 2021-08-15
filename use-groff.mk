@@ -64,8 +64,9 @@ cpanm.stamp:	plenv.stamp
 Font-TTF?=		https://github.com/obuk/font-ttf.git
 Pod-Man-TMAC?=		https://github.com/obuk/Pod-Man-TMAC.git
 Pod-Perldoc-ToNroff4?=	https://github.com/obuk/Pod-Perldoc-ToNroff4.git
-Pod-Perldoc-ToNroff4?=	https://github.com/obuk/Pod-Perldoc-ToNroff4.git
 HTML-Spacing-JA?=	https://github.com/obuk/HTML-Spacing-JA.git
+App-grops-prepro?=	https://github.com/obuk/App-grops-prepro.git
+
 
 %.cpanm: cpanm.stamp
 	@echo cpanm $(basename $@)
