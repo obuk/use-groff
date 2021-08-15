@@ -41,6 +41,9 @@ if echo "$GS_ENABLE" | grep -iq "yes"; then
     fi
 fi
 
+# also install font as internalname
+LONGNAME_ENABLE=${LONGNAME_ENABLE:-"yes"}
+
 usage="usage: $(basename $0) groff-fontname fontfile.{ttf,otf}"
 
 name=${1:?"$usage"}
@@ -88,6 +91,10 @@ temp=$(mktemp -d)
 	printf "$fontname\t$fontname.t42\n"
     ) | sort -u > download.devps
     install -m 644 download.devps $SITE_FONT/devps/download
+    if echo "$LONGNAME_ENABLE" | grep -iq "yes"; then
+        iname=$(grep ^internalname $SITE_FONT/devps/$name | cut -d ' ' -f 2)
+        ln -f $SITE_FONT/devps/$name $SITE_FONT/devps/$iname
+    fi
 
     if echo "$PDF_ENABLE" | grep -iq "yes"; then
 	mkdir -p $SITE_FONT/devpdf
@@ -98,6 +105,9 @@ temp=$(mktemp -d)
 	    printf "$FOUNDRY\t$fontname\t$EMBED$TYPE42_FONT/$fontname.t42\n"
 	) | sort -u > download.devpdf
 	install -m 644 download.devpdf $SITE_FONT/devpdf/download
+        if echo "$LONGNAME_ENABLE" | grep -iq "yes"; then
+            ln -sf $SITE_FONT/devps/$iname $SITE_FONT/devpdf
+        fi
     fi
 
     if echo "$GS_ENABLE" | grep -iq "yes"; then
