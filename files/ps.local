@@ -43,6 +43,7 @@
 .if (\w'\[u3010]' > 0.8m) .char \[u3010] \h'-0.5m'\[u3010]\" 【
 .if  c  \[u2985] \
 .if (\w'\[u2985]' > 0.8m) .char \[u2985] \h'-0.5m'\[u2985]\" ｟
+.if (\w'\[uFF5F]' > 0.8m) .char \[uFF5F] \h'-0.5m'\[uFF5F]\" ｟
 .if (\w'\[u3018]' > 0.8m) .char \[u3018] \h'-0.5m'\[u3018]\" 〘
 .if (\w'\[u3016]' > 0.8m) .char \[u3016] \h'-0.5m'\[u3016]\" 〖
 .\"char \[u00AB] \[u00AB]\" «
@@ -57,17 +58,18 @@
 .\"char \[u005D] \[u005D]\" ]
 .if (\w'\[uFF3D]' > 0.8m) .char \[uFF3D] \[uFF3D]\h'-0.5m'\" ］
 .\"char \[u007D] \[u007D]\" }
-.if (\w'\[uFF7D]' > 0.8m) .char \[uFF7D] \[uFF7D]\h'-0.5m'\" ｝
+.if (\w'\[uFF5D]' > 0.8m) .char \[uFF5D] \[uFF5D]\h'-0.5m'\" ｝
 .if (\w'\[u3009]' > 0.8m) .char \[u3009] \[u3009]\h'-0.5m'\" 〉
 .if (\w'\[u300B]' > 0.8m) .char \[u300B] \[u300B]\h'-0.5m'\" 》
 .if (\w'\[u300D]' > 0.8m) .char \[u300D] \[u300D]\h'-0.5m'\" 」
 .if (\w'\[u300F]' > 0.8m) .char \[u300F] \[u300F]\h'-0.5m'\" 』
 .if (\w'\[u3011]' > 0.8m) .char \[u3011] \[u3011]\h'-0.5m'\" 】
 .if  c  \[u2986] \
-.if (\w'\[u2986]' > 0.8m) .char \[u2986] \[u2986]\h'-0.5m'\" ｠
+.if (\w'\[u2986]' > 0.8m) .char \[u2986] \[u2986]\h'-0.5m'\" ⦆
+.if (\w'\[uFF60]' > 0.8m) .char \[uFF60] \[uFF60]\h'-0.5m'\" ｠
 .if (\w'\[u3019]' > 0.8m) .char \[u3019] \[u3019]\h'-0.5m'\" 〙
 .if (\w'\[u3017]' > 0.8m) .char \[u3017] \[u3017]\h'-0.5m'\" 〗
-.char \[u00BB]  \[u00BB]\" »
+.\"char \[u00BB]  \[u00BB]\" »
 .if (\w'\[u301F]' > 0.8m) .char \[u301F] \[u301F]\h'-0.5m'\" 〟
 .
 .\" A.3 Hyphens (cl-03)
@@ -78,9 +80,9 @@
 .
 .\" A.4 Dividing punctuation marks (cl-04)
 .\"char \[u0021] \[u0021]\" ！
-.if (\w'\[uFF01]' > 0.8m) .char \[uFF01] \h'-0.25m'\z\[uFF01]\h'+0.5m'\" ！
+.if (\w'\[uFF01]' > 0.8m) .char \[uFF01] \h'-0.25m'\[uFF01]\h'-0.25m'\" ！
 .\"char \[u003F] \[u003F]\" ？
-.if (\w'\[uFF1F]' > 0.8m) .char \[uFF1F] \h'-0.20m'\z\[uFF1F]\h'+0.8m'\" ？
+.if (\w'\[uFF1F]' > 0.8m) .char \[uFF1F] \h'-0.15m'\[uFF1F]\h'-0.20m'\" ？
 .\"char \[u203C] \[u203C]\" ‼
 .\"char \[u2047] \[u2047]\" ⁇
 .\"char \[u2048] \[u2048]\" ⁈
@@ -99,8 +101,8 @@
 .if (\w'\[uFF0E]' > 0.8m) .char \[uFF0E] \[uFF0E]\h'-0.5m'\" ．
 .
 .\" A.7 Commas (cl-07)
-.if (\w'\[u3001]' > 0.8m) .char \[u3001] \z\[u3001]\h'+0.5m'\" 、
+.if (\w'\[u3001]' > 0.8m) .char \[u3001] \[u3001]\h'-0.5m'\" 、
 .\"char \[u002C] \[u002C]\" ，
-.if (\w'\[uFF0C]' > 0.8m) .char \[uFF0C] \z\[uFF0C]\h'+0.5m'\" ，
+.if (\w'\[uFF0C]' > 0.8m) .char \[uFF0C] \[uFF0C]\h'-0.5m'\" ，
 .
 .\" EOF
