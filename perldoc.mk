@@ -20,7 +20,7 @@ clean::
 
 LOCATE_DB?=	/var/lib/mlocate/mlocate.db
 
-install::	perldoc.sh
+install::	perldoc.sh locate.pkg
 	[ -f $(LOCATE_DB) ] || sudo updatedb
 	sudo install -m755 $< /usr/local/bin
 
