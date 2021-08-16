@@ -67,7 +67,7 @@
 .      do chop URL-div
 .      do URL-div
 \c
-.      pdfmarkend
+.      pdfhrefend
 .    \}
 .    el \
 .      pdfhref W -A \\c -D \\*(m1 -- \\*(m1
