@@ -87,13 +87,6 @@ man.local と mdoc.local の中で調整しています。
 これは freebsd の man コマンドの方法を真似たものです。
 
 
-### 行末揃えとハイフネーション
-
-日本語のマンページには行末揃えやハイフネーションを抑止しているものもあれば、していないものもあります。
-freebsd では前処理プログラムの中で抑止したと思われるところを機械的に戻していましたが、
-ubuntu ではそのままにしています。
-
-
 ### 異体字
 
 unicode で統合される漢字、たとえば「視 uFA61」の「視 u8996」は、
@@ -103,5 +96,19 @@ UVS のないフォントは正しく表示できないかもしれません。
 
 [ttf の cmap テーブル]: https://docs.microsoft.com/en-us/typography/opentype/spec/cmap
 [Font::TTF]: https://metacpan.org/pod/Font::TTF
+
+
+### 両端揃えとpdfのリンク
+
+日本語で groff の両端揃えを試しました。使ったものをまとめておきます。
+
+* 日本語で groff の両端揃えを使うとき、ps や pdf の prepro でスペースを追加します。[App::grops::prepro][]
+* スペースを追加したテキストは、pdfhref に渡せなないので、pdf.tmac を修正します。[pdf.tmac.patch][]
+* 修正した pdfhref は man マクロの UR と UL で使います。[man.local][]
+
+[App::grops::prepro]: https://github.com/obuk/App-grops-prepro
+[pdf.tmac.patch]: https://github.com/obuk/use-groff/blob/master/files/pdf.tmac.patch
+[man.local]: https://github.com/obuk/use-groff/blob/master/files/man.local
+
 
 誤りや改善のご指摘がありましたら、お気軽にどうぞ。

@@ -1,13 +1,19 @@
+'\" t
 .\" -*- nroff -*-
 .
 .TH SAMPLE 7
 .\"ss 12
 .ds dg "\v[-0.4m]\s-3\[dg]\s+3\v[+0.4m]\""
 .ds dd "\v[-0.4m]\s-3\[dd]\s+3\v[+0.4m]\""
+.ds dg "\v[-0.4m]\s-3\f(MR†\fP\s+3\v[+0.4m]\""
+.ds dd "\v[-0.4m]\s-3\f(MR‡\fP\s+3\v[+0.4m]\""
 .ds la \[u3008]
 .ds ra \[u3009]
-.ds C` \f(CW\s-1
-.ds C' \s+1\fP
+.ds C` \s-1
+.ds C' \s+1
+.char \(bu *
+.ds TeX T\h'-.2m'\v'.2m'E\v'-.2m'\h'-.1m'X\" Knuth's TeX
+.
 .
 .am1 EX
 .in +1m
@@ -32,42 +38,35 @@ sample \- Groff と日本語
 .\" ------------------------------------------------------------------
 .
 .EX
-groff -KUTF-8 -mja -man ./sample.7 >a.ps
+groff -k -mandoc -mja ./sample.7 >a.ps
 .EE
 .
 .\" ------------------------------------------------------------------
 .SH DESCRIPTION
 .\" ------------------------------------------------------------------
 .
+.
 .\" ------------------------------------------------------------------
 .SS 日本語マンページのメモ
 .\" ------------------------------------------------------------------
 .
-FreeBSD の日本語のマンページ groff(7) を開くと中に次のようなメモがあります。
+FreeBSDの日本語のマンページgroff(7)に次のようなメモがあります。
 .
 .PP
 .EX
-\&.\\" nroff の justification をオフにする. justification は, 日本語に似合わない.\""
+\&.\e" nroff の justification をオフにする. justification は, 日本語に似合わない.\""
 \&.na
-\&.\\" ハイフネーションをオフにする.\""
+\&.\e" ハイフネーションをオフにする.\""
 \&.hy 0
 .EE
 .
-.PP
-groff で justification を有効にして日本語を処理すると、所々に大きなス
-ペースのある少し読み難い出力になることがあります。
-.
-.PP
-感じ方は人それぞれだと思いますが、読み難いと疲れるので、groff の前処理
-とマクロを利用して補正してみようと思います。
-.
-.
 .\" ------------------------------------------------------------------
-.SS メモの行を無効に、 それなりに
+.SS 両端揃え（justification）を確かめる
 .\" ------------------------------------------------------------------
 .
-とりあえず、マンページに追加された上のメモに書かれた行 \*(C`na\*(C' や
-\*(C`hy\~0\*(C' を無効にします。
+.PP
+確認に使用する日本語のマンページを選び、\f(CW\*(C`\&.na\*(C'\fP と
+\f(CW\*(C`\&.hy 0\*(C'\fP がnroffでしか働かないようにします。
 .
 .PP
 .EX
@@ -76,132 +75,225 @@ groff で justification を有効にして日本語を処理すると、所々�
 .EE
 .
 .PP
-同様のメモは、たとえば debian の
-.pdfhref W -D https://manpages.debian.org/buster/manpages-ja/groff.7.ja.html -- \
-groff(7)
+このような設定は、debianの
+.UR https://manpages.debian.org/buster/manpages-ja/groff.7.ja.html
+groff(7) の日本語のマンページ
+.UE \c
 .
-にはありません。ubuntu は \*(C`ad l\*(C' を使っています。
-いろいろありそうです。そういうわけで、それなりに修正します。
+にはありません。ubuntuでは \f(CW\*(C`ad l\*(C'\fP が使われています。様々です。
+.
+.PP
+日本語のマンページを修正し、そのpsかpdf出力を確認します。groffは両端揃
+えでスペースを補正（伸長）するので、補正対象が少ないとき、個々のスペー
+スの補正量が大きくなります。
+.
+.PP
+注意: 予め出力デバイスに応じた日本語のフォントをインストールしておく必
+要があります。
 .
 .\" ------------------------------------------------------------------
-.SS prepro の使い方は
+.SS 前処理プログラム prepro を使う
 .\" ------------------------------------------------------------------
 .
-DESC ファイルの prepro 行を使って troff に前処理プログラムを追加します。
-DESC ファイルの説明は groff_font(5) にあります。例を示します。
+一つのスペースに割り当てられる補正量を小さくするため、文中のスペースを
+増やします。
+.
+字間に幅ゼロのスペースを挟んだり、字体にスペースを含む "、" （テン）や
+"。" （マル）のような約物をプロポーショナルフォントとスペースの組合せ
+に直します。
+.
+.PP
+入力の機械的な修正にはtroffの前処理プログラムを利用します。troffの前処
+理プログラムはDESCファイルのprepro行で指定します。prepro行は
+groff_font(5)に説明されていますが、詳細は分りません。groff \-Vの出力
+（下記）が参考になります。
 .
 .PP
 .EX
-\&prepro /usr/local/bin/pre-gropdf.pl
+\&$ \fBgroff -V -Tpdf -mandoc -mja -k files...\fP
+\&preconv files... | \fIprepro\fP troff -mandoc -mja -Tpdf | \fIpostpro\fP
 .EE
 .
 .PP
-prepro(1) はありませんが、groff(1) に groff \-V を使えば起動するコマン
-ド（パイプライン）が分ることが説明されています。ある程度のことは試して
-調べられそうです。
+.IP 1. 4
+\fIprepro\fP と \fIpostpro\fP はデバイスのDESCファイルで指定します。
+preconvはgroffのオプション \-kの他、\-Dや \-Kを指定したときに使われま
+す。
 .
-.PP
-prepro はその標準出力が troff の標準入力になるように troff とパイプで
-つなぎます。
+.IP 2.
+\fIprepro\fP の入力はtroffのコマンドライン（\fIprepro\fP のコマンドラ
+インの troff 以降）に指定されるtroffの入力ファイルか、標準入力（前処理
+プログラムの出力）です。
 .
-.PP
-prepro の入力は、troff の入力ファイルとしてコマンドラインに指定されて
-いるときはそれを、何も指定されていなければ標準入力を使います。
-.
-.PP
-prepro のコマンドラインには出力ドライバのオプションも渡されます。出力
-ドライバとの協調に役立ちますが、使わなくてもパースする必要があります。
+.IP 3.
+\fIprepro\fP の出力はtroffの標準入力になるので、troffのコマンドライン
+に入力ファイルが指定されていれば取り除かなければなりません。
 .
 .\" ------------------------------------------------------------------
-.SS 日本語の改行を取り除く (PREPRODEBUG=8)
+.SS スペースを作る
 .\" ------------------------------------------------------------------
 .
-改行は空白と同様に扱われます。行末から行頭にかけて日本語の文字（平仮名、
-片仮名、漢字）が続くとき、改行を取り除いて次の行とつなぎます。抑止する
-には行頭に \*(lq.\*(rq を置きます。
-.
-.PP
-結果は環境変数 \*(C`PREPRODEBUG=8\*(C' で確かめます。
-.\" \*(lq\fB\s-2\[u23CE]\s+2\fP\*(rq
+伸びるスペースを作ります。groffのスペースは、伸び縮みする \*[TeX] の
+glueとは違い、伸びるだけで縮みません。
 .
 .PP
 .EX
-env PREPRODEBUG=8 groff -Tpdf -man -mja -Kutf8 sample.7 > sample.pdf
+\&.de pp:sp
+\e\ec
+\&.  ie \e\en[.$] .ss \e\e$*
+\&.  el .ss \e\en[\e\e$0-width]
+\&.  nop \e\e& \e\ec
+\&.  ss
+\&..
+\&.nr pp:emsp-width  (\en[.ss] * 4)
+\&.nr pp:hemsp-width (\en[.ss] * 2)
+\&.nr pp:qemsp-width (\en[.ss])
+.\"\&.nr pp:wdsp-width  \en[.ss]
+.\"\&.nr pp:nrsp-width  (\en[.ss] / 4)
+\&.nr pp:zwsp-width  0
+\&.
+\&.als pp:emsp  pp:sp
+\&.als pp:hemsp pp:sp
+\&.als pp:qemsp pp:sp
+.\"\&.als pp:wdsp  pp:sp
+.\"\&.als pp:nrsp  pp:sp
+\&.als pp:zwsp  pp:sp
 .EE
 .
-.\"| gs -sDEVICE=pdfwrite -dPrinted=false -dNOPAUSE -dQUIET -dBATCH -sOutputFile=- -
+.PP
+このマクロは
+.UR https://www.gnu.org/software/groff/manual/html_node/Strings.html#index-_005c_002a
+\f(CW\*(C`\e*\*(C'\fP
+.UE
+で実行します。
+.
+スペースの幅は、引数で指定するか、マクロ名で指定します。
+.PP
+.RS 2
+.PD 0
+.TP 16
+引数で幅を指定:
+.
+\f(CW\*(C`\e*[pp:sp\*(C'\fP \fIwidth\fP\f(CW\*(C`]\*(C'\fP
+.TP
+名前で幅を指定:
+.
+\f(CW\*(C`\e*[pp:emsp ]\*(C'\fP, \f(CW\*(C`\e*[pp:hemsp ]\*(C'\fP,
+\f(CW\*(C`\e*[pp:qemsp ]\*(C'\fP, \f(CW\*(C`\e*[pp:zwsp ]\*(C'\fP, ...
+.PD
+.RE
+.
+.PP
+後者は、マクロ名に -width を付けた名前の数値レジスタに幅を設定する必要
+があります。
+.
+.PP
+マクロを \f(CW\*(C`\e*\*(C'\fP で実行するのは、文中にマクロ（スペース）を追加
+しても行数を変えないようにするためです。行数が変わるとgroffのメッセー
+ジで示される行番号が変わります。引数の入力に
+.UR https://www.gnu.org/software/groff/manual/html_node/Input-Line-Traps.html#index-it
+\f(CW\*(C`.it\*(C'\fP
+.UE
+を使うマクロは、おそらく指定行数の入力に失敗しまます。
+.
+.ig
+.PP
+最近のgroff 1.22.4に同梱されるマクロは \f(CW\*(C`.itc\*(C'\fP を使用しています。
+..
 .
 .\" ------------------------------------------------------------------
-.SS 約物のスペースを groff の伸縮可能なスペースと組合せる (PREPRODEBUG=9)
+.SS スペースを配置する
 .\" ------------------------------------------------------------------
 .
-約物に含まれるスペースが調整に使えるように groff のスペース（伸縮可能）
-と取り替えます。イメージを示します。
+.ds emsp \m[red]\D'l 0 0.1'\D'l 1 0'\D'l 0 -0.6'\D'l -1 0'\D'l 0 0.5'\h'1'\m[]
+.ds ensp \m[red]\D'l 0 0.1'\D'l 0.5 0'\D'l 0 -0.6'\D'l -0.5 0'\D'l 0 0.5'\h'0.5'\m[]
+.ds qwsp \m[red]\D'l 0 0.1'\D'l 0.25 0'\D'l 0 -0.6'\D'l -0.25 0'\D'l 0 0.5'\h'0.25'\m[]
+.ds zwsp \m[red]\D'l 0 0.1'\D'l 0.1 0'\D'l 0 -0.6'\D'l -0.1 0'\D'l 0 0.5'\h'0.1'\m[]
+.
+字間に幅ゼロのスペース \*[zwsp] を配置します。
 .
 .PP
 .IP \(bu 4
-\[bv]\z。\h'1m'\[bv] \(-> \[bv]\z。\h'0.5m'\[bv] + \h'0.25m'\[u2423]
-.IP \(bu 4
-\[bv]\z、\h'1m'\[bv] \(-> \[bv]\z、\h'0.5m'\[bv] + \h'0.25m'\[u2423]
-.IP \(bu 4
-\[bv]\h'0.5m'\Z'\&（'\h'0.5m'\[bv] \(-> \h'0.25m'\z\[u2423]\h'1.25m' +
-\[bv]\Z'\&（'\h'0.5m'\[bv]
-.IP \(bu 4
-\[bv]\z）\h'1m'\[bv] \(-> \[bv]\z）\h'0.5m'\[bv] + \h'0.25m'\[u2423]
+「おはよう」 \(-> 「お\*[zwsp]は\*[zwsp]よ\*[zwsp]う」
 .
 .PP
-結果は環境変数 \*(C`PREPRODEBUG=9\*(C' で確かめます。
-.
-.\" ------------------------------------------------------------------
-.SS 約物のスペースを確かめる
-.\" ------------------------------------------------------------------
-.
-約物のスペース（アキ）を確かめ、必要なら \*(C`.ss\*(C' で調整します。
-.
-.\" pp-ja 3
-.TP 12
-.B それなり
-\c
-■■■。■■■\[bv]■■■。■■■\[bv]■■■。■■■\[bv]■■■。■■■\[bv]
-.
-.TP
-.gcolor grey
-.B ベタ
-\c
-■■■。\&■■■\[bv]■■■。\&■■■\[bv]■■■。\&■■■\[bv]■■■。\&■■■\[bv]
-.gcolor
-.
-.TP
-.B 四分
-\c
-■■■\z。\h'+0.75m'■■■\[bv]■■■\z。\h'+0.75m'■■■\[bv]■■■\z。\h'+0.75m'■■■\[bv]■■■\z。\h'+0.75m'■■■\[bv]
-.
-.TP
-.gcolor grey
-.B 二分
-\c
-■■■\z。\h'+1m'■■■\[bv]■■■\z。\h'+1m'■■■\[bv]■■■\z。\h'+1m'■■■\[bv]■■■\z。\h'+1m'■■■\[bv]
-.gcolor
-.
-.\" pp-ja
+約物の字体をプロポーショナルフォントで狭め、スペース \*[ensp] を補いま
+す。
 .
 .PP
-\*(C`.ss 12\*(C' で「それなり」の行と「四分」の行の長さがほぼ同じ長さ
-になります。約物のアキを欧文の語間に使うスペースと兼用したので、調整す
-るときは欧文の語間に注意してください。
+.PD 0
+.IP \(bu
+「\z。\h'1m'」 \(-> 「。\&\*[ensp]」
+.IP \(bu
+「\z、\h'1m'」 \(-> 「、\&\*[ensp]」
+.IP \(bu
+「\h'0.5m'\z（\h'0.5m'」 \(-> 「\*[ensp]\&（」
+.IP \(bu
+「\z）\h'1m'」 \(-> 「）\&\*[ensp]」
+.IP \(bu
+「\h'0.25m'・\h'0.25m'」 \(-> 「\*[qwsp]\&・\&\*[qwsp]」
+.PD
+.
+.PP
+それから、日本語と欧文の境界にスペースを配置します。preproは、
+.UR https://qiita.com/CodeOne/items/43d2b8e4247b020652b2
+日本語文章中、 英単語の両端にスペースをつける人
+.UE \c
+.
+のようにスペースをつけます。もしそこにスペースを見付けたら、それはスペー
+スをつける人の入力かもしれません。そのまま残します。人が入力するスペー
+スには20Hの他、groffのエスケープで作られたものもあります。
+.
+.PP
+数は日本語と近いと考えられるので（説明は上のリンクを参照）、数と日本語
+の境界のスペースを狭くします。
+.
+また数を構成するものには数字だけでなく前置記号（￥、＄、￡、等）、後置
+記号（℃、％、㌔、等）、更に単位もあると思います。定義は一つではないと
+思います。
+.
+そのため文中に次の行を置くことで追加したスペースを確認できるようにして
+います。
+.
+.PP
+.EX
+\&.nr pp:debug 1
+.EE
+.
+.PP
+.nr pp:debug.bak \n[pp:debug]
+.nr pp:debug 1
+.PD 0
+.IP \(bu 4
+2012年3月4日は今日と同じ曜日ですか？
+.IP \(bu
+弟から1,000円もらう。1,\|000円、1,\~000円など
+.IP \(bu
+数は単位も含みます。縦横230㎝や重さ4.75㌢は単位の後にスペースが入ります。
+.IP \(bu
+単位は英字の組合せも受け入れます。従って230cmと書くことができます。
+.IP \(bu
+単位230km/hや4.75kg/m\s-3\u2\d\s+3はパースできません。
+.IP \(bu
+単位230[km/h]や4.75(kg/m\s-3\u2\d\s+3)はパースできます。
+.PD
+.PP
+カンマの後、括弧の前後のスペースの調整は難しいので、何もしていません。
+.nr pp:debug \n[pp:debug.bak]
 .
 .\" ------------------------------------------------------------------
-.SS 連続する約物を補正する
+.SS 両端揃えで伸ばさないところに配慮する
 .\" ------------------------------------------------------------------
 .
-.pdfhref W -D https://www.w3.org/TR/jlreq/ja/ -- \
-  日本語組版処理の要件 （日本語版） W3C 技術ノート 2012年\:4月\:3日
+.UR https://www.w3.org/TR/jlreq/
+日本語組版処理の要件 （日本語版） W3C 技術ノート
+.UE
 .
-\c
 「3.1.4 始め括弧類，終わり括弧類，読点類，句点類及び中点類が連続する場
-合の配置方法」の例を示します。
+合の配置方法」を参考にしました。例を示します。
 .
 .PP
+.PD 0
 .IP \[u2460]  4
 句読点の後ろに終わり括弧類が連続
 .br
@@ -236,117 +328,286 @@ env PREPRODEBUG=8 groff -Tpdf -man -mja -Kutf8 sample.7 > sample.pdf
 括弧類と中点類が連続
 .br
 …「編集」・「校正」…
+.PD
 .
 .PP
-役物のスペースの配置は、環境変数 \*(C`PREPRODEBUG=9\*(C' で確かめます。
+（後で）禁則ではスペースのマクロに使われる20Hを \f(CW\*(C`\e~\*(C'\fP にする必
+要があります。
 .
 .ig
 .PP
-.UR https://\:www.gnu.org/\:software/\:groff/\:manual/\:html_node/\:Ligatures-and-Kerning.html
+.UR https://www.gnu.org/software/groff/manual/html_node/Ligatures-and-Kerning.html
 Ligatures and Kerning
 .UE
-も試しましたが、日本語の約物には使えませんでした。
-確か unicode の文字には使えない、といった類のエラーが出力されました。
+も試しましたが、日本語の約物には使えませんでした。確かunicodeの文字に
+は使えない、といった類のエラーが出力されました。
 ..
-.
-.\" ------------------------------------------------------------------
-.SS 文字間に伸縮可能なスペースを挟む (PREPRODEBUG=11)
-.\" ------------------------------------------------------------------
-.
-伸縮可能なスペースは node.cpp に stretchable zero-width space not
-implemented yet というコメントがありますから、とりあえずマクロで実装し
-ます。期待して待ちましょう。
-.
-.PP
-文字間に \*(C`.zwsp\*(C' を挟みます。たとえば「お早う」は次のとおり。
-.
-.PP
-.EX
-\&お\\c
-\&.zwsp
-\&早\\c
-\&.zwsp
-\&う\\c
-.EE
-.
-.PP
-結果は環境変数 \*(C`PREPRODEBUG=11\*(C' で確かめます。
-.
-.PP
-注意、この方法は \*(C`.TP\*(C' の直後の行（ラベル）に使うことができません。
 .
 .
 .\" ------------------------------------------------------------------
 .SS プロポーショナルフォント（もどき）を作る
 .\" ------------------------------------------------------------------
 .
-約物の字体を調整します。フォントを直すのは大変なので、groff で調整しま
-す。サンプルの ps.local の一部を示します。
+サンプルのps.localの一部を示します。全角幅1emに近いとき \ehで調整しま
+す。
 .
 .PP
 .EX
-\&.\\" A.6 Full stops (cl-06)\""
-\&.if (\\w'\\\&[u3002]' > 0.8m) .char \\\&[u3002] \\\&[u3002]\\h'-0.5m'\\" 。\""
-\&.if (\\w'\\\&[uFF0E]' > 0.8m) .char \\\&[uFF0E] \\\&[uFF0E]\\h'-0.5m'\\" ．\""
+\&.\e" A.6 Full stops (cl-06)\""
+\&.if (\ew'\e[u3002]' > 0.8m) .char \e[u3002] \e[u3002]\eh'-0.5m'\e" 。\""
+\&.if (\ew'\e[uFF0E]' > 0.8m) .char \e[uFF0E] \e[uFF0E]\eh'-0.5m'\e" ．\""
 .EE
 .
 .PP
-ここで使用したフォントは、
-.pdfhref W -D https://github.com/3846masa/sauce-han-fonts -- \
-醤ノ角ゴシック (ひしおのかくごしっく) と醤ノ明朝 (ひしおのみんちょう)
+以下、字体の幅が0.5em以下で「青」、そうでないとき「赤」です。（大半は
+青の筈です。）
 .
-です。他のフォントでは別の調整が必要になるかもしれません。
+.de check_char
+.  nop \m[grey]|\m[]\c
+.  ie (\w'\\$1' <= 0.5m) .nop \m[blue]\\$1\m[]\c
+.  el .nop \m[red]\\$1\m[]\c
+..
+.de check_w3c_jlreq_a1-7
+.PD 0
+.TP 3i
+A.1 Opening brackets (cl-01)
+.check_char ‘
+.check_char “
+.check_char (
+.check_char （
+.check_char 〔
+.check_char [
+.check_char ［
+.check_char {
+.check_char ｛
+.check_char 〈
+.check_char 《
+.check_char 「
+.check_char 『
+.check_char 【
+.check_char ⦅
+.check_char ｟
+.check_char 〘
+.check_char 〖
+.check_char «
+.check_char 〝
+.check_char
 .
-.sp 999
+.TP
+A.2 Closing brackets (cl-02)
+.check_char ’
+.check_char ”
+.check_char )
+.check_char ）
+.check_char 〕
+.check_char ]
+.check_char ］
+.check_char }
+.check_char ｝
+.check_char 〉
+.check_char 》
+.check_char 」
+.check_char 』
+.check_char 】
+.check_char ⦆
+.check_char ｠
+.check_char 〙
+.check_char 〗
+.check_char »
+.check_char 〟
+.check_char
+.
+.TP
+A.3 Hyphens (cl-03)
+.check_char ‐
+.\"check_char 〜
+.check_char ゠
+.check_char –
+.check_char
+.
+.TP
+A.4 Dividing punctuation marks (cl-04)
+.check_char !
+.check_char ！
+.check_char ?
+.check_char ？
+.\"check_char ‼
+.\"check_char ⁇
+.\"check_char ⁈
+.\"check_char ⁉
+.check_char
+.
+.TP
+A.5 Middle dots (cl-05)
+.check_char ・
+.check_char ：
+.check_char :
+.check_char ;
+.check_char
+.
+.TP
+A.6 Full stops (cl-06)
+.check_char 。
+.check_char ．
+.check_char .
+.check_char 
+.
+.TP
+A.7 Commas (cl-07)
+.check_char 、
+.check_char ，
+.check_char ,
+.check_char
+.PD
+..
+.
+.PP
+.check_w3c_jlreq_a1-7
+.
+.
+.\".PP
+.\".UR https://github.com/3846masa/sauce-han-fonts
+.\"醤ノ明朝
+.\".UE 、
+.\".UR https://github.com/ButTaiwan/genyo-font
+.\"源様明朝
+.\".UE 、
+.\".UR https://moji.or.jp/ipafont/
+.\"IPAex明朝
+.\".UE 、
+.\".UR https://moji.or.jp/ipafont/
+.\"Takao明朝
+.\".UE \c
+.\"を試しました。
+.
+.\" ------------------------------------------------------------------
+.SS 異体字を使う
+.\" ------------------------------------------------------------------
+.
+groffは、前処理プログラムpreconvがunicodeの文字を \f(CW\*(C`\e[uXXXX]\*(C'\fP
+形式（groffの内部表現）に直します。そのため、\[u908A_E0107]は
+\f(CW\*(C`\e[u908A_E0107]\*(C'\fP または \f(CW\*(C`\e[u908A]\e[uE0107]\*(C'\fP と記述
+することができます。後者は元のgroffの処理系にはなく、preproで拡張した
+ものです。
+.
+.PP
+groffで異体字を扱うには
+.UR https://docs.microsoft.com/en-us/typography/opentype/spec/cmap
+Character to Glyph Index Mapping Table (cmap)
+.UE
+のUVSからtextmapを作成し、afmtodit(1)に入力して異体字をサポートする
+groffのフォントを作成します。
+.
+.ig ..
+.TS
+tab(;);
+lfCW l l l.
+\e[u9089_E0101];邉󠄁;邉\[uE0101];\[u9089_E0101];
+\e[u9089_E0102];邉󠄂;邉\[uE0102];\[u9089_E0102];
+\e[u9089_E0103];邉󠄃;邉\[uE0103];\[u9089_E0103];
+\e[u9089_E0104];邉󠄄;邉\[uE0104];\[u9089_E0104];
+\e[u9089_E0105];邉󠄅;邉\[uE0105];\[u9089_E0105];
+\e[u9089_E0106];邉󠄆;邉\[uE0106];\[u9089_E0106];
+\e[u9089_E0107];邉󠄇;邉\[uE0107];\[u9089_E0107];
+\e[u9089_E0108];邉󠄈;邉\[uE0108];\[u9089_E0108];
+\e[u9089_E0109];邉󠄉;邉\[uE0109];\[u9089_E0109];
+\e[u9089_E010A];邉󠄊;邉\[uE010A];\[u9089_E010A];
+\e[u9089_E010B];邉󠄋;邉\[uE010B];\[u9089_E010B];
+\e[u9089_E010C];邉󠄌;邉\[uE010C];\[u9089_E010C];
+\e[u9089_E010D];邉󠄍;邉\[uE010D];\[u9089_E010D];
+\e[u9089_E010E];邉󠄎;邉\[uE010E];\[u9089_E010E];
+\e[u908A_E0101];邊󠄁;邊\[uE0101];\[u908A_E0101];
+\e[u908A_E0102];邊󠄂;邊\[uE0102];\[u908A_E0102];
+\e[u908A_E0103];邊󠄃;邊\[uE0103];\[u908A_E0103];
+\e[u908A_E0104];邊󠄄;邊\[uE0104];\[u908A_E0104];
+\e[u908A_E0105];邊󠄅;邊\[uE0105];\[u908A_E0105];
+\e[u908A_E0106];邊󠄆;邊\[uE0106];\[u908A_E0106];
+\e[u908A_E0107];邊󠄇;邊\[uE0107];\[u908A_E0107];
+.TE
+...
+.
+.
+.\" ------------------------------------------------------------------
+.SS ハイパーリンクを使う
+.\" ------------------------------------------------------------------
+.
+pdfのハイパーリンクはpdf.tmacの \f(CW\*(C`\&.pdfhref\*(C'\fP で作りま
+すが、指定できるリンクテキストは単純なものに限られます。指定できないも
+のには、たとえば、複数行のテキスト、日本語のテキストにスペース
+（\f(CW\*(C`\&pp:sp\*(C'\fP の類）を追加したもの、manマクロの
+\f(CW\*(C`\&.UR\*(C'\fP と \f(CW\*(C`\&.UE\*(C'\fP のリンクテキスト
+（ここにはgroffのリクエストが記述できる）等があります。
+.
+.
+.PP
+制限を緩和するためpdf.tmacを修正し、複雑なリンクテキストは
+\f(CW\*(C`\&.pdfhref\*(C'\fP に渡さない、リンクテキストの終わりを
+\f(CW\*(C`\&.pdfhrefend\*(C'\fP で示せるようにします。
+.
+.
+.bp
 .\" ------------------------------------------------------------------
 .SS 両端揃えの比較
 .\" ------------------------------------------------------------------
 .
-.pdfhref W -D https://www.aozora.gr.jp/cards/001779/card56646.html -- \
+.UR https://www.aozora.gr.jp/cards/001779/card56646.html
 心理試験（青空文庫 図書カード：No.56646）
+.UE
 .
-を両端揃えの比較に使います。
+をmodeを指定して処理し、スペースの配置を確かめます。
+.
+.nr pp:debug.bak \n[pp:debug]
+.nr pp:debug 1
+.PP
+.B
+1. 日本語の行の継続で取り除かれるスペースを見る（mode 32）
 .
 .ll 30m
 .PP
-.\" pp-ja 0
-.ti -1
-.B 1. 改行を取り除く
-.br
-例えば、Automatograph 等の力を借りて、手の微細な動きを発見する方法。あ
-る手段によって眼球の動き方を確める方法。Pneumograph によって呼吸の深浅
-遅速を計る方法。Sphygmograph によって脈搏の高低遅速を計る方法。
-Plethysmograph によって四肢の血量を計る方法。Galvanometer によって掌の
-微細なる発汗を発見する方法。膝の関節を軽く打って生ずる筋肉の収縮の多少
-を見る方法、其他これらに類した種々様々の方法がある。
-.\" pp-ja
-.PP
-.\" pp-ja 1
-.ti -1
-.B 2. 約物のスペースを調整する
-.br
-例えば、Automatograph 等の力を借りて、手の微細な動きを発見する方法。あ
-る手段によって眼球の動き方を確める方法。Pneumograph によって呼吸の深浅
-遅速を計る方法。Sphygmograph によって脈搏の高低遅速を計る方法。
-Plethysmograph によって四肢の血量を計る方法。Galvanometer によって掌の
-微細なる発汗を発見する方法。膝の関節を軽く打って生ずる筋肉の収縮の多少
-を見る方法、其他これらに類した種々様々の方法がある。
-.\" pp-ja
-.PP
-.\" pp-ja 3
-.ti -1
-.B 3. 約物のスペースと文字間を調整する
-.br
-例えば、Automatograph 等の力を借りて、手の微細な動きを発見する方法。あ
-る手段によって眼球の動き方を確める方法。Pneumograph によって呼吸の深浅
-遅速を計る方法。Sphygmograph によって脈搏の高低遅速を計る方法。
-Plethysmograph によって四肢の血量を計る方法。Galvanometer によって掌の
+.\" pp-ja 32
+例えば、Automatograph等の力を借りて、手の微細な動きを発見する方法。あ
+る手段によって眼球の動き方を確める方法。Pneumographによって呼吸の深浅
+遅速を計る方法。Sphygmographによって脈搏の高低遅速を計る方法。
+Plethysmographによって四肢の血量を計る方法。Galvanometerによって掌の
 微細なる発汗を発見する方法。膝の関節を軽く打って生ずる筋肉の収縮の多少
 を見る方法、其他これらに類した種々様々の方法がある。
 .\" pp-ja
 .ll
 .
-.sp
+.PP
+.\"B 2. 行を跨ぐ日本語の文をつなぐ。 約物のスペースを補正に使う （mode 1）
+.B
+2. 行を跨ぐ日本語の文をつなぐ。約物のスペースを補正に使う（mode 1）
+.
+.ll 30m
+.PP
+.\" pp-ja 1
+例えば、Automatograph等の力を借りて、手の微細な動きを発見する方法。あ
+る手段によって眼球の動き方を確める方法。Pneumographによって呼吸の深浅
+遅速を計る方法。Sphygmographによって脈搏の高低遅速を計る方法。
+Plethysmographによって四肢の血量を計る方法。Galvanometerによって掌の
+微細なる発汗を発見する方法。膝の関節を軽く打って生ずる筋肉の収縮の多少
+を見る方法、其他これらに類した種々様々の方法がある。
+.\" pp-ja
+.ll
+.
+.PP
+.\".B 3. 上記 2. に加え、 和文と欧文の境界、 および字間にスペースを補う （mode 7）
+.B
+3. 上記2.に加え、和文と欧文の境界、および字間にスペースを補う（mode 7）
+.
+.ll 30m
+.PP
+.\" pp-ja 7
+例えば、Automatograph等の力を借りて、手の微細な動きを発見する方法。あ
+る手段によって眼球の動き方を確める方法。Pneumographによって呼吸の深浅
+遅速を計る方法。Sphygmographによって脈搏の高低遅速を計る方法。
+Plethysmographによって四肢の血量を計る方法。Galvanometerによって掌の
+微細なる発汗を発見する方法。膝の関節を軽く打って生ずる筋肉の収縮の多少
+を見る方法、其他これらに類した種々様々の方法がある。
+.\" pp-ja
+.ll
+.nr pp:debug \n[pp:debug.bak]
+.
 .PP
 誤りや改善のご指摘がありましたら、お気軽にどうぞ。
-
