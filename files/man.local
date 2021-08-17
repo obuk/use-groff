@@ -61,17 +61,19 @@
 .  el .ie \\n[mPDF] \{\
 .    br
 .    di
-.    ev
-.    ie \\n(dn \{\
-.      \" Yes, strip off final newline of diversion and emit it.
-.      do chop URL-div
-.      do URL-div
-\c
-.      pdfhrefend
+.    if !\\n(dl \{\
+.      da URL-div
+.      nop \&\\*(m1
+.      br
+.      di
 .    \}
-.    el \
-.      pdfhref W -A \\c -D \\*(m1 -- \\*(m1
-.    nop \&\\$*
+.    ev
+.    \" Yes, strip off final newline of diversion and emit it.
+.    do chop URL-div
+.    do URL-div
+\c
+.    pdfhrefend
+\&\\$*\"
 .  \}
 .  el \
 \\*(la\\*(m1\\*(ra\\$*\"
