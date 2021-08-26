@@ -86,11 +86,9 @@
 .
 .  am UR
 .    nr in-pdfhref 1
-.    nr pp:debug 2
 .  .
 .  am UE
 .    nr in-pdfhref 0
-.    nr pp:debug 0
 .  .
 .  de an-pdfmarksuspend
 .    if \\n[in-pdfhref] \
@@ -110,11 +108,9 @@
 .  .
 .
 .  am1 TH
-.    \"ptr
 .    wh 0 an-header-with-pdfmark
 .    \"wh -1i an-footer-with-pdfmark
 .    wh \n[FT]u an-p-footer-with-pdfmark
-.    \"ptr
 .  .
 .\}
 .
