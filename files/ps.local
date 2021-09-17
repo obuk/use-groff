@@ -5,17 +5,28 @@
 .
 .\"tm configure japanese fonts for ps with .fspecial TR MR
 .fspecial TR  MR
-.fspecial TI  MR
+.ie F MI  .fspecial TI  MI
+.el       .fspecial TI  MR
 .fspecial TB  MB
-.fspecial TBI MB
-.fspecial CR  MR
-.fspecial CI  MR
-.fspecial CB  MB
-.fspecial CBI MB
+.ie F MBI .fspecial TBI MBI
+.el       .fspecial TBI MB
+.
 .fspecial HR  GR
-.fspecial HI  GR
+.ie F GI  .fspecial HI  GI
+.el       .fspecial HI  GR
 .fspecial HB  GB
-.fspecial HBI GB
+.ie F GBI .fspecial HBI GBI
+.el       .fspecial HBI GB
+.
+.fspecial CR  MR
+.ie F MI  .fspecial CI  MI
+.el       .fspecial CI  MR
+.fspecial CB  MB
+.ie F MBI .fspecial CBI MBI
+.el       .fspecial CBI MB
+.
+.nr pp:spacewidth \w'\f(TR \fP'
+.
 .
 .\" define missing glyph for SauceHan{Serif,Sans}JP-*
 .if c \[ti] \{\
