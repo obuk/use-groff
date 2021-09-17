@@ -9,8 +9,8 @@ FILES=	${TMP}/gropdf ${TMP}/ps.local ${TMP}/ja.local	\
 
 LOCAL_BIN?=	/usr/local/bin
 
-PREGROPS?=	${LOCAL_BIN}/pre-grops-ja.plenv
-PREGROPDF?=	${LOCAL_BIN}/pre-grops-ja.plenv
+PREGROPS?=	${LOCAL_BIN}/pre-grops.plenv
+PREGROPDF?=	${LOCAL_BIN}/pre-grops.plenv
 PAPERSIZE?=	a4
 
 BUILDFOUNDRIES?=	${GROFF_FONT}/devpdf/util/BuildFoundries
@@ -59,15 +59,15 @@ tmpdir:
 clean::
 	rm -rf ${TMP}
 
-install::	${TMP}/pre-grops-ja.plenv
+install::	${TMP}/pre-grops.plenv
 	sudo install -m 755 $< ${LOCAL_BIN}
 
-${TMP}/pre-grops-ja.plenv:	App-grops-prepro.cpanm $(MAKEFILE_LIST)
+${TMP}/pre-grops.plenv:	App-grops-prepro.cpanm $(MAKEFILE_LIST)
 	echo "#!/bin/sh\n\
-	USER=\$${USER:-vagrant}\n\
-	HOME=\$$(getent passwd \$${USER} | cut -d: -f6)\n\
+	GROFF_USER=\$${GROFF_USER:-vagrant}\n\
+	HOME=\$$(getent passwd \$${GROFF_USER} | cut -d: -f6)\n\
 	export PLENV_ROOT=\"\$${HOME}/.plenv\"\n\
-	exec \"\$${PLENV_ROOT}/libexec/plenv\" exec pre-grops-ja \"\$$@\"" >$@
+	exec \"\$${PLENV_ROOT}/libexec/plenv\" exec `basename $@ .plenv` \"\$$@\"" >$@
 
 # update dev{ps,pdf}/DESC
 INSTALL_DESC=	\
