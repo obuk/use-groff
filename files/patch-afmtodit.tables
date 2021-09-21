@@ -1,7 +1,7 @@
-*** ./src/utils/afmtodit/afmtodit.tables.orig	Tue Jul  3 06:56:04 2018
---- ./src/utils/afmtodit/afmtodit.tables	Sun Aug 25 09:00:54 2019
+*** ./src/utils/afmtodit/afmtodit.tables.orig	2021-09-20 00:57:44.528326566 +0000
+--- ./src/utils/afmtodit/afmtodit.tables	2021-09-20 01:01:24.929600735 +0000
 ***************
-*** 990,1450 ****
+*** 1001,1466 ****
     "30F9", "30F1_3099",
     "30FA", "30F2_3099",
     "30FE", "30FD_3099",
@@ -295,6 +295,8 @@
 -   "FA2B", "98FC",
 -   "FA2C", "9928",
 -   "FA2D", "9DB4",
+-   "FA2E", "90DE",
+-   "FA2F", "96B7",
 -   "FA30", "4FAE",
 -   "FA31", "50E7",
 -   "FA32", "514D",
@@ -354,6 +356,9 @@
 -   "FA68", "96E3",
 -   "FA69", "97FF",
 -   "FA6A", "983B",
+-   "FA6B", "6075",
+-   "FA6C", "242EE",
+-   "FA6D", "8218",
 -   "FA70", "4E26",
 -   "FA71", "51B5",
 -   "FA72", "5168",
@@ -463,9 +468,9 @@
     "FB1D", "05D9_05B4",
     "FB1F", "05F2_05B7",
     "FB2A", "05E9_05C1",
---- 990,995 ----
+--- 1001,1006 ----
 ***************
-*** 1492,2039 ****
+*** 1521,2068 ****
     "1D1BE", "1D1BA_1D165_1D16E",
     "1D1BF", "1D1B9_1D165_1D16F",
     "1D1C0", "1D1BA_1D165_1D16F",
@@ -1013,5 +1018,5 @@
 -   "2FA1D", "2A600",
   );
   
-  # This table has been algorithmically derived from the file glyphlist.txt,
---- 1037,1042 ----
+  # This table has been algorithmically derived from the file
+--- 1061,1066 ----
