@@ -98,20 +98,33 @@
 .    if \\n[in-pdfhref] \
 .      pdfmarkrestart
 .  .
-.  de an-p-footer-with-pdfmark
-.    an-pdfmarksuspend
-.    an-p-footer
-.  .
+.
 .  de1 an-header-with-pdfmark
 .    an-header
 .    an-pdfmarkrestart
 .  .
 .
-.  am1 TH
-.    wh 0 an-header-with-pdfmark
-.    \"wh -1i an-footer-with-pdfmark
-.    wh \n[FT]u an-p-footer-with-pdfmark
-.  .
+.  if d an-p-footer \{\
+.    de an-p-footer-with-pdfmark
+.      an-pdfmarksuspend
+.      an-p-footer
+.    .
+.    am1 TH
+.      wh 0 an-header-with-pdfmark
+.      wh \\n[FT]u an-p-footer-with-pdfmark
+.    .
+.  \}
+.  el \{\
+.    de an-footer-with-pdfmark
+.      an-pdfmarksuspend
+.      an-footer
+.    .
+.    am1 TH
+.      wh 0 an-header-with-pdfmark
+.      wh \\n[an-footer-location]u an-footer-with-pdfmark
+.    .
+.  \}
+.
 .\}
 .
 .\" End
