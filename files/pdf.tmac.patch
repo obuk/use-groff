@@ -1,5 +1,5 @@
-*** /usr/share/groff/current/tmac/pdf.tmac	2020-03-21 12:27:30.000000000 +0000
---- tmp/pdf.tmac.patched	2021-08-16 14:05:30.343751335 +0000
+*** pdf.tmac.orig	2021-09-19 22:47:31.433533814 +0000
+--- pdf.tmac	2021-09-19 22:48:36.232725972 +0000
 ***************
 *** 250,256 ****
   .         chop pdf:clean
@@ -66,10 +66,10 @@
   .   \"
   .   \" Clean up the temporary registers and strings, used to
 ***************
-*** 805,810 ****
---- 814,825 ----
-  .de pdftransition
-  .nop \!x X pdf: transition \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8
+*** 793,798 ****
+--- 802,813 ----
+  .de pdfmarkrestart
+  .nop \!x X pdf: markrestart
   ..
 + .de pdfmarkend
 + .  device pdf: markend
@@ -77,6 +77,6 @@
 + .    nop \&\m[]\c
 + ..
 + .als pdfhrefend pdfmarkend
-  .\" Local Variables:
-  .\" mode: nroff
-  .\" End:
+  .de pdfpagename
+  .nop \!x X pdf: pagename \\$1
+  ..
