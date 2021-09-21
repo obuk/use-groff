@@ -2,29 +2,43 @@
 
 include use-groff.mk
 
-FONTS=		genyo-font genyog-font
+REPOM=		genyo-font
+REPOG=		genyog-font
 SERIF=		GenYoMin
 SANS=		GenYoGothic
 
-VPATH=		$(patsubst %,%/ttc,${FONTS})
+VPATH=		$(patsubst %,%/ttc,${REPOM} ${REPOG})
 
 setup::
-	for f in ${FONTS}; do \
+	for f in ${REPOM} ${REPOG}; do \
 	  [ -d $$f ] || git clone --depth 1 https://github.com/ButTaiwan/$$f.git; \
 	done
 
 veryclean::
-	rm -rf ${FONTS}
+	rm -rf ${REPOM} ${REPOG}
 
 FF_BOLD=
-KEEP_SUFFIXES=	.TTF .ttf
+
 include font-common.mk
+
+${REPOM}/ttc/${SERIF}-R.ttc:	setup
+${REPOG}/ttc/${SANS}-R.ttc:	setup
+
+${REPOM}/ttc/${SERIF}-B.ttc:	setup
+${REPOG}/ttc/${SANS}-B.ttc:	setup
+
+all::	$M-$R.ttx $M-$R.ttf $G-$R.ttx $G-$R.ttf \
+	$M-$B.ttx $M-$B.ttf $G-$B.ttx $G-$B.ttf
 
 %.ttf:	%.ttx fonttools.pkg
 	ttx -o $@ $<
 
-%JP-$(B).ttx:	%-B.ttc fonttools.pkg
+%$(CN)-$R.ttx:	%-R.ttc fonttools.pkg
 	ttx -o $@ -y 1 $<
 
-%JP-$(R).ttx:	%-R.ttc fonttools.pkg
+%$(CN)-$B.ttx:	%-B.ttc fonttools.pkg
 	ttx -o $@ -y 1 $<
+
+clean::
+	rm -f ${SERIF}*.ttx ${SANS}*.ttx
+	rm -f ${SERIF}*.ttf ${SANS}*.ttf

@@ -22,10 +22,10 @@ include font-common.mk
 
 setup::		${FONT_PKG}
 
-#${FONT_MR}:	${FONT_PKG}
-#ifneq "${FONT_GR}" ""
-#${FONT_GR}:	${FONT_PKG}
-#endif
+${FONT_MR}:	${FONT_PKG}
+ifneq "${FONT_GR}" ""
+${FONT_GR}:	${FONT_PKG}
+endif
 
 $M-$R.ttf:	${FONT_MR}
 	ln -sf $< $@

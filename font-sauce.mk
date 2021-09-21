@@ -2,19 +2,26 @@
 
 include use-groff.mk
 
-FONTS=		sauce-han-fonts
+REPO=		sauce-han-fonts
 SERIF=		SauceHanSerif
 SANS=		SauceHanSans
 
-VPATH=		$(patsubst %,%/${SERIF},${FONTS}) $(patsubst %,%/${SANS},${FONTS})
+VPATH=		$(patsubst %,%/${SERIF},${REPO}) $(patsubst %,%/${SANS},${REPO})
 
 setup::
-	for f in ${FONTS}; do \
+	for f in ${REPO}; do \
 	  [ -d $$f ] || git clone --depth 1 https://github.com/3846masa/$$f.git; \
 	done
 
 veryclean::
-	rm -rf ${FONTS}
+	rm -rf ${REPO}
 
 FF_BOLD=
+
 include font-common.mk
+
+${REPO}/${SERIF}/$M-$R.ttf:	setup
+${REPO}/${SANS}/$G-$R.ttf:	setup
+
+${REPO}/${SERIF}/$M-$B.ttf:	setup
+${REPO}/${SANS}/$G-$B.ttf:	setup
