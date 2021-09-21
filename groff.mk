@@ -20,13 +20,21 @@ clean::
 		$(MAKE) -C groff $@; \
 	fi
 
-all::	groff.diff setup
+all::	setup patch
+	$(MAKE) -C groff $@
+
+patch:	groff.diff
 	[ -d groff ]
 	cd groff && git reset --hard
 	cd groff && patch -p1 <$(abspath $<)
-	$(MAKE) -C groff $@
 
-install:: all
+groff.diff:	patch-afmtodit.tables patch-uniuni.cpp
+	cat $^ >$@
+
+clean::
+	rm -f groff.diff
+
+install::
 	sudo make -C groff $@
 	if [ ! -L "${SITE_TMAC}" -o "$$(readlink ${SITE_TMAC})" != "/etc/groff" ]; then \
 		sudo mv ${SITE_TMAC} ${SITE_TMAC}.old; \
