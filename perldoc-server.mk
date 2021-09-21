@@ -10,15 +10,18 @@ clean::
 	rm -f inc-Module-Install.cpanm
 
 Perldoc-Server?=	https://github.com/obuk/Perldoc-Server.git
+HTML-Spacing-JA?=	https://github.com/obuk/HTML-Spacing-JA.git
 
 all::
 
-install::	all Perldoc-Server.stamp
+install::	Perldoc-Server.stamp
 
-Perldoc-Server.stamp:	mandoc.pkg nkf.pkg HTML-Spacing-JA.cpanm
+Perldoc-Server.stamp:	mandoc.pkg nkf.pkg HTML-Spacing-JA.cpanm Pod-Man-TMAC.cpanm
 	[ -d $* ] || git clone ${$*}
-	cd $*; cpanm --installdeps .; perl Makefile.PL
-	cd $*; make; make install
+	#cd $*; cpanm --installdeps .; perl Makefile.PL
+	#cd $*; make; make install
+	bash -l -c 'cd $(abspath $*); cpanm --installdeps .; perl Makefile.PL'
+	bash -l -c 'cd $(abspath $*); make; make install'
 	@echo '# cd $*'
 	@echo '# perldoc-server --perl `which perl` # or'
 	@echo '# env PERL5LIB=./lib plackup --port 3000 -R ./lib script/perldoc_server.psgi'
@@ -49,20 +52,23 @@ TWIST_NAMES+=	-t HTML-Lint-1.22/lib/HTML/Lint/HTML4.pod=HTML::Lint::HTML4
 TWIST_NAMES+=	-t Inline-0.43/C/C-Cookbook.pod=Inline::C::Cookbook
 TWIST_NAMES+=	-t URI-1.35/URI/Heuristic.pod=URI::Heuristic
 
+install-pods-deps:	POD2-Base.cpanm common-sense.cpanm Perl6-Slurp.cpanm \
+			Pod-POM.cpanm
+
 install-pods::	install-pods-jprp-docs
-install-pods-jprp-docs:	pods/jprp.stamp POD2-Base.cpanm common-sense.cpanm
+install-pods-jprp-docs:	pods/jprp.stamp install-pods-deps
 	cd pods/jprp/docs/perl; \
 	find . -name '*.pod' | $(INSTALL_PODS_POD2JA)
 	cd pods/jprp/docs/modules; \
 	find . -name '*.pod' | $(INSTALL_PODS_POD2JA)
 
 install-pods::	install-pods-moose-doc-ja
-install-pods-moose-doc-ja:	pods/Moose-Doc-JA.stamp POD2-Base.cpanm common-sense.cpanm
+install-pods-moose-doc-ja:	pods/Moose-Doc-JA.stamp install-pods-deps
 	cd pods/Moose-Doc-JA/Moose; \
 	find . -name '*.pod' | $(INSTALL_PODS_POD2JA)
 
 install-pods::	install-pods-module-pod-jp
-install-pods-module-pod-jp:	pods/module-pod-jp.stamp POD2-Base.cpanm common-sense.cpanm
+install-pods-module-pod-jp:	pods/module-pod-jp.stamp install-pods-deps
 	cd pods/module-pod-jp/docs/modules; \
 	find . -name '*.pod' | $(INSTALL_PODS_POD2JA)
 

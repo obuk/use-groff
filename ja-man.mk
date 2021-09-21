@@ -3,7 +3,7 @@ include use-groff.mk
 VPATH=	${UG}/files/${OS} ${UG}/files
 
 setup::
-install::	all
+install::
 
 ifeq ("$(OS)", "ubuntu")
 install::	manpages-ja.pkg

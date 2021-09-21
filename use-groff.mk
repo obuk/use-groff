@@ -5,6 +5,7 @@ _use_groff:=	1
 # default
 all::
 setup::		groff.pkg git.pkg
+install::	all
 
 UG?=		.
 ADD_MSO_LOCAL?=	${UG}/script/add-mso-local.pl
@@ -46,6 +47,8 @@ AFMTODIT?=	perl ${GROFF_BIN}/afmtodit -s
 # perl
 
 PERL_VERSION?=	5.30.2
+#PERL_VERSION?=	5.32.1
+#PERL_VERSION?=	5.34.0
 
 .SUFFIXES:	.stamp
 
@@ -64,7 +67,6 @@ cpanm.stamp:	plenv.stamp
 Font-TTF?=		https://github.com/obuk/font-ttf.git
 Pod-Man-TMAC?=		https://github.com/obuk/Pod-Man-TMAC.git
 Pod-Perldoc-ToNroff4?=	https://github.com/obuk/Pod-Perldoc-ToNroff4.git
-HTML-Spacing-JA?=	https://github.com/obuk/HTML-Spacing-JA.git
 App-grops-prepro?=	https://github.com/obuk/App-grops-prepro.git
 
 
@@ -128,5 +130,12 @@ endif
 clean::
 	rm -f pkg.stamp
 	rm -f *.pkg
+
+define newline
+
+
+endef
+
+print=	bash -c "printf '$(subst %,\x25,$(subst ',\x27,$(subst $(newline),\n,$($(strip $1)))))\n'"
 
 endif # _use_groff

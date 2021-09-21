@@ -48,7 +48,7 @@ all::	tmpdir $(FILES)
 ifeq ("$(OS)", "ubuntu")
 all::	libfile-spec-native-perl.pkg
 endif
-install::	all
+install::
 	cd ${TMP}; sudo install -m 644 *.local *.tmac troffrc ${SITE_TMAC}
 	cd ${TMP}; sudo install -m 755 gropdf ${GROPDF}
 
@@ -67,6 +67,7 @@ ${TMP}/pre-grops.plenv:	App-grops-prepro.cpanm $(MAKEFILE_LIST)
 	GROFF_USER=\$${GROFF_USER:-vagrant}\n\
 	HOME=\$$(getent passwd \$${GROFF_USER} | cut -d: -f6)\n\
 	export PLENV_ROOT=\"\$${HOME}/.plenv\"\n\
+	export PERL5LIB=\"/vagrant/App-grops-prepro/lib\"\n\
 	exec \"\$${PLENV_ROOT}/libexec/plenv\" exec `basename $@ .plenv` \"\$$@\"" >$@
 
 # update dev{ps,pdf}/DESC
