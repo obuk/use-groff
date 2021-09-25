@@ -67,7 +67,7 @@ ${TMP}/pre-grops.plenv:	App-grops-prepro.cpanm $(MAKEFILE_LIST)
 	GROFF_USER=\$${GROFF_USER:-vagrant}\n\
 	HOME=\$$(getent passwd \$${GROFF_USER} | cut -d: -f6)\n\
 	export PLENV_ROOT=\"\$${HOME}/.plenv\"\n\
-	export PERL5LIB=\"/vagrant/App-grops-prepro/lib\"\n\
+	#export PERL5LIB=\"/vagrant/App-grops-prepro/lib\"\n\
 	exec \"\$${PLENV_ROOT}/libexec/plenv\" exec `basename $@ .plenv` \"\$$@\"" >$@
 
 # update dev{ps,pdf}/DESC
