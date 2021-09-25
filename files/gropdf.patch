@@ -1,5 +1,5 @@
-*** gropdf.old	2021-08-15 11:51:13.366645740 +0000
---- gropdf	2021-08-15 11:51:13.390645356 +0000
+*** gropdf.old	2021-09-25 09:28:17.557873747 +0900
+--- gropdf	2021-09-25 09:28:17.565873612 +0900
 ***************
 *** 2,8 ****
   #
@@ -95,14 +95,14 @@
 !     {
 ! 	my $psname=$o->{NAM}->{$ch->[1]}->[PSNAME] || '/.notdef';
 ! 	my $wid=$o->{NAM}->{$ch->[1]}->[WIDTH] || 0;
-  
+! 
 ! 	push(@{$o->{DIFF}},$psname);
 ! 	push(@{$o->{WIDTH}},$wid);
 ! 	last if $#{$o->{DIFF}} >= 255;
 !     }
 !     unshift(@{$o->{DIFF}},0);
 !     my $p=GetObj($fontlst{$fontno}->{OBJ});
-! 
+  
 !     if (exists($p->{LastChar}) and $p->{LastChar} > 255)
 !     {
 ! 	$p->{LastChar} = 255;
@@ -272,6 +272,16 @@
   	}
       }
 ***************
+*** 865,870 ****
+--- 965,971 ----
+  		elsif ($pdfmark=~m/(.+) \/DEST\s*$/)
+  		{
+  		    my @xwds=split(' ',"<< $1 >>");
++ 		    fix_pdfname(\@xwds);
+  		    my $dest=ParsePDFValue(\@xwds);
+  		    foreach my $v (@{$dest->{View}})
+  		    {
+***************
 *** 899,908 ****
   		elsif ($pdfmark=~m/(.+) \/OUT\s*$/)
   		{
@@ -283,7 +293,7 @@
   		    $title=~s/(?<!\\)\(/\\\(/g;
   		    $title=~s/(?<!\\)\)/\\\)/g;
   		    my @xwds=split(' ',"<< $pre$title$post >>");
---- 999,1024 ----
+--- 1000,1025 ----
   		elsif ($pdfmark=~m/(.+) \/OUT\s*$/)
   		{
   		    my $t=$1;
@@ -311,8 +321,18 @@
   		    $title=~s/(?<!\\)\)/\\\)/g;
   		    my @xwds=split(' ',"<< $pre$title$post >>");
 ***************
+*** 979,984 ****
+--- 1096,1102 ----
+  	}
+  	elsif (lc($xprm[0]) eq 'pdf:')
+  	{
++ 	    fix_pdfname(\@xprm);
+  	    if (lc($xprm[1]) eq 'import')
+  	    {
+  		my $fil=$xprm[2];
+***************
 *** 1091,1096 ****
---- 1207,1220 ----
+--- 1209,1222 ----
   	    }
   	    elsif (lc($xprm[1]) eq 'markstart')
   	    {
@@ -329,10 +349,25 @@
   	    }
 ***************
 *** 1243,1248 ****
---- 1367,1417 ----
+--- 1369,1434 ----
       }
   }
   
++ sub fix_pdfname {
++     my ($words) = @_;
++     if ($D3_unicodefy) {
++         for (@{$words}) {
++             s{^\/(.*)}{"/" . do {
++                 my $u = unicodefy($1);
++                 join '', $u =~ /^[[:ascii:]]*$/ ? $u :
++                     map sprintf(".%02x", $_), map unpack("C*", $_), split //,
++                     encode("utf8", $u);
++             }}e;
++             s/\s+/-/g;
++         }
++     }
++ }
++ 
 + # decode groff_chars and remove escapes.
 + sub unicodefy {
 +     local $_ = shift;
@@ -383,7 +418,7 @@
       my $o=shift;
 ***************
 *** 2087,2092 ****
---- 2256,2262 ----
+--- 2273,2279 ----
   sub PutObj
   {
       my $ono=shift;
@@ -393,7 +428,7 @@
       if (exists($obj[$ono]->{STREAM}))
 ***************
 *** 2147,2152 ****
---- 2317,2326 ----
+--- 2334,2343 ----
       {
   	$$pmsg.="$$fld 0 R$term";
       }
@@ -413,7 +448,7 @@
   
       while (<$f>)
       {
---- 2364,2378 ----
+--- 2381,2395 ----
       my $t1flags=0;
       my $fixwid=-1;
       my $ascent=0;
@@ -440,7 +475,7 @@
   	    $fnt{NO}->[$r[3]]=[$r[0],$r[0]];
   	    $lastnm=$r[0];
   	    $lastchr=$r[3] if $r[3] > $lastchr;
---- 2411,2421 ----
+--- 2428,2438 ----
   	    }
   
   	    $r[0]='u0020' if $r[3] == 32;
@@ -461,7 +496,7 @@
   	    $capheight=$p[1] if length($r[4]) == 1 and $r[4] ge 'A' and $r[4] le 'Z' and $p[1] > $capheight;
   	}
       }
---- 2426,2431 ----
+--- 2443,2448 ----
 ***************
 *** 2256,2351 ****
   
@@ -560,7 +595,7 @@
   	$fontlst{$fontno}->{NM}='/F'.$fontno;
   	$pages->{'Resources'}->{'Font'}->{'F'.$fontno}=$fontlst{$fontno}->{OBJ};
   	$fontlst{$fontno}->{FNT}=\%fnt;
---- 2439,2496 ----
+--- 2456,2513 ----
   
       my $fno=0;
       my $slant=0;
@@ -621,7 +656,7 @@
   	$fontlst{$fontno}->{FNT}=\%fnt;
 ***************
 *** 2379,2384 ****
---- 2524,2530 ----
+--- 2541,2547 ----
       Msg(1,"Failed to open '$file'") if !defined($f);
   
       $head=GetChunk($f,1,"currentfile eexec");
@@ -638,7 +673,7 @@
   		    'Contents' => [ BuildObj($objct+1,
   				{'Length' => 0}
   				) ],
---- 2696,2702 ----
+--- 2713,2719 ----
       my $thispg=BuildObj($objct,
   		    {'Type' => '/Page',
   		    'Group' => {'CS' => '/DeviceRGB', 'S' => '/Transparency'},
@@ -648,7 +683,7 @@
   				) ],
 ***************
 *** 2591,2598 ****
---- 2737,2746 ----
+--- 2754,2763 ----
   
   #	IsText();
       $cft="$par";
@@ -661,7 +696,7 @@
   
 ***************
 *** 2602,2607 ****
---- 2750,2756 ----
+--- 2767,2773 ----
       }
   
   #     $krntbl=$fnt->{KERN};
@@ -671,7 +706,7 @@
   sub CacheWid
 ***************
 *** 2620,2632 ****
---- 2769,2785 ----
+--- 2786,2802 ----
   {
       my $fnt=shift;
       my @cwid;
@@ -698,7 +733,7 @@
   	}
   	$stream.="$curkern Tc\n";
       }
---- 2800,2808 ----
+--- 2817,2825 ----
   	if (defined($cft))
   	{
   	    $whtsz=$fontlst{$cft}->{FNT}->{spacewidth}*$cftsz;
@@ -719,7 +754,7 @@
       }
   
       $mode='t';
---- 2819,2832 ----
+--- 2836,2849 ----
       if ($fontchg)
       {
   	PutLine(0);
@@ -736,7 +771,7 @@
       $mode='t';
 ***************
 *** 2699,2705 ****
---- 2859,2867 ----
+--- 2876,2884 ----
   	Set_LWidth() if $lwidth < 1;
   #		$stream.="/F$cft $cftsz Tf\n";
   	$fontchg=1;
@@ -748,7 +783,7 @@
       {
 ***************
 *** 3303,3308 ****
---- 3465,3471 ----
+--- 3482,3488 ----
   sub TextWid
   {
       my $txt=shift;
@@ -758,7 +793,7 @@
       my $ck=0;
 ***************
 *** 3310,3317 ****
---- 3473,3485 ----
+--- 3490,3502 ----
       foreach my $c (split('',$txt))
       {
   	my $cn=ord($c);
@@ -774,7 +809,7 @@
       $ck=length($txt)*$curkern;
 ***************
 *** 3323,3328 ****
---- 3491,3499 ----
+--- 3508,3516 ----
   {
       my $par=shift;
       my $fnt=$fontlst{$cft}->{FNT};
@@ -792,11 +827,11 @@
 ! 	my $chnm=$fnt->{NAM}->{$fnt->{NO}->[$cn]->[1]};
   
 ! 	if ($chnm->[USED]==0)
-! 	{
+  	{
 ! 	    $chnm->[USED]=1;
 ! 	}
 ! 	elsif ($fnt->{NO}->[$cn]->[0] ne $fnt->{NO}->[$cn]->[1])
-  	{
+! 	{
 ! 	    # A glyph has already been remapped to this char, so find a spare
 ! 
 ! 	    my $cn2=RemapChr($cn,$fnt,$fnt->{NO}->[$cn]->[0]);
@@ -806,7 +841,7 @@
   	    {
   		substr($par2,$j,1)=chr($cn2);
   
---- 3508,3523 ----
+--- 3525,3540 ----
       foreach my $j (0..length($par2)-1)
       {
   	my $cn=ord(substr($par2,$j,1));
@@ -832,7 +867,7 @@
   
       $par=reverse(split('',$par)) if $xrev and $par!~m/^!\|!\|(\d\d\d)/;
   
---- 3532,3538 ----
+--- 3549,3555 ----
   	    }
   	}
       }
@@ -850,7 +885,7 @@
       }
   
       $gotT=1;
---- 3557,3570 ----
+--- 3574,3587 ----
       if ($fontchg)
       {
   	PutLine();
@@ -876,7 +911,7 @@
       $nomove=$fontlst{$cft}->{FNT}->{NAM}->{$par}->[WIDTH]*$cftsz ;
   }
   
---- 3665,3671 ----
+--- 3682,3688 ----
   {
       my $par=shift;
   
@@ -897,7 +932,7 @@
       }
       else
       {
---- 3676,3684 ----
+--- 3693,3701 ----
   
       if (exists($fnt->{NAM}->{$chnm}))
       {
@@ -950,7 +985,7 @@
       }
   }
   
---- 3691,3772 ----
+--- 3708,3789 ----
       my $ch=shift;
       my $fnt=shift;
       my $chnm=shift;
@@ -1035,7 +1070,7 @@
   
 ***************
 *** 3597,3602 ****
---- 3807,3814 ----
+--- 3824,3831 ----
   
   
   1;
