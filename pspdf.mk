@@ -64,7 +64,7 @@ install::	${TMP}/pre-grops.plenv
 
 ${TMP}/pre-grops.plenv:	App-grops-prepro.cpanm $(MAKEFILE_LIST)
 	echo "#!/bin/sh\n\
-	GROFF_USER=\$${GROFF_USER:-vagrant}\n\
+	GROFF_USER=\$${GROFF_USER:-\$${USER:-vagrant}}\n\
 	HOME=\$$(getent passwd \$${GROFF_USER} | cut -d: -f6)\n\
 	export PLENV_ROOT=\"\$${HOME}/.plenv\"\n\
 	#export PERL5LIB=\"/vagrant/App-grops-prepro/lib\"\n\
