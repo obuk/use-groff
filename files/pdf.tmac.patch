@@ -1,26 +1,154 @@
-*** pdf.tmac.orig	2021-09-19 22:47:31.433533814 +0000
---- pdf.tmac	2021-09-19 22:48:36.232725972 +0000
+*** /usr/local/share/groff/current/tmac/pdf.tmac	2021-09-24 06:22:16.551617349 +0000
+--- pdf.tmac	2021-10-28 04:36:23.616660783 +0000
 ***************
-*** 250,256 ****
+*** 240,250 ****
+  .      el .ds PDFBOOKMARK.NAME \\*[pdf:href-T]
+  .      pdf:href.sety
+  .         ds pdf:cleaned \\$*
+  .         ev pdfcln
+  .         tr \[em]-
+  .         nf
+  .         box pdf:clean
+! .         nop \\$*
+  .         fl
+  .         box
   .         chop pdf:clean
-  .         asciify pdf:clean
-  .         length pdf:clean:len \\*[pdf:clean]
-! .         ds pdf:cleaned \\*[pdf:clean]
+--- 240,261 ----
+  .      el .ds PDFBOOKMARK.NAME \\*[pdf:href-T]
+  .      pdf:href.sety
+  .         ds pdf:cleaned \\$*
++ . ig endig
+  .         ev pdfcln
+  .         tr \[em]-
+  .         nf
+  .         box pdf:clean
+! .      \" if '\*[pdf.ec]'@' \{\
+! .         eo
+! .         tr \\@
+! .         ec @
+! .         nop @$*
+! .         tr \\\\
+! .         ec
+! .      \" \}
+! .      \" el \{\
+! .      \" nop \\$*
+! .      \" \}
+  .         fl
+  .         box
+  .         chop pdf:clean
+***************
+*** 254,264 ****
   .         rm pdf:clean
   .         ev
   .         tr \[em]\[em]
---- 250,260 ----
-  .         chop pdf:clean
-  .         asciify pdf:clean
-  .         length pdf:clean:len \\*[pdf:clean]
-! .   \" 
-! .   \" use pdf:cleaned instead of pdf:clean for now
-! .   \" because unicode characters ignored in bookmarks. xxxxx
-! .   \"
-! .         \"ds pdf:cleaned \\*[pdf:clean]
+  .      ds pdf:look(\\*[PDFBOOKMARK.NAME]) \\*[pdf:cleaned]
+  .      if dPDF.EXPORT .tm .ds pdf:look(\\*[PDFBOOKMARK.NAME]) \\*[pdf:cleaned]
+  .      pdfmark /Dest /\\*[PDFBOOKMARK.NAME] /View [\\*[PDFBOOKMARK.VIEW]] /DEST
+! .      nop \!x X ps:exec [/Dest /\\*[PDFBOOKMARK.NAME] /Title (\\*[pdf:cleaned]) /Level \\n[pdf:bm.lev] /OUT pdfmark
+! .\".      pdfmark /Dest /\\*[PDFBOOKMARK.NAME] /Title "(\\*[pdf:cleaned])" /Level \\n[pdf:bm.lev] /OUT
+  .      pdf:href.options.clear
+  .      rr PDFPAGE.Y
+  .      rm pdf:cleaned
+--- 265,279 ----
   .         rm pdf:clean
   .         ev
   .         tr \[em]\[em]
++ . endig
++ .         pdfclean pdf:cleaned
++ . 
+  .      ds pdf:look(\\*[PDFBOOKMARK.NAME]) \\*[pdf:cleaned]
+  .      if dPDF.EXPORT .tm .ds pdf:look(\\*[PDFBOOKMARK.NAME]) \\*[pdf:cleaned]
++ .\"      if dPDF.EXPORT .tm .ds pdf:look(\\*[PDFBOOKMARK.NAME]) \\$*
+  .      pdfmark /Dest /\\*[PDFBOOKMARK.NAME] /View [\\*[PDFBOOKMARK.VIEW]] /DEST
+! .\"      pdfmark /Dest /\\*[PDFBOOKMARK.NAME] /Title (\\*[pdf:cleaned]) /Level \\n[pdf:bm.lev] /OUT
+! .      pdfmark /Dest /\\*[PDFBOOKMARK.NAME] /Title (\\$*) /Level \\n[pdf:bm.lev] /OUT
+  .      pdf:href.options.clear
+  .      rr PDFPAGE.Y
+  .      rm pdf:cleaned
+***************
+*** 276,298 ****
+  ..
+  .
+  .de pdfclean
+! .  ie '\\n(.z'' \{\
+! .         ds pdfcleaned \\$*
+! .         ev pdfcln
+! .         tr \[em]-
+! .         nf
+! .         box pdf:clean
+! .         nop \\*[\\*[pdfcleaned]]
+! .         fl
+! .         box
+! .         chop pdf:clean
+! .         asciify pdf:clean
+! .         ev
+! .         ds \\*[pdfcleaned] "\\*[pdf:clean]
+! .         rm pdf:clean
+! .         tr \[em]\[em]
+  .  el .nop \!.pdfclean \\$@
+  ..
+  .\"
+  .\" =============================================================
+  .\" Module PDFHREF: Create Hypertext References in a PDF Document
+--- 291,348 ----
+  ..
+  .
+  .de pdfclean
+! .  ie '\\n(.z'' .pdfclean! \\$@
+  .  el .nop \!.pdfclean \\$@
+  ..
++ .ds pdfclean:magic ?&
++ .de pdfclean!
++ .  ds pdfcleaned \\$1
++ .  nr pdfclean.i 0
++ .  length pdfclean.n \\*[\\*[pdfcleaned]]
++ .  length pdfclean.m \\*[pdfclean:magic]
++ .  ds pdfclean:magic.start \\*[pdfclean:magic]
++ .  substring pdfclean:magic.start 0 0
++ .  ds pdf:clean "\""
++ .  while (\\n[pdfclean.i] < \\n[pdfclean.n]) \{\
++ .    ds pdfclean.c \\*[\\*[pdfcleaned]]
++ .    substring pdfclean.c \\n[pdfclean.i]
++ .    substring pdfclean.c 0 0
++ .    if '\\*[pdfclean.c]-'\\*[pdfclean:magic.start]-' \{\
++ .      ds pdfclean.d \\*[\\*[pdfcleaned]]
++ .      substring pdfclean.d \\n[pdfclean.i]
++ .      substring pdfclean.d 0 (\\n[pdfclean.m] - 1)
++ .      if '\\*[pdfclean.d]-'\\*[pdfclean:magic]-' \{\
++ .        ds pdfclean:s \\*[\\*[pdfcleaned]]
++ .        substring pdfclean:s \\n[pdfclean.i]
++ .        substring pdfclean:s 0 (\\n[pdfclean.m] + 2 - 1)
++ .        nr pdfclean.i +(\\n[pdfclean.m] + 2)
++ .        as pdf:clean \\*[pdfclean:s]
++ .        continue
++ .      \}
++ .    \}
++ .    ie        '\\*[pdfclean.c]-' -'  .as pdf:clean -
++ .    el \{ .ie '\\*[pdfclean.c]-'%-'  .as pdf:clean \\*[pdfclean:magic]25
++ .    el \{ .ie '\\*[pdfclean.c]-'\\-' .as pdf:clean \\*[pdfclean:magic]5c
++ .    el \{ .ie '\\*[pdfclean.c]-'/-'  .as pdf:clean \\*[pdfclean:magic]2f
++ .
++ .    el \{ .ie '\\*[pdfclean.c]-'(-'  .as pdf:clean \\*[pdfclean:magic]28
++ .    el \{ .ie '\\*[pdfclean.c]-')-'  .as pdf:clean \\*[pdfclean:magic]29
++ .    el \{ .ie '\\*[pdfclean.c]-'<-'  .as pdf:clean \\*[pdfclean:magic]3c
++ .
++ .    el \{ .ie '\\*[pdfclean.c]-'>-'  .as pdf:clean \\*[pdfclean:magic]3e
++ .    el \{ .ie '\\*[pdfclean.c]-'[-'  .as pdf:clean \\*[pdfclean:magic]5b
++ .    el \{ .ie '\\*[pdfclean.c]-']-'  .as pdf:clean \\*[pdfclean:magic]5d
++ .
++ .    el \{ .ie '\\*[pdfclean.c]-'{-'  .as pdf:clean \\*[pdfclean:magic]7b
++ .    el \{ .ie '\\*[pdfclean.c]-'}-'  .as pdf:clean \\*[pdfclean:magic]7d
++ .    el                               .as pdf:clean \\*[pdfclean.c]
++ .    \}\}\} \}\}\} \}\}\} \}\}
++ .    nr pdfclean.i +1
++ .  \}
++ .  ds \\*[pdfcleaned] "\\*[pdf:clean]\""
++ .  rm pdf:clean
++ .  tr \[em]\[em]
++ ..
+  .\"
+  .\" =============================================================
+  .\" Module PDFHREF: Create Hypertext References in a PDF Document
 ***************
 *** 407,415 ****
   .   \"
@@ -32,7 +160,7 @@
   .      nr pdf:href-X 0
   .   \"
   .   \" Handle the case where subcommand is specified as "-class",
---- 411,420 ----
+--- 457,466 ----
   .   \"
   .      nr pdf:href.ok 1
   .   \"
@@ -45,7 +173,7 @@
   .   \" Handle the case where subcommand is specified as "-class",
 ***************
 *** 494,499 ****
---- 499,505 ----
+--- 545,551 ----
   .als pdf:href.opt-F pdf:href.option   \" remote file specifier
   .als pdf:href.opt-N pdf:href.option   \" reference name
   .als pdf:href.opt-P pdf:href.option   \" prefixed text
@@ -54,8 +182,51 @@
   .als pdf:href.opt-X pdf:href.flag     \" cross reference
   .\"
 ***************
+*** 574,580 ****
+  .\" if any, and set the marker -- if we still can't identify the name
+  .\" for the destination, then this marker will not be created.
+  .\"
+! .ds PDFBOOKMARK.NAME "\\*[pdf:href-N]\\*[pdf:href-D]
+  .pdf*href.set \\*[PDFBOOKMARK.NAME] \\$1
+  .ds pdf:look(\\*[PDFBOOKMARK.NAME]) \\$*
+  .if dPDF.EXPORT .tm .ds pdf:look(\\*[PDFBOOKMARK.NAME]) \\$*
+--- 626,636 ----
+  .\" if any, and set the marker -- if we still can't identify the name
+  .\" for the destination, then this marker will not be created.
+  .\"
+! .\"ds PDFBOOKMARK.NAME "\\*[pdf:href-N]\\*[pdf:href-D]
+! .ds PDFBOOKMARK.NAME \\*[pdf:href-N]
+! .if '\\*[PDFBOOKMARK.NAME]'' .ds PDFBOOKMARK.NAME \\*[pdf:href-D]
+! .if '\\*[PDFBOOKMARK.NAME]'' .ds PDFBOOKMARK.NAME \\$1
+! .pdfclean PDFBOOKMARK.NAME
+  .pdf*href.set \\*[PDFBOOKMARK.NAME] \\$1
+  .ds pdf:look(\\*[PDFBOOKMARK.NAME]) \\$*
+  .if dPDF.EXPORT .tm .ds pdf:look(\\*[PDFBOOKMARK.NAME]) \\$*
+***************
+*** 602,607 ****
+--- 658,666 ----
+  .   ie '\\n(.z'' \{\
+  .      pdf:href.sety
+  .      pdfmark /Dest /\\$1 /View [\\*[PDFHREF.VIEW]] /DEST
++ .   \"    ds pdfmark.dest \\$1
++ .   \"    pdfclean pdfmark.dest
++ .   \" pdfmark /Dest /\\*[pdfmark.dest] /View [\\*[PDFHREF.VIEW]] /DEST
+  .      ds PDFHREF.NAME \\$1
+  .      rr PDFPAGE.Y
+  .      \}
+***************
+*** 662,667 ****
+--- 721,727 ----
+  .   pdf:error pdfhref has no destination
+  .   nr pdf:href.ok 0
+  .   \}
++ .if '\\*[pdf*href.class]'L' .pdfclean! pdf:href-D
+  .\"
+  .\" Now, initialise a string, defining the PDFMARK code sequence
+  .\" to create the reference, using the appropriate type indicators.
+***************
 *** 707,712 ****
---- 713,721 ----
+--- 767,775 ----
   .   nr pdf:bm.width \\w'\\*[PDFHREF.DESC]'
   .   nop \&\m[\\*[PDFHREF.TEXT.COLOUR]]\c
   .   device pdf: markstart \\n[rst] \\n[rsb] \\n[PDFHREF.LEADING] \\*[pdf:href.link]
@@ -67,7 +238,7 @@
   .   \" Clean up the temporary registers and strings, used to
 ***************
 *** 793,798 ****
---- 802,813 ----
+--- 856,867 ----
   .de pdfmarkrestart
   .nop \!x X pdf: markrestart
   ..
