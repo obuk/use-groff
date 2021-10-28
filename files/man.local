@@ -17,10 +17,12 @@
 .\" Use headings as bookmarks.
 .if t \{\
 .am SH
-.  pdfhref O 1 \\$*\"
+.  pdfhref O 1 \\$*
+.  pdfhref M -D "\\$*
 ..
 .am SS
-.  pdfhref O 2 \\$*\"
+.  pdfhref O 2 \\$*
+.  pdfhref M -D "\\$*
 ..
 .\}
 .
@@ -30,98 +32,179 @@
 .  if '\*(.T'pdf' \
 .    nr mPDF 1
 .
+.\" Parse URL, and setup pdfhref class and options.
+.de my:an-URL
+.  ds my:an-URL.class L
+.  nr my:an-URL.i 0
+.  ds my:an-URL.dest \\$*
+.  length my:an-URL.n \\$*
+.  while (\\n[my:an-URL.i] < \\n[my:an-URL.n]) \{\
+.    ds my:an-URL.s \\$1\"
+.    substring my:an-URL.s 0 \\n[my:an-URL.i]
+.    substring my:an-URL.s -3
+.    if '\\*[my:an-URL.s]-'\\-' \{\
+.      pdfclean my:an-URL.dest
+.      break
+.    \}
+.    if '\\*[my:an-URL.s]-'://-' \{\
+.      ds my:an-URL.class W
+.      break
+.    \}
+.    nr my:an-URL.i +1
+.  \}
+.  ds my:an-URL.pdfhref pdfhref \\*[my:an-URL.class] -D \\*[my:an-URL.dest]
+..
+.
 .am UR
 .  if \\n[mPDF] \{\
-.    ev URL-div
-.    di URL-div
-.    pdfhref W -S -A \\c -D \\*(m1\" separates markend to be sent later
+.    my:an-URL \\*(m1
+.    ev link-text-env
+.    di link-text-div
+.    \\*[my:an-URL.pdfhref] -A \\c -S --
 .  \}
 ..
 .
 .\" End URL.
+.rn UE an-old:UE
 .de UE
-.  ie \\n(mH \{\
-.    br
-.    di
-.    ev
-.
-.    \" Has there been one or more input lines for the link text?
-.    ie \\n(dn \{\
-.      do HTML-NS "<a href=""\\*(m1"">"
-.      \" Yes, strip off final newline of diversion and emit it.
-.      do chop URL-div
-.      do URL-div
-\c
-.      do HTML-NS </a>
-.    \}
-.    el \
-.      do HTML-NS "<a href=""\\*(m1"">\\*(m1</a>"
-\&\\$*\"
-.  \}
-.  el .ie \\n[mPDF] \{\
+.  ie \\n[mPDF] \{\
+.    nop
 .    br
 .    di
 .    if !\\n(dl \{\
-.      da URL-div
+.      do chop link-text-div
+.      da link-text-div
 .      nop \&\\*(m1
 .      br
 .      di
 .    \}
 .    ev
 .    \" Yes, strip off final newline of diversion and emit it.
-.    do chop URL-div
-.    do URL-div
+.    do chop link-text-div
+.    do link-text-div
 \c
 .    pdfhrefend
 \&\\$*\"
 .  \}
-.  el \
-\\*(la\\*(m1\\*(ra\\$*\"
-.
-.  hy \\n(HY
+.  el \{\
+.    an-old:UE \\$@
+.  \}
 ..
 .
 .if (\n[cR]=0)&(\n[mPDF]) \{\
-.  nr in-pdfhref 0
+.  nr my:an-in-pdfhref 0
 .
 .  am UR
-.    nr in-pdfhref 1
+.    nr my:an-in-pdfhref 1
 .  .
 .  am UE
-.    nr in-pdfhref 0
+.    nr my:an-in-pdfhref 0
 .  .
-.  de an-pdfmarksuspend
-.    if \\n[in-pdfhref] \
+.  de my:an-pdfmarksuspend
+.    if \\n[my:an-in-pdfhref] \
 .      pdfmarksuspend
 .  .
-.  de an-pdfmarkrestart
-.    if \\n[in-pdfhref] \
+.  de my:an-pdfmarkrestart
+.    if \\n[my:an-in-pdfhref] \
 .      pdfmarkrestart
 .  .
 .
-.  de1 an-header-with-pdfmark
-.    an-header
-.    an-pdfmarkrestart
+.  de1 my:an-header-with-pdfmark
+.    my:an-header
+.    my:an-pdfmarkrestart
 .  .
 .
-.  if d an-p-footer \{\
-.    de an-p-footer-with-pdfmark
-.      an-pdfmarksuspend
-.      an-p-footer
+.  if d my:an-p-footer \{\
+.    de my:an-p-footer-with-pdfmark
+.      my:an-pdfmarksuspend
+.      my:an-p-footer
 .    .
 .    am1 TH
-.      wh 0 an-header-with-pdfmark
-.      wh \\n[FT]u an-p-footer-with-pdfmark
+.      wh 0 my:an-header-with-pdfmark
+.      wh \\n[FT]u my:an-p-footer-with-pdfmark
 .    .
 .  \}
 .  el \{\
-.    de an-footer-with-pdfmark
-.      an-pdfmarksuspend
-.      an-footer
+.    de my:an-footer-with-pdfmark
+.      my:an-pdfmarksuspend
+.      my:an-footer
 .    .
 .    am1 TH
-.      wh 0 an-header-with-pdfmark
-.      wh \\n[an-footer-location]u an-footer-with-pdfmark
+.      wh 0 my:an-header-with-pdfmark
+.      wh \\n[my:an-footer-location]u my:an-footer-with-pdfmark
+.    .
+.  \}
+.
+.\}
+.
+.\" End URL.
+.rn UE an-old:UE
+.de UE
+.  .ie \\n[mPDF] \{\
+.    nop
+.    br
+.    di
+.    if !\\n(dl \{\
+.      do chop link-text-div
+.      da link-text-div
+.      nop \&\\*(m1
+.      br
+.      di
+.    \}
+.    ev
+.    \" Yes, strip off final newline of diversion and emit it.
+.    do chop link-text-div
+.    do link-text-div
+\c
+.    pdfhrefend
+\&\\$*\"
+.  \}
+.  el \{\
+.    an-old:UE \\$@
+.  \}
+..
+.
+.if (\n[cR]=0)&(\n[mPDF]) \{\
+.  nr my:an-in-pdfhref 0
+.
+.  am UR
+.    nr my:an-in-pdfhref 1
+.  .
+.  am UE
+.    nr my:an-in-pdfhref 0
+.  .
+.  de my:an-pdfmarksuspend
+.    if \\n[my:an-in-pdfhref] \
+.      pdfmarksuspend
+.  .
+.  de my:an-pdfmarkrestart
+.    if \\n[my:an-in-pdfhref] \
+.      pdfmarkrestart
+.  .
+.
+.  de1 my:an-header-with-pdfmark
+.    my:an-header
+.    my:an-pdfmarkrestart
+.  .
+.
+.  if d my:an-p-footer \{\
+.    de my:an-p-footer-with-pdfmark
+.      my:an-pdfmarksuspend
+.      my:an-p-footer
+.    .
+.    am1 TH
+.      wh 0 my:an-header-with-pdfmark
+.      wh \\n[FT]u my:an-p-footer-with-pdfmark
+.    .
+.  \}
+.  el \{\
+.    de my:an-footer-with-pdfmark
+.      my:an-pdfmarksuspend
+.      my:an-footer
+.    .
+.    am1 TH
+.      wh 0 my:an-header-with-pdfmark
+.      wh \\n[my:an-footer-location]u my:an-footer-with-pdfmark
 .    .
 .  \}
 .
