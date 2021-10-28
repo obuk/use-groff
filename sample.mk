@@ -54,6 +54,10 @@ clean::
 LETTER_ORIG=	https://lists.gnu.org/archive/html/groff/2019-08/txtqtVQY7Ql6Z.txt
 LETTER_DERI=	https://lists.gnu.org/archive/html/groff/2019-08/txtrEepUiAFDJ.txt
 
+# https://lists.gnu.org/archive/html/groff/2021-04/msg00000.html
+# New extension to gropdf
+MSBOXES=	https://lists.gnu.org/archive/html/groff/2021-04/binGfkWxmBxNY.bin
+
 all::	letter.pdf
 
 clean::
@@ -62,6 +66,23 @@ clean::
 
 letter.mom:
 	[ -f $@ ] || curl -Ls $(LETTER_DERI) >$@
+
+all::	msboxes.pdf
+
+msboxes.pdf:	msboxes.ms sboxes.tmac
+	groff -Tpdf -k -M. -ms -msboxes msboxes.ms >$@
+
+msboxes.ms sboxes.tmac: msboxes-20210402.tgz
+	tar xvzf $< msboxes-20210402/$@
+	cp -p msboxes-20210402/$@ .
+
+msboxes-20210402.tgz:
+	[ -f $@ ] || curl -Ls $(MSBOXES) >$@
+
+clean::
+	rm -f msboxes.pdf
+	rm -f msboxes-20210402.tgz
+	rm -rf msboxes-20210402
 
 %.pdf:	%.mom
 	pdfmom $< >$@
