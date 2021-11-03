@@ -1,19 +1,8 @@
-*** /usr/local/share/groff/current/tmac/pdf.tmac	2021-09-24 06:22:16.551617349 +0000
---- pdf.tmac	2021-10-28 04:36:23.616660783 +0000
+*** /usr/local/share/groff/current/tmac/pdf.tmac	2021-10-29 03:45:27.868786148 +0000
+--- pdf.tmac	2021-10-31 00:24:26.109071693 +0000
 ***************
-*** 240,250 ****
-  .      el .ds PDFBOOKMARK.NAME \\*[pdf:href-T]
-  .      pdf:href.sety
-  .         ds pdf:cleaned \\$*
-  .         ev pdfcln
-  .         tr \[em]-
-  .         nf
-  .         box pdf:clean
-! .         nop \\$*
-  .         fl
-  .         box
-  .         chop pdf:clean
---- 240,261 ----
+*** 240,245 ****
+--- 240,246 ----
   .      el .ds PDFBOOKMARK.NAME \\*[pdf:href-T]
   .      pdf:href.sety
   .         ds pdf:cleaned \\$*
@@ -21,21 +10,6 @@
   .         ev pdfcln
   .         tr \[em]-
   .         nf
-  .         box pdf:clean
-! .      \" if '\*[pdf.ec]'@' \{\
-! .         eo
-! .         tr \\@
-! .         ec @
-! .         nop @$*
-! .         tr \\\\
-! .         ec
-! .      \" \}
-! .      \" el \{\
-! .      \" nop \\$*
-! .      \" \}
-  .         fl
-  .         box
-  .         chop pdf:clean
 ***************
 *** 254,264 ****
   .         rm pdf:clean
@@ -49,7 +23,7 @@
   .      pdf:href.options.clear
   .      rr PDFPAGE.Y
   .      rm pdf:cleaned
---- 265,279 ----
+--- 255,269 ----
   .         rm pdf:clean
   .         ev
   .         tr \[em]\[em]
@@ -90,7 +64,7 @@
   .\"
   .\" =============================================================
   .\" Module PDFHREF: Create Hypertext References in a PDF Document
---- 291,348 ----
+--- 281,338 ----
   ..
   .
   .de pdfclean
@@ -160,7 +134,7 @@
   .      nr pdf:href-X 0
   .   \"
   .   \" Handle the case where subcommand is specified as "-class",
---- 457,466 ----
+--- 447,456 ----
   .   \"
   .      nr pdf:href.ok 1
   .   \"
@@ -173,7 +147,7 @@
   .   \" Handle the case where subcommand is specified as "-class",
 ***************
 *** 494,499 ****
---- 545,551 ----
+--- 535,541 ----
   .als pdf:href.opt-F pdf:href.option   \" remote file specifier
   .als pdf:href.opt-N pdf:href.option   \" reference name
   .als pdf:href.opt-P pdf:href.option   \" prefixed text
@@ -190,7 +164,7 @@
   .pdf*href.set \\*[PDFBOOKMARK.NAME] \\$1
   .ds pdf:look(\\*[PDFBOOKMARK.NAME]) \\$*
   .if dPDF.EXPORT .tm .ds pdf:look(\\*[PDFBOOKMARK.NAME]) \\$*
---- 626,636 ----
+--- 616,626 ----
   .\" if any, and set the marker -- if we still can't identify the name
   .\" for the destination, then this marker will not be created.
   .\"
@@ -204,7 +178,7 @@
   .if dPDF.EXPORT .tm .ds pdf:look(\\*[PDFBOOKMARK.NAME]) \\$*
 ***************
 *** 602,607 ****
---- 658,666 ----
+--- 648,656 ----
   .   ie '\\n(.z'' \{\
   .      pdf:href.sety
   .      pdfmark /Dest /\\$1 /View [\\*[PDFHREF.VIEW]] /DEST
@@ -216,17 +190,37 @@
   .      \}
 ***************
 *** 662,667 ****
---- 721,727 ----
+--- 711,719 ----
   .   pdf:error pdfhref has no destination
   .   nr pdf:href.ok 0
   .   \}
-+ .if '\\*[pdf*href.class]'L' .pdfclean! pdf:href-D
++ .\"if '\\*[pdf*href.class]'L' .pdfclean! pdf:href-D
++ .ds pdf:href-D.cleaned \\*[pdf:href-D]
++ .pdfclean! pdf:href-D.cleaned
   .\"
   .\" Now, initialise a string, defining the PDFMARK code sequence
   .\" to create the reference, using the appropriate type indicators.
 ***************
+*** 690,696 ****
+  .      ds PDFHREF.DESC \\\\$*
+  .      \}
+  .   el \{\
+! .      ie dpdf:look(\\*[pdf:href-D]) .ds PDFHREF.DESC \\*[pdf:look(\\*[pdf:href-D])]
+  .      el .ds PDFHREF.DESC Unknown
+  .      \}
+  .   \" Apply border and colour specifications to the PDFMARK string
+--- 742,749 ----
+  .      ds PDFHREF.DESC \\\\$*
+  .      \}
+  .   el \{\
+! .      \"ie dpdf:look(\\*[pdf:href-D]) .ds PDFHREF.DESC \\*[pdf:look(\\*[pdf:href-D])]
+! .      ie dpdf:look(\\*[pdf:href-D.cleaned]) .ds PDFHREF.DESC \\*[pdf:look(\\*[pdf:href-D.cleaned])]
+  .      el .ds PDFHREF.DESC Unknown
+  .      \}
+  .   \" Apply border and colour specifications to the PDFMARK string
+***************
 *** 707,712 ****
---- 767,775 ----
+--- 760,768 ----
   .   nr pdf:bm.width \\w'\\*[PDFHREF.DESC]'
   .   nop \&\m[\\*[PDFHREF.TEXT.COLOUR]]\c
   .   device pdf: markstart \\n[rst] \\n[rsb] \\n[PDFHREF.LEADING] \\*[pdf:href.link]
@@ -237,8 +231,26 @@
   .   \"
   .   \" Clean up the temporary registers and strings, used to
 ***************
+*** 764,770 ****
+  .\" in any other PDF document, through "pdf*href-L.file".
+  .\"
+  .als pdf*href-L      pdf*href
+! .ds  pdf*href-L.link /Dest /\\\\*[pdf:href-D]
+  .ds  pdf*href-L.file /Action /GoToR \\\\*[pdf:href.files] \\*[pdf*href-L.link]
+  .\"
+  .\" "pdf*href-O" is the "official" handler for creating PDF
+--- 820,827 ----
+  .\" in any other PDF document, through "pdf*href-L.file".
+  .\"
+  .als pdf*href-L      pdf*href
+! .\"ds  pdf*href-L.link /Dest /\\\\*[pdf:href-D]
+! .ds  pdf*href-L.link /Dest /\\\\*[pdf:href-D.cleaned]
+  .ds  pdf*href-L.file /Action /GoToR \\\\*[pdf:href.files] \\*[pdf*href-L.link]
+  .\"
+  .\" "pdf*href-O" is the "official" handler for creating PDF
+***************
 *** 793,798 ****
---- 856,867 ----
+--- 850,861 ----
   .de pdfmarkrestart
   .nop \!x X pdf: markrestart
   ..

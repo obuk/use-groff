@@ -43,7 +43,6 @@
 .    substring my:an-URL.s 0 \\n[my:an-URL.i]
 .    substring my:an-URL.s -3
 .    if '\\*[my:an-URL.s]-'\\-' \{\
-.      pdfclean my:an-URL.dest
 .      break
 .    \}
 .    if '\\*[my:an-URL.s]-'://-' \{\
@@ -52,7 +51,7 @@
 .    \}
 .    nr my:an-URL.i +1
 .  \}
-.  ds my:an-URL.pdfhref pdfhref \\*[my:an-URL.class] -D \\*[my:an-URL.dest]
+.  ds my:an-URL.pdfhref pdfhref \\*[my:an-URL.class] -D "\\*[my:an-URL.dest]"
 ..
 .
 .am UR

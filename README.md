@@ -12,6 +12,8 @@ man -t -Lja 7 groff > a.ps
 man -Tpdf -Lja 7 groff > a.pdf
 ```
 
+ubuntu の man コマンドで groff のオプションを指定するには MANROFFOPT を使います。
+
 ## 日本語のフォント
 
 フォントは type42 形式でインストールします。
@@ -103,7 +105,7 @@ UVS のないフォントは正しく表示できないかもしれません。
 日本語で groff の両端揃えを試しました。使ったものをまとめておきます。
 
 * 日本語で groff の両端揃えを使うとき、ps や pdf の prepro でスペースを追加します。[App::grops::prepro][]
-* スペースを追加したテキストは、pdfhref に渡せなないので、pdf.tmac を修正します。[pdf.tmac.patch][]
+* pdfhref の -D オプションでスペースや unicode も扱えるようにします。[pdf.tmac.patch][]
 * 修正した pdfhref は man マクロの UR と UL で使います。[man.local][]
 
 [App::grops::prepro]: https://github.com/obuk/App-grops-prepro
