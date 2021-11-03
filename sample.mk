@@ -9,12 +9,11 @@ endif
 all::	setup
 
 lang?=		ja
-GS_PDFWRITE?=	gs -sDEVICE=pdfwrite -dPrinted=false -dNOPAUSE -dQUIET -dBATCH \
-		-sFONTPATH=${SITE_FONT}/devps:${GROFF_FONT}/devps -sOutputFile=- -
+GS_PDFWRITE?=	gs -sDEVICE=pdfwrite -sOutputFile=- -
 
 GROFF_ENV?=	GROFF_TMAC_PATH=/vagrant/files
 GROFF_PATH=	${GROFF_BIN}/groff
-GROFF?=		env ${GROFF_ENV} ${GROFF_PATH} -VV -P-pa4 -dpaper=a4 -Kutf8
+GROFF?=		env ${GROFF_ENV} ${GROFF_PATH} -P-pa4 -dpaper=a4 -Kutf8
 
 PDFMAN=		(path=$$(man -w -L${lang} $$(sed -e 's/\(.*\)_\([0-9]\)/\2 \1/')); \
 		mlang=$$(echo $$path | tr / '\n' | sed -n '/^${lang}$$/s//-m&/p'); \
@@ -88,7 +87,7 @@ clean::
 	pdfmom $< >$@
 
 %.pdf:	setup
-	echo $* | ${PDFMAN} > $@
+	echo $* | ${PDFMAN} | ${GS_PDFWRITE} > $@
 
 clean::
 	rm -f a.pdf

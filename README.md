@@ -50,8 +50,8 @@ $ vi ps.local
 次の例は gs を使ってフォントを埋め込みます。
 
 ```
-$ man -Tpdf -Lja コマンド名 | \
-  gs -sDEVICE=pdfwrite -dPrinted=false -dNOPAUSE -dQUIET -dBATCH -sOutputFile=- - >a.pdf
+$ env MANROFFOPT=-mja man -Tpdf -Lja コマンド名 | \
+    gs -sDEVICE=pdfwrite -sOutputFile=- - >a.pdf
 ```
 
 埋め込みは pdf ドライバのオプションにもありますが、
