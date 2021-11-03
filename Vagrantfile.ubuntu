@@ -15,8 +15,8 @@ Vagrant.configure("2") do |config|
   #sudo -u vagrant -i make -C /vagrant -f /vagrant/groff.mk setup
   #sudo -u vagrant -i make -C /vagrant -f /vagrant/groff.mk clean install
   #sudo -u vagrant -i make -C /vagrant clean install
-  #sudo -u vagrant -i make -C /vagrant -f /vagrant/pdfman.mk clean all
-  #sudo -u vagrant -i make -C /vagrant -f /vagrant/perldoc-server.mk clean install install-pods
+  #sudo -u vagrant -i make -C /vagrant -f /vagrant/perldoc-server.mk clean install-pods
+  #sudo -u vagrant -i make -C /vagrant -f /vagrant/perldoc-server.mk clean install
   SHELL
   #config.vm.network :forwarded_port, guest: 3000, host: 3000
 end
