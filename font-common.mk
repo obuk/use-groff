@@ -222,7 +222,7 @@ AGL-text.enc.pl?=\
 	}\
 	exit 0;
 
-AGL-text.enc.nam:	${TEXT_ENC} $(MAKEFILE_LIST) Slurp.cpanm
+AGL-text.enc.nam:	$(MAKEFILE_LIST) Slurp.cpanm
 	perl -e '${AGL-text.enc.pl}' ${GROFF_FONT}/devps/${TEXT_ENC} > $@
 
 clean::
