@@ -17,11 +17,14 @@ veryclean::
 	rm -rf ${REPO}
 
 FF_BOLD=
-
 include font-common.mk
 
-${REPO}/${SERIF}/$M-$R.ttf:	setup
-${REPO}/${SANS}/$G-$R.ttf:	setup
+${REPO}/${SERIF}/$M-Regular.ttf \
+${REPO}/${SANS}/$G-Regular.ttf \
+${REPO}/${SERIF}/$M-Bold.ttf \
+${REPO}/${SANS}/$G-Bold.ttf:	setup
 
-${REPO}/${SERIF}/$M-$B.ttf:	setup
-${REPO}/${SANS}/$G-$B.ttf:	setup
+%-$R.ttf:	%-Regular.ttf
+	ln -s $< $@
+%-$B.ttf:	%-Bold.ttf
+	ln -s $< $@

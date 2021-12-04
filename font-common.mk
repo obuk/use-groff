@@ -5,6 +5,7 @@ include use-groff.mk
 TYPE42_FONT?=	${SITE_FONT}/devps
 EMBED?=		*
 FOUNDRY?=
+TEXT_ENC?=	text.enc
 
 GS_ENABLE?=	yes
 
@@ -19,10 +20,15 @@ G?=		${SANS}${CN}
 
 STY?=		R I B BI
 
-R?=		Regular
-I?=		Italic
-B?=		Bold
-BI?=		BoldItalic
+R?=		R
+I?=		I
+B?=		B
+BI?=		BI
+
+#R?=		Regular
+#I?=		Italic
+#B?=		Bold
+#BI?=		BoldItalic
 
 setup::
 
@@ -42,9 +48,22 @@ clean-download:
 
 TRY_JA_VARIANT_GLYPHS?=
 ifneq "${TRY_JA_VARIANT_GLYPHS}" ""
-AFMTODIT=	perl afmtodit.tmp -s
+AFMTODIT=	perl afmtodit.tmp
+all::	afmtodit.tmp
+clean::
+	rm -f afmtodit.tmp
 afmtodit.tmp:
 	perl -w -lpe 's/^\s+"(?:F[9A][0-9A-F]{2}|2F[89][0-9A-F]{2}|2FA[01][0-9A-F])",\s+"[0-9A-F]+",$$/#$$&/' <${GROFF_BIN}/afmtodit >$@
+endif
+
+AFMTODIT+=	-s
+ifneq "${TEXT_ENC}" ""
+AFMTODIT+=	-e ${TEXT_ENC}
+ifneq "${TEXT_ENC}" "text.enc"
+all::	${TEXT_ENC}
+${TEXT_ENC}:
+	cd ${GROFF_FONT}/devps && sudo ln -sf text.enc ${TEXT_ENC}
+endif
 endif
 
 define install_font
@@ -71,22 +90,17 @@ download.devps::	$(2) $(2).t42
 download.devpdf::	$(2) $(2).t42
 	printf "${FOUNDRY}\t$(2)\t${EMBED}${TYPE42_FONT}/$(2).t42\n" >> $$@
 
+# afmtodit option: see /usr/share/groff/current/font/devps/generate/Makefile
+
 $(2):	$(2).afm $(2).t42 $(2).textmap fontforge.pkg
 	case $(2) in \
 	*Italic) ${AFMTODIT} -i50 $(2).afm $(2).textmap $(2);; \
 	*) ${AFMTODIT} -i0 -m $(2).afm $(2).textmap $(2);; \
 	esac
 
-ifneq "${TRY_JA_VARIANT_GLYPHS}" ""
-$(2):	afmtodit.tmp
-endif
-
 clean::
 	rm -f $(2)*
 endef
-
-clean::
-	rm -f afmtodit.tmp
 
 install::	download.devps
 	sudo install -m 644 $< ${SITE_FONT}/devps/download
@@ -177,11 +191,52 @@ ifneq "${FF_ITALIC}" ""
 	fontforge -lang=ff -c '$(FF_ITALIC)' $< $@
 endif
 
+
+#Based: Adobe Glyph List, AGL For New Fonts, AGL without afii, AGL with PUA
+AGL?=	Adobe Glyph List
+
+ifneq "${TEXT_ENC}" ""
+FF_AGL-text.enc?=	\
+		Open($$1); \
+		LoadNamelist("AGL-text.enc.nam"); \
+		RenameGlyphs("AGL-text.enc"); \
+		SetFontNames($$2:r); \
+		Generate($$2);
+
+AGL-text.enc.pl?=\
+	use strict;\
+	use warnings;\
+	use feature "say";\
+	use Slurp;\
+	exit 1 unless my $$afmtodit = slurp "${GROFF_BIN}/afmtodit";\
+	say "Based: $(AGL)";\
+	if ($$afmtodit =~ /%AGL_to_unicode\s*=\s*(\(.*?\))\s*;/s) {\
+	  my %AGL_to_unicode = eval $$1;\
+	  while (<>) {\
+	    s/\#.*//;\
+	    next unless my ($$name, $$code) = split /\s+/;\
+	    next unless my $$unicode = $$AGL_to_unicode{$$name};\
+	    next unless $$unicode ge "0100";\
+	    say "0x$$unicode $$name";\
+	  }\
+	}\
+	exit 0;
+
+AGL-text.enc.nam:	${TEXT_ENC} $(MAKEFILE_LIST) Slurp.cpanm
+	perl -e '${AGL-text.enc.pl}' ${GROFF_FONT}/devps/${TEXT_ENC} > $@
+
+clean::
+	rm -f AGL-text.enc.nam
+
+%.TTF:	%.ttf fontforge.pkg AGL-text.enc.nam
+	fontforge -lang=ff -c '$(FF_AGL-text.enc)' $< $@
+else
 FF_AGL=	\
 		Open($$1); \
-		RenameGlyphs("Adobe Glyph List"); \
+		RenameGlyphs("$(AGL)"); \
 		SetFontNames($$2:r); \
 		Generate($$2);
 
 %.TTF:	%.ttf fontforge.pkg
 	fontforge -lang=ff -c '$(FF_AGL)' $< $@
+endif
