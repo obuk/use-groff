@@ -16,13 +16,17 @@
 .
 .\" Use headings as bookmarks.
 .if t \{\
-.am SH
+.rn SH an-SH
+.de SH
+.  an-SH \\$@
 .  pdfhref O 1 \\$*
-.  pdfhref M -D "\\$*
+.  pdfhref M -D "\\$*"
 ..
-.am SS
+.rn SS an-SS
+.de SS
+.  an-SS \\$@
 .  pdfhref O 2 \\$*
-.  pdfhref M -D "\\$*
+.  pdfhref M -D "\\$*"
 ..
 .\}
 .
@@ -67,14 +71,13 @@
 .rn UE an-old:UE
 .de UE
 .  ie \\n[mPDF] \{\
-.    nop
-.    br
+.    fl
 .    di
 .    if !\\n(dl \{\
 .      do chop link-text-div
 .      da link-text-div
 .      nop \&\\*(m1
-.      br
+.      fl
 .      di
 .    \}
 .    ev
