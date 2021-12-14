@@ -116,27 +116,26 @@
 .    my:an-pdfmarkrestart
 .  .
 .
-.  if d my:an-p-footer \{\
-.    de my:an-p-footer-with-pdfmark
-.      my:an-pdfmarksuspend
-.      my:an-p-footer
-.    .
-.    am1 TH
-.      wh 0 my:an-header-with-pdfmark
-.      wh \\n[FT]u my:an-p-footer-with-pdfmark
-.    .
-.  \}
-.  el \{\
-.    de my:an-footer-with-pdfmark
-.      my:an-pdfmarksuspend
-.      my:an-footer
-.    .
-.    am1 TH
-.      wh 0 my:an-header-with-pdfmark
-.      wh \\n[my:an-footer-location]u my:an-footer-with-pdfmark
-.    .
-.  \}
+.  als my:an-header an-header
+.  ie d an-p-footer .als my:an-footer an-p-footer
+.  el               .als my:an-footer an-footer
 .
+.  de my:an-footer-with-pdfmark
+.    my:an-pdfmarksuspend
+.    my:an-footer
+.  .
+.
+.  am1 TH
+.    wh 0 my:an-header-with-pdfmark
+.    ie r an-footer-location \{\
+.      nr my:an-footer-location \\n[an-footer-location]
+.    \}
+.    el \{\
+.       ie r FT .nr my:an-footer-location \\n[FT]
+.       el      .nr my:an-footer-location (-.5i)
+.    \}
+.    wh \\n[my:an-footer-location]u my:an-footer-with-pdfmark
+.  .
 .\}
 .
 .\" End
