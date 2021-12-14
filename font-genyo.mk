@@ -30,8 +30,15 @@ ${REPOG}/ttc/${SANS}-B.ttc:	setup
 all::	$M-$R.ttx $M-$R.ttf $G-$R.ttx $G-$R.ttf \
 	$M-$B.ttx $M-$B.ttf $G-$B.ttx $G-$B.ttf
 
-%.ttf:	%.ttx fonttools.pkg
-	ttx -o $@ $<
+clean::
+	rm -f	\
+	$M-$R.ttx $M-$R.ttf $G-$R.ttx $G-$R.ttf \
+	$M-$B.ttx $M-$B.ttf $G-$B.ttx $G-$B.ttf
+
+%.sfd:	%.ttx fonttools.pkg
+	ttx -o a.ttf $<
+	fontforge -lang=ff -c '$(FF_SAVE)' a.ttf $@
+	rm -f a.ttf
 
 %$(CN)-$R.ttx:	%-R.ttc fonttools.pkg
 	ttx -o $@ -y 1 $<
@@ -40,5 +47,7 @@ all::	$M-$R.ttx $M-$R.ttf $G-$R.ttx $G-$R.ttf \
 	ttx -o $@ -y 1 $<
 
 clean::
-	rm -f ${SERIF}*.ttx ${SANS}*.ttx
-	rm -f ${SERIF}*.ttf ${SANS}*.ttf
+	rm -f $M-$R.sfd
+	rm -f $M-$B.sfd
+	rm -f $G-$R.sfd
+	rm -f $G-$B.sfd

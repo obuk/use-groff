@@ -24,7 +24,14 @@ ${REPO}/${SANS}/$G-Regular.ttf \
 ${REPO}/${SERIF}/$M-Bold.ttf \
 ${REPO}/${SANS}/$G-Bold.ttf:	setup
 
-%-$R.ttf:	%-Regular.ttf
-	ln -s $< $@
-%-$B.ttf:	%-Bold.ttf
-	ln -s $< $@
+%-$R.sfd:	%-Regular.ttf
+	fontforge -lang=ff -c '$(FF_SAVE)' $< $@
+
+%-$B.sfd:	%-Bold.ttf
+	fontforge -lang=ff -c '$(FF_SAVE)' $< $@
+
+clean::
+	rm -f $M-$R.sfd
+	rm -f $M-$B.sfd
+	rm -f $G-$R.sfd
+	rm -f $G-$B.sfd

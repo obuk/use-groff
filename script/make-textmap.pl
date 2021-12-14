@@ -39,7 +39,9 @@ print "# $ttf cmap\n";
 
 for (grep !$unicode_decomposed{sprintf "%04X", $_}, keys %{$f->{cmap}->find_ms->{val}}) {
     next unless my $gid = $f->{cmap}->ms_lookup($_);
-    printf "%s u%04X\n", $f->{post}{VAL}[$gid], $_;
+    my $name = $f->{post}{VAL}[$gid];
+    next if $name eq 'space';   # not to map 'space'
+    printf "%s u%04X\n", $name, $_;
 }
 
 exit 0 unless $f->{cmap}->find_uvs;

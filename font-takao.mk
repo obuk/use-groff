@@ -20,17 +20,12 @@ endif
 
 include font-common.mk
 
-setup::		${FONT_PKG}
+$M-$R.sfd:	${FONT_MR}
+	fontforge -lang=ff -c '$(FF_SAVE)' $< $@
 
-${FONT_MR}:	${FONT_PKG}
-ifneq "${FONT_GR}" ""
-${FONT_GR}:	${FONT_PKG}
-endif
+$G-$R.sfd:	${FONT_GR}
+	fontforge -lang=ff -c '$(FF_SAVE)' $< $@
 
-$M-$R.ttf:	${FONT_MR}
-	ln -sf $< $@
-
-ifneq "$G" ""
-$G-$R.ttf:	${FONT_GR}
-	ln -sf $< $@
-endif
+clean::
+	rm -f $M-$R.sfd
+	rm -f $G-$R.sfd

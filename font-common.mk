@@ -156,6 +156,10 @@ FF_GENERATE=	\
 		SetFontNames($$2:r); \
 		Generate($$2);
 
+FF_SAVE=	\
+		Open($$1); \
+		Save($$2);
+
 %.afm:	%.TTF
 	fontforge -lang=ff -c '$(FF_GENERATE)' $< $@
 
@@ -195,48 +199,49 @@ endif
 #Based: Adobe Glyph List, AGL For New Fonts, AGL without afii, AGL with PUA
 AGL?=	Adobe Glyph List
 
-ifneq "${TEXT_ENC}" ""
-FF_AGL-text.enc?=	\
+FF_RENAME?=	\
 		Open($$1); \
-		LoadNamelist("AGL-text.enc.nam"); \
-		RenameGlyphs("AGL-text.enc"); \
+		LoadNamelist("ff_rename.nam"); \
+		RenameGlyphs("ff_rename"); \
 		SetFontNames($$2:r); \
 		Generate($$2);
 
-AGL-text.enc.pl?=\
+ff_rename.pl?=\
 	use strict;\
 	use warnings;\
 	use feature "say";\
 	use Slurp;\
 	exit 1 unless my $$afmtodit = slurp "${GROFF_BIN}/afmtodit";\
-	say "Based: $(AGL)";\
+	say "Based: ${AGL}" if "${AGL}";\
 	if ($$afmtodit =~ /%AGL_to_unicode\s*=\s*(\(.*?\))\s*;/s) {\
 	  my %AGL_to_unicode = eval $$1;\
-	  while (<>) {\
-	    s/\#.*//;\
-	    next unless my ($$name, $$code) = split /\s+/;\
-	    next unless my $$unicode = $$AGL_to_unicode{$$name};\
-	    next unless $$unicode ge "0100";\
-	    say "0x$$unicode $$name";\
+	  my %seen;\
+	  while (<STDIN>) {\
+	    chop;\
+	    next unless !$$seen{$$_}++;\
+	    next unless my $$unicode = $$AGL_to_unicode{$$_};\
+	    say "0x$$unicode $$_";\
 	  }\
 	}\
 	exit 0;
 
-AGL-text.enc.nam:	$(MAKEFILE_LIST) Slurp.cpanm
-	perl -e '${AGL-text.enc.pl}' ${GROFF_FONT}/devps/${TEXT_ENC} > $@
+ff_rename.nam:	$(MAKEFILE_LIST) Slurp.cpanm
+	echo $(FF_RENAME_LIST) | tr ' ' '\n' | perl -e '${ff_rename.pl}' > $@
+
+FF_RENAME_LIST+=	space
+
+ifneq "${TEXT_ENC}" ""
+FF_RENAME_LIST+=	`perl -lae 'next unless !/^\#/ && @F == 2; print $$F[0]' \
+			${GROFF_FONT}/devps/${TEXT_ENC}`
+endif
 
 clean::
-	rm -f AGL-text.enc.nam
+	rm -f ff_rename.nam
 
-%.TTF:	%.ttf fontforge.pkg AGL-text.enc.nam
-	fontforge -lang=ff -c '$(FF_AGL-text.enc)' $< $@
-else
-FF_AGL=	\
-		Open($$1); \
-		RenameGlyphs("$(AGL)"); \
-		SetFontNames($$2:r); \
-		Generate($$2);
+%.TTF:	%.ttf fontforge.pkg ff_rename.nam
+	fontforge -lang=ff -c '$(FF_RENAME)' $< $@
 
-%.TTF:	%.ttf fontforge.pkg
-	fontforge -lang=ff -c '$(FF_AGL)' $< $@
-endif
+%.ttf:	%.sfd fontforge.pkg $(MAKEFILE_LIST)
+	./script/unaltuni2.pl $(patsubst %, -g %, $(FF_RENAME_LIST)) $< >a.sfd
+	fontforge -lang=ff -c '$(FF_GENERATE)' a.sfd $@
+	rm a.sfd
