@@ -231,8 +231,8 @@ ff_rename.nam:	$(MAKEFILE_LIST) Slurp.cpanm
 FF_RENAME_LIST+=	space
 
 ifneq "${TEXT_ENC}" ""
-FF_RENAME_LIST+=	`perl -lae 'next unless !/^\#/ && @F == 2; print $$F[0]' \
-			${GROFF_FONT}/devps/${TEXT_ENC}`
+FF_RENAME_LIST+=	$(shell perl -lae 'next unless !/^\#/ && @F == 2; print $$F[0]' \
+				${GROFF_FONT}/devps/${TEXT_ENC})
 endif
 
 clean::
