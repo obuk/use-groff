@@ -1,5 +1,5 @@
-*** gropdf.old	2021-12-14 04:49:56.074133757 +0000
---- gropdf	2021-12-14 04:49:56.082133626 +0000
+*** gropdf.old	2021-12-18 03:12:38.136686700 +0000
+--- gropdf	2021-12-18 03:12:38.140686634 +0000
 ***************
 *** 22,27 ****
 --- 22,38 ----
@@ -508,7 +508,7 @@
   
 +     $fnt{NM} = 'F'.$fontno;
 +     $fnt{SUPPL} = 0;
-+     my @remap = (127..255);
++     my @remap = (127..138, 144..255);
 +     @remap = grep !$ucmap_tounicode[$_], @remap if $O5_tounicode;
 +     $fnt{REMAP} = \@remap;
 +     my @used;
@@ -800,11 +800,11 @@
 ! 	my $chnm=$fnt->{NAM}->{$fnt->{NO}->[$cn]->[1]};
   
 ! 	if ($chnm->[USED]==0)
-! 	{
+  	{
 ! 	    $chnm->[USED]=1;
 ! 	}
 ! 	elsif ($fnt->{NO}->[$cn]->[0] ne $fnt->{NO}->[$cn]->[1])
-  	{
+! 	{
 ! 	    # A glyph has already been remapped to this char, so find a spare
 ! 
 ! 	    my $cn2=RemapChr($cn,$fnt,$fnt->{NO}->[$cn]->[0]);
@@ -954,7 +954,7 @@
       }
   }
   
---- 4010,4091 ----
+--- 4010,4097 ----
       my $ch=shift;
       my $fnt=shift;
       my $chnm=shift;
@@ -985,11 +985,17 @@
 !     if ($use_suppl_font) {
 ! 	if (!defined $unused) {
 ! 	    if (!$fnt->{NEXT}) {
+! 		my @reserved = ($textenc{space} // 32);
+! 		my %reserved = map +($_ => 1), @reserved;
 ! 		my $fnt2 = {
 ! 		    (map +($_ => $fnt->{$_}), qw/NM NO NAM/),
 ! 		    SUPPL => $fnt->{SUPPL} + 1,
-! 		    REMAP => [ 0..31, 33..255 ],
+! 		    REMAP => [ grep !$reserved{$_}, 0..255 ],
 ! 		};
+! 		for (@reserved) {
+! 		    $fnt2->{NO}->[$_ + $fnt2->{SUPPL} * 256] =
+! 			$fnt->{NO}->[$_ + $fnt->{SUPPL} * 256];
+! 		}
 ! 		$fnt->{NEXT} = $fnt2;
 ! 	    }
 ! 	    return RemapChr($ch, $fnt->{NEXT}, $chnm);
@@ -1039,7 +1045,7 @@
   
 ***************
 *** 3774,3779 ****
---- 4126,4133 ----
+--- 4132,4139 ----
   
   
   1;
