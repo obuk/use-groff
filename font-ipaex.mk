@@ -25,10 +25,10 @@ setup::		${FONT_PKG}
 ${FONT_MR}:	${FONT_PKG}
 ${FONT_GR}:	${FONT_PKG}
 
-$M-$R.sfd:	${FONT_MR}
+$M-$R.sfd:	${FONT_MR} fontforge.pkg
 	fontforge -lang=ff -c '$(FF_SAVE)' $< $@
 
-$G-$R.sfd:	${FONT_GR}
+$G-$R.sfd:	${FONT_GR} fontforge.pkg
 	fontforge -lang=ff -c '$(FF_SAVE)' $< $@
 
 clean::

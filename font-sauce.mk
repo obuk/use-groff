@@ -8,13 +8,15 @@ SANS=		SauceHanSans
 
 VPATH=		$(patsubst %,%/${SERIF},${REPO}) $(patsubst %,%/${SANS},${REPO})
 
-setup::
-	for f in ${REPO}; do \
-	  [ -d $$f ] || git clone --depth 1 https://github.com/3846masa/$$f.git; \
-	done
+setup::	$(patsubst %,%.git,${REPO})
+
+$(patsubst %,%.git,${REPO}):
+	[ -d `basename $@ .git` ] || git clone --depth 1 https://github.com/adobe-fonts/$@
+	touch $@
 
 veryclean::
 	rm -rf ${REPO}
+	rm -f $(patsubst %,%.git,${REPO})
 
 FF_BOLD=
 include font-common.mk
@@ -22,16 +24,15 @@ include font-common.mk
 ${REPO}/${SERIF}/$M-Regular.ttf \
 ${REPO}/${SANS}/$G-Regular.ttf \
 ${REPO}/${SERIF}/$M-Bold.ttf \
-${REPO}/${SANS}/$G-Bold.ttf:	setup
+${REPO}/${SANS}/$G-Bold.ttf:	sauce-han-fonts.git
 
-%-$R.sfd:	%-Regular.ttf
-	fontforge -lang=ff -c '$(FF_SAVE)' $< $@
-
-%-$B.sfd:	%-Bold.ttf
-	fontforge -lang=ff -c '$(FF_SAVE)' $< $@
+all::	$(foreach fam, ${FAM}, $($(fam))-$R.sfd $($(fam))-$B.sfd)
 
 clean::
-	rm -f $M-$R.sfd
-	rm -f $M-$B.sfd
-	rm -f $G-$R.sfd
-	rm -f $G-$B.sfd
+	rm -f $(foreach fam, ${FAM}, $($(fam))-$R.sfd $($(fam))-$B.sfd)
+
+%-$R.sfd:	%-Regular.ttf fontforge.pkg
+	fontforge -lang=ff -c '$(FF_SAVE)' $< $@
+
+%-$B.sfd:	%-Bold.ttf fontforge.pkg
+	fontforge -lang=ff -c '$(FF_SAVE)' $< $@

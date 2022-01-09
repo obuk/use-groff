@@ -67,39 +67,46 @@ endif
 endif
 
 define install_font
-all::		$(patsubst %,$(2)%,.TTF)
+all::		$(patsubst %,$(1)%,.TTF)
 
-install::	install-$(1)
-
-install-$(1):	install-$(2)
-	sed 's/^name .*/name $(1)/' ${SITE_FONT}/devps/$(2) >/tmp/$(1)
-	sudo install -m 644 /tmp/$(1) ${SITE_FONT}/devps/
+install-$(1):	$(1) $(1).t42
+	sudo install -m 644 $(1).t42 ${TYPE42_FONT}
+	sudo install -m 644 $(1) ${SITE_FONT}/devps
 	sudo ln -sf ${SITE_FONT}/devps/$(1) ${SITE_FONT}/devpdf/$(1)
 
-clean::
-	rm -f /tmp/$(1)
+download.devps::	$(1) $(1).t42
+	printf "$(1)\t${TYPE42_FONT}/$(1).t42\n" >> $$@
 
-install-$(2):	$(2) $(2).t42
-	sudo install -m 644 $(2).t42 ${TYPE42_FONT}
-	sudo install -m 644 $(2) ${SITE_FONT}/devps
-	sudo ln -sf ${SITE_FONT}/devps/$(2) ${SITE_FONT}/devpdf/$(2)
-
-download.devps::	$(2) $(2).t42
-	printf "$(2)\t${TYPE42_FONT}/$(2).t42\n" >> $$@
-
-download.devpdf::	$(2) $(2).t42
-	printf "${FOUNDRY}\t$(2)\t${EMBED}${TYPE42_FONT}/$(2).t42\n" >> $$@
+download.devpdf::	$(1) $(1).t42
+	printf "${FOUNDRY}\t$(1)\t${EMBED}${TYPE42_FONT}/$(1).t42\n" >> $$@
 
 # afmtodit option: see /usr/share/groff/current/font/devps/generate/Makefile
 
-$(2):	$(2).afm $(2).t42 $(2).textmap fontforge.pkg
-	case $(2) in \
-	*Italic) ${AFMTODIT} -i50 $(2).afm $(2).textmap $(2);; \
-	*) ${AFMTODIT} -i0 -m $(2).afm $(2).textmap $(2);; \
-	esac
+$(1):	$(1).afm $(1).t42 $(1).textmap fontforge.pkg
+	echo ${AFMTODIT} \
+	`case $(1) in \
+	 *Mono$(CN)-*|*Code$(CN)-*) echo "\-n";; \
+	 esac` \
+	`case $(1) in \
+	 *$(CN)-$(I)|*$(CN)-$(BI)) echo "\-i50";; \
+	 *) echo "\-i0 -m";; \
+	 esac` \
+	$(1).afm $(1).textmap $(1) | sh -x
 
 clean::
-	rm -f $(2)*
+	rm -f $(1)*
+endef
+
+define install_font_alias
+install::	install-$(2)
+
+install-$(2):	install-$(1)
+	sed 's/^name .*/name $(2)/' ${SITE_FONT}/devps/$(1) >/tmp/$(2)
+	sudo install -m 644 /tmp/$(2) ${SITE_FONT}/devps/
+	sudo ln -sf ${SITE_FONT}/devps/$(2) ${SITE_FONT}/devpdf/$(2)
+
+clean::
+	rm -f /tmp/$(2)
 endef
 
 install::	download.devps
@@ -109,7 +116,9 @@ install::	download.devpdf
 	sudo install -m 644 $< ${SITE_FONT}/devpdf/download
 
 $(foreach fam, ${FAM}, $(foreach sty, ${STY}, \
-  $(eval $(call install_font,$(fam)$(sty),$($(fam))-$($(sty)))) \
+  $(eval $(call install_font,$($(fam))-$($(sty)))) \
+  $(eval $(call install_font_alias,$($(fam))-$($(sty)),$(fam)$(sty))) \
+  $(eval $(call install_font_alias,$($(fam))-$($(sty)),$($(fam))$($(sty)))) \
 ))
 
 ifeq "${GS_ENABLE}" "yes"
@@ -245,3 +254,18 @@ clean::
 	./script/unaltuni2.pl $(patsubst %, -g %, $(FF_RENAME_LIST)) $< >a.sfd
 	fontforge -lang=ff -c '$(FF_GENERATE)' a.sfd $@
 	rm a.sfd
+
+
+URI_CIDMAP?=	https://raw.githubusercontent.com/fontforge/fontforge/master/contrib/cidmap
+
+%.cidmap:
+	[ -f $@ ] || curl -O $(URI_CIDMAP)/$@
+
+install-fontforge-cidmap:	Adobe-CNS1-6.cidmap Adobe-GB1-5.cidmap \
+		Adobe-Identity-0.cidmap \
+		Adobe-Japan1-5.cidmap \
+		Adobe-Japan1-6.cidmap \
+		Adobe-Japan1-7.cidmap \
+		Adobe-Japan2-0.cidmap \
+		Adobe-Korea1-2.cidmap
+	sudo cp $^ /usr/share/fontforge/
