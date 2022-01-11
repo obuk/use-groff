@@ -12,7 +12,7 @@
 .\}
 .
 .\" Default heading font
-.ds HF HB\"
+.\".ds HF HB\"" use groff option: -dFH=HB
 .
 .\" Use headings as bookmarks.
 .if t \{\
