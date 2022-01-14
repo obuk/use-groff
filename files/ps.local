@@ -16,6 +16,8 @@
 .if !d fnH .ds fnH \*[fnH-default]
 .if !d fnC .ds fnC \*[fnC-default]
 .
+.ds my:fzoom-styles "R I B BI O X\""
+.
 .de my:fspecial
 .  if \n[my:debug-font] .tm \\$0 \\$*
 .  fspecial \\$1R  \\$2R
@@ -31,6 +33,7 @@
 .  nr my:fzoomf-factor \\$2
 .  shift 2
 .  while (\\n(.$ > 0) \{\
+.    if F\\*[my:fzoomf-family]\\$1 \
 .    fzoom \\*[my:fzoomf-family]\\$1 \\n[my:fzoomf-factor]
 .    shift
 .  \}
@@ -53,8 +56,8 @@
 .    nr my:fzoom-\\$2.h (\\n[rst] - \\n[rsb])
 .    nr my:fzoom (\\n[my:fzoom-factor] * \\n[my:fzoom-\\$2.h] / \\n[my:fzoom-\\$1.h])
 .  \}
-.  my:fzoomf \\$2 \\n[my:fzoom-factor] R I B BI
-.  my:fzoomf \\$1 \\n[my:fzoom] R I B BI
+.  my:fzoomf \\$2 \\n[my:fzoom-factor] \\*[my:fzoom-styles]
+.  my:fzoomf \\$1 \\n[my:fzoom] \\*[my:fzoom-styles]
 ..
 .
 .de my:fconfig
@@ -66,6 +69,7 @@
 .  nr my:fconfig-zoom 0
 .  nr my:fconfig-ratio 0
 .  ds my:fconfig-dir h
+.  nr my:fconfig-easy 1
 .  if '\\*[my:font]'C' .ds my:fconfig-dir w
 .  while \\n(.$ \{\
 .    ds my:font-c \\$1
@@ -84,13 +88,23 @@
 .    el \{ .ie '\\$1'-h' \{\
 .      ds my:fconfig-dir h
 .    \}
+.    el \{ .ie '\\$1'-strict' \{\
+.      nr my:fconfig-easy 0
+.    \}
+.    el \{ .ie '\\$1'-debug' \{\
+.      nr my:fconfig-debug 1
+.    \}
 .    el \{\
 .      tm \\n(.F:\\n(.c: config error: -dfn\\*[my:font]='\\$*'
-.    \}\}\}\}\}
+.    \}\}\}\}\}\}\}
 .    shift
 .  \}
 .
-.  if !'\\$1'\\*[my:font]' .my:fspecial \\*[my:font] \\$1
+.  if !'\\$1'\\*[my:font]' \{\
+.    my:fspecial \\*[my:font] \\$1
+.    if \\n[my:fconfig-easy] \
+.      my:fspecial \\$1 \\*[my:font]
+.  \}
 .  ie \\n[my:fconfig-zoom]>=0 \{\
 .    my:fzoom \\$1 \\*[my:font] \\*[my:fconfig-dir] \\n[my:fconfig-zoom]
 .  \}
@@ -113,12 +127,6 @@
 .my:fconfig C \*[fnC]
 .
 .nr pp:spacewidth \w'\f(TR \fP'
-.
-.\" define missing glyph for SauceHan{Serif,Sans}JP-*
-.if c \[ti] \{\
-.  if !c ~     .char ~     \v[-0.15]\[ti]\v[+0.15]
-.  if !c \[a~] .char \[a~] \v[-0.15]\[ti]\v[+0.15]
-.\}
 .
 .\" mimic punctuation marks in proportional fonts.
 .\" https://www.w3.org/TR/jlreq/ja/#character_classes
