@@ -67,7 +67,7 @@ endif
 endif
 
 define install_font
-all::		$(patsubst %,$(1)%,.TTF)
+install::	install-$(1)
 
 install-$(1):	$(1) $(1).t42
 	sudo install -m 644 $(1).t42 ${TYPE42_FONT}
@@ -75,7 +75,7 @@ install-$(1):	$(1) $(1).t42
 	sudo ln -sf ${SITE_FONT}/devps/$(1) ${SITE_FONT}/devpdf/$(1)
 
 download.devps::	$(1) $(1).t42
-	printf "$(1)\t${TYPE42_FONT}/$(1).t42\n" >> $$@
+	printf "$(1)\t$(1).t42\n" >> $$@
 
 download.devpdf::	$(1) $(1).t42
 	printf "${FOUNDRY}\t$(1)\t${EMBED}${TYPE42_FONT}/$(1).t42\n" >> $$@
@@ -110,16 +110,28 @@ clean::
 endef
 
 install::	download.devps
-	sudo install -m 644 $< ${SITE_FONT}/devps/download
+	for f in $< ${SITE_FONT}/devps/download; do \
+	  [ -f $$f ] && cat $$f; \
+	done | sort -u >/tmp/download
+	sudo install -m 644 /tmp/download ${SITE_FONT}/devps
 
 install::	download.devpdf
-	sudo install -m 644 $< ${SITE_FONT}/devpdf/download
+	for f in $< ${SITE_FONT}/devpdf/download; do \
+	  [ -f $$f ] && cat $$f; \
+	done | sort -u >/tmp/download
+	sudo install -m 644 /tmp/download ${SITE_FONT}/devpdf
 
+ifeq "${STY}" ""
+$(foreach fam,${FAM}, \
+  $(eval $(call install_font,$(or $($(fam)),$(fam)))) \
+)
+else
 $(foreach fam, ${FAM}, $(foreach sty, ${STY}, \
-  $(eval $(call install_font,$($(fam))-$($(sty)))) \
-  $(eval $(call install_font_alias,$($(fam))-$($(sty)),$(fam)$(sty))) \
-  $(eval $(call install_font_alias,$($(fam))-$($(sty)),$($(fam))$($(sty)))) \
+  $(eval $(call install_font,$(or $($(fam)),$(fam))-$($(sty)))) \
+  $(eval $(call install_font_alias,$(or $($(fam)),$(fam))-$($(sty)),$(fam)$(sty))) \
+  $(eval $(call install_font_alias,$(or $($(fam)),$(fam))-$($(sty)),$(or $($(fam)),$(fam))$($(sty)))) \
 ))
+endif
 
 ifeq "${GS_ENABLE}" "yes"
 GS_FONTDIR?=	\
@@ -136,11 +148,11 @@ install::	download.devps ghostscript.pkg
 			$(MAKE) -f $(firstword $(MAKEFILE_LIST)) 
 	sudo mkdir -p $(GS_FONTDIR)
 	([ -f $(GS_FONTDIR)/Fontmap ] && cat $(GS_FONTDIR)/Fontmap; \
-	 cat $< | while read fontname fontpath; do \
-	   (cd ${SITE_FONT}/devps; \
-	    [ -L $$fontpath ] && fontpath=$$(readlink $$fontpath); \
-	    sudo ln -sf $$fontpath $(GS_FONTDIR); \
-	    printf "/$$fontname ($$(basename $$fontpath));\n";) \
+	 cat $< | while read fontname fontfile; do \
+	   if [ "${TYPE42_FONT}" != "$(GS_FONTDIR)" ]; then \
+	     sudo ln -sf ${TYPE42_FONT}/$$fontfile $(GS_FONTDIR); \
+	   fi; \
+	   printf "/$$fontname ($$fontfile);\n"; \
 	 done) |sort -u >Fontmap
 	sudo install -b -m 644 Fontmap $(GS_FONTDIR)
 endif

@@ -2,20 +2,13 @@
 
 include use-groff.mk
 
-REPO=		source-han-serif \
-		source-han-sans \
-		source-han-mono \
-		source-han-code-jp
+REPO?=		source-han-serif \
+		source-han-sans
 
-SERIF=		SourceHanSerif
-SANS=		SourceHanSans
-MONO=		SourceHanMono
-CODE=		SourceHanCode
+SERIF?=		SourceHanSerif
+SANS?=		SourceHanSans
 
-# override C (experimental)
-FAM?=		M G Code
-#Code?=		${MONO}${CN}
-Code?=		${CODE}${CN}
+FAM?=		M G
 
 setup::	$(patsubst %,%.git,${REPO})
 
@@ -27,14 +20,10 @@ veryclean::
 	rm -rf ${REPO}
 	rm -f $(patsubst %,%.git,${REPO})
 
-VPATH=	source-han-sans/Regular \
+VPATH?=	source-han-sans/Regular \
 	source-han-sans/Bold \
 	source-han-serif/Masters/Regular \
-	source-han-serif/Masters/Bold \
-	source-han-mono/Regular/OTC \
-	source-han-mono/Bold/OTC \
-	source-han-code-jp/Regular \
-	source-han-code-jp/Bold
+	source-han-serif/Masters/Bold
 
 FF_BOLD=
 include font-common.mk
@@ -50,40 +39,11 @@ clean::
 %-$B.sfd:	%-Bold.ttf fontforge.pkg
 	fontforge -lang=ff -c '$(FF_SAVE)' $< $@
 
-FF_USE_HAN?=	\
-	Open($$1); \
-	CIDFlattenByCMap($$3); \
-	Reencode("UnicodeFull",1); \
-	SetFontNames($$2:r); \
-	$(if $(filter %.sfd,$@),Save($$2),Generate($$2))
-
-FF_USE_HAN_JP?=	\
-	Open($$1); \
-	CIDChangeSubFont($$4+"-Hangul"); SelectAll(); Clear(); \
-	CIDChangeSubFont($$4+"-Italic"); SelectAll(); Clear(); \
-	CIDChangeSubFont($$4+"-ItalicCJK"); SelectAll(); Clear(); \
-	CIDChangeSubFont($$4+"-ItalicDigits"); SelectAll(); Clear(); \
-	CIDFlattenByCMap($$3); \
-	Reencode("UnicodeFull", 1); \
-	SetFontNames($$2:r); \
-	$(if $(filter %.sfd,$@),Save($$2),Generate($$2));
-
-#all::	$(foreach fam, ${FAM}, $($(fam))-Regular.ttf $($(fam))-Bold.ttf)
-
 clean::
 	rm -f $(foreach fam, ${FAM}, $($(fam))-Regular.ttf $($(fam))-Bold.ttf)
 
-${MONO}${CN}-Regular.ttf:	${MONO}-Regular.otf fontforge.pkg
-	fontforge -lang=ff -c '$(FF_USE_HAN_JP)' $< $@ \
-		source-han-mono/Uni${MONO}${CN}-UTF32-H ${MONO}-Regular
-
-${MONO}${CN}-Bold.ttf:		${MONO}-Bold.otf fontforge.pkg
-	fontforge -lang=ff -c '$(FF_USE_HAN_JP)' $< $@ \
-		source-han-mono/Uni${MONO}${CN}-UTF32-H ${MONO}-Bold
-
 %.ttf:	%.otf afdko.pip
 	otf2ttf -o $@ $<
-
 
 build-han=\
 	cd `dirname $@`; \
@@ -107,14 +67,6 @@ source-han-sans/Bold/${SANS}${CN}-Bold.otf:		source-han-sans.git afdko.pip
 source-han-serif/Masters/Regular/${SERIF}${CN}-Regular.otf \
 source-han-serif/Masters/Bold/${SERIF}${CN}-Bold.otf:	source-han-serif.git afdko.pip
 	$(call build-han,${SERIF},.${CN},.SUBSET)
-
-source-han-mono/Regular/OTC/${MONO}-Regular.otf \
-source-han-mono/Bold/OTC/${MONO}-Bold.otf:		source-han-mono.git afdko.pip
-	$(call build-han,${MONO},.OTC.J)
-
-source-han-code-jp/Regular/${CODE}${CN}-Regular.otf \
-source-han-code-jp/Bold/${CODE}${CN}-Bold.otf:		source-han-code-jp.git afdko.pip
-	$(call build-han,${CODE},,,_fs)
 
 %.pip:	python3.pkg python3-pip.pkg
 	sudo pip install $*
