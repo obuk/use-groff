@@ -1,4 +1,4 @@
-'\" t
+'\" tp
 .\" -*- nroff -*-
 .\"nr pp:debug 0
 .
@@ -25,6 +25,7 @@
 .nr VS_BAK \\n[VS]
 .nr VS (\\n[PS] * 120 / 100)
 .vs \\n[VS]u
+.ft CW
 ..
 .am1 EE
 .nr VS \\n[VS_BAK]
@@ -1111,14 +1112,12 @@ TとMの文字の大きさが揃うようにMを拡大します。
 \&.fzoom MR zoom
 .EE
 .
-特に指定しない限り、MがデフォルトになったときMにない文字をTで探す様に、
-次のコードも実行されます。
+デフォルトでは groff のオプション \-fM のために次のコードも実行します。
+無効にするには \f(CW-strict\fP を指定します。
+.
 .EX
 \&.fspecial MR TR                       \e" MRにないグリフをTRで探す\""
 .EE
-.
-fspecialの設定で探索がループしそうに見えますが、大丈夫です。もし、この
-設定を無効にするなら \f(CW-strict\fP を指定します。
 .
 .TP
 \f(CW-dfnH=G\fP
@@ -1150,8 +1149,119 @@ fspecialの設定で探索がループしそうに見えますが、大丈夫で
 \&.ftr CW CodeR
 .EE
 .
+.\" ------------------------------------------------------------------
+.SS 縦書き (宛名書き)
+.\" ------------------------------------------------------------------
 .
-.bp
+groffは縦書き (宛名書き) に使えるでしょうか。試したことをメモしておき
+ます。
+.
+.IP 1. 4
+groffの前処理プログラム
+.BR pic (1)
+を使う。
+.
+.TS
+tab(;);
+lw50 l.
+T{
+.
+.EX
+\&.PS
+\&line dotted up "こ" aligned; move down right 0.15
+\&line dotted up "ん" aligned; move same
+\&line dotted up "に" aligned; move same
+\&line dotted up "ち" aligned; move same
+\&line dotted up "は" aligned
+\&.PE
+.EE
+T};T{
+.ft GR
+\s-1(左例の結果)\s0
+.PS
+line dotted right "こ"; move left down 0.15
+line dotted right "ん"; move same
+line dotted right "に"; move same
+line dotted right "ち"; move same
+line dotted right "は"
+.PE
+.ft
+T}
+.TE
+.sp 0.5
+例は線分に dotted を指定しています。invis で線分が消えて文字のみになり
+ます。
+.
+.IP 2.
+縦書きフォント (通常のフォントを90度回転させたもの) を使う。
+.TS
+tab(;);
+lw40 l.
+T{
+.sp 0.5
+.EX
+\&.ft MV
+\&◁○▢\e- おでん oden
+\&.ft GV
+\&一丁目二番地三四\e-\eb'６０５'号室
+.EE
+T};T{
+.ft GR
+\s-1(左例の結果)\s0
+.nf
+.ft MV
+◁○▢\- おでん oden
+.sp 0.3
+.ft GV
+一丁目二番地三四\-\b'６０５'号室
+T}
+.TE
+.sp 0.5
+縦書きフォントは、
+.UR https://mandel59.hateblo.jp/entry/20100521/1274426208
+改造フォントとCSSで縦組にする
+.UE \c
+を参照しました。
+.
+.IP 3.
+縦書きフォントとマクロ(picによる回転)を使う。
+.br
+.
+試しに葉書の宛名書きに使ってみたところ、漢数字を誤入力し、「\f(GRあて
+所に尋ねあたりません\fP」というシールが貼られて戻されました。正しいの
+は漢数字でもアラビア数字の方が良いこともあるかもしれません。
+.
+.ds @rotate \
+\\*[pp:sp 6]\
+\R'@rotate.w (\w'\\$1'/2)'\
+\R'@rotate.h (\\n[rst]-(\\n[rsb]))'\
+\X'ps: exec gsave currentpoint 2 copy translate -90 rotate neg exch neg exch translate'\
+\Z'\v'\\n[@rotate.h]u'\h'0.35-\\n[@rotate.w]u'\\$1'\
+\X'ps: exec grestore'\
+\h'\\n[@rotate.h]u'\
+\\*[pp:sp 6]
+.
+.TS
+tab(;);
+lw40 l.
+T{
+.sp 0.5
+.EX
+\&.ft GV
+\&\e*[b 1]丁目\e*[b 2]番地\e*[b 34]\e-\e*[b 506]号室
+.EE
+T};T{
+.ft GR
+\s-1(左例の結果)\s0
+.sp 0.1
+.ft GV
+.als b @rotate
+\&\*[b 1]丁目\*[b 2]番地\*[b 34]\-\*[b 506]号室
+.rr b
+T}
+.TE
+.
+.
 .\" ------------------------------------------------------------------
 .SS 両端揃えの比較
 .\" ------------------------------------------------------------------
@@ -1181,7 +1291,6 @@ Plethysmographによって四肢の血量を計る方法。Galvanometerによっ
 .ll
 .
 .PP
-.\"B 2. 行を跨ぐ日本語の文をつなぐ。 約物のスペースを補正に使う （mode 1）
 .B
 2. 行を跨ぐ日本語の文をつなぐ。約物のスペースを補正に使う（mode 1）
 .
@@ -1198,7 +1307,6 @@ Plethysmographによって四肢の血量を計る方法。Galvanometerによっ
 .ll
 .
 .PP
-.\".B 3. 上記 2. に加え、 和文と欧文の境界、 および字間にスペースを補う （mode 7）
 .B
 3. 上記2.に加え、和文と欧文の境界、および字間にスペースを補う（mode 7）
 .

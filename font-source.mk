@@ -10,6 +10,11 @@ SANS?=		SourceHanSans
 
 FAM?=		M G
 
+STY?=		R I B BI V BV
+
+V?=		V
+BV?=		BV
+
 setup::	$(patsubst %,%.git,${REPO})
 
 $(patsubst %,%.git,${REPO}):
@@ -28,16 +33,35 @@ VPATH?=	source-han-sans/Regular \
 FF_BOLD=
 include font-common.mk
 
-all::	$(foreach fam, ${FAM}, $($(fam))-$R.sfd $($(fam))-$B.sfd)
+all::	$(foreach fam, ${FAM}, $($(fam))-$R.sfd $($(fam))-$B.sfd \
+		$($(fam))-$V.sfd $($(fam))-$(BV).sfd)
 
 clean::
-	rm -f $(foreach fam, ${FAM}, $($(fam))-$R.sfd $($(fam))-$B.sfd)
+	rm -f $(foreach fam, ${FAM}, $($(fam))-$R.sfd $($(fam))-$B.sfd \
+		$($(fam))-$V.sfd $($(fam))-$(BV).sfd)
+
+FF_VERTICAL_WRITING=	\
+	Open($$1); \
+	SelectAll(); \
+	ApplySubstitution("*","*","vrt2"); \
+	ApplySubstitution("*","*","vert"); \
+	Select(0u0000, 0u2fff); \
+	SelectInvert(); \
+	Rotate(90, 512, 360); \
+	AddExtrema(); \
+	RoundToInt();
 
 %-$R.sfd:	%-Regular.ttf fontforge.pkg
 	fontforge -lang=ff -c '$(FF_SAVE)' $< $@
 
 %-$B.sfd:	%-Bold.ttf fontforge.pkg
 	fontforge -lang=ff -c '$(FF_SAVE)' $< $@
+
+%-$V.sfd:	%-Regular.ttf fontforge.pkg $(MAKEFILE_LIST)
+	fontforge -lang=ff -c '$(FF_VERTICAL_WRITING); Save($$2)' $< $@
+
+%-$(BV).sfd:	%-Bold.ttf fontforge.pkg $(MAKEFILE_LIST)
+	fontforge -lang=ff -c '$(FF_VERTICAL_WRITING); Save($$2)' $< $@
 
 clean::
 	rm -f $(foreach fam, ${FAM}, $($(fam))-Regular.ttf $($(fam))-Bold.ttf)

@@ -91,6 +91,11 @@ $(1):	$(1).afm $(1).t42 $(1).textmap fontforge.pkg
 	 *$(CN)-$(I)|*$(CN)-$(BI)) echo "\-i50";; \
 	 *) echo "\-i0 -m";; \
 	 esac` \
+	`if [ -n "$(V)" -o -n "$(BV)" ]; then \
+	   case $(1) in \
+	   *$(CN)-$(V)|*$(CN)-$(BV)) echo "\-n";; \
+	   esac; \
+	fi` \
 	$(1).afm $(1).textmap $(1) | sh -x
 
 clean::
