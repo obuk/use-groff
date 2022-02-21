@@ -912,9 +912,9 @@ T};
 .\" ------------------------------------------------------------------
 .
 見出しをしおりやリンク先として使うには、見出しを定義するマクロに
-\f(CWpdfhref\fP を追加します。
+\f(CWpdfhref\fP あるいは \f(CWpdfbookmark\fP を追加します。
 .
-\f(CWpdfhref\fP は
+これらは
 .UR https://opensource.adobe.com/dc-acrobat-sdk-docs/acrobatsdk/pdfs/acrobatsdk_pdfmark.pdf
 pdfmark
 .UE
@@ -925,6 +925,7 @@ man.localに追加するコードの例を示します。
 .
 .sp 0.5
 .EX
+\&.if dan*bookmark \e{\e
 \&.am SH
 \&.  pdfhref O 1 \e\e$*
 \&.  pdfhref M -D \(dq\e\e$*\(dq
@@ -933,8 +934,21 @@ man.localに追加するコードの例を示します。
 \&.  pdfhref O 2 \e\e$*
 \&.  pdfhref M -D \(dq\e\e$*\(dq
 \&..
+\&\e}
 .EE
 .
+.PP
+groff 1.22.xのmanマクロは \f(CWpdfbookmark\fP を呼びます。詳細は、
+.UR https://git.savannah.gnu.org/cgit/groff.git/commit/tmac/an.tmac?id=98112bfecad04b5568755cc531cc86d0b4553cf5
+98112bf\" Implement PDF bookmark support for man pages.
+.UE ,
+.UR https://git.savannah.gnu.org/cgit/groff.git/commit/tmac/an.tmac?id=ea3b27102f1f84af4cf88f999266f10603c53628
+ea3b271\" [man]: Refactor PDF bookmark support.
+.UE
+にあります。
+.
+.
+.ig ..
 .PP
 上のpdfhref Mで \-Dオプションに指定した文字列はリンク先を表わす名前に
 なります。名前はURIの一部として使うことができます。見出しから名前を作
@@ -971,7 +985,7 @@ pdfcleanにはスペースを \- に変換する修正も加えました。
 .PP
 それなりに動いているように見えますが、しばらく使ってみようと思います。
 ..
-.
+...
 .
 .\" ------------------------------------------------------------------
 .SS リンクテキストのはじまりと終わりを指定する
@@ -1223,13 +1237,9 @@ T}
 .UE \c
 を参照しました。
 .
-.IP 3.
-縦書きフォントとマクロ(picによる回転)を使う。
+.IP 2'.
+縦書きフォントを使う。(その2、アラビア数字を使う)
 .br
-.
-試しに葉書の宛名書きに使ってみたところ、漢数字を誤入力し、「\f(GRあて
-所に尋ねあたりません\fP」というシールが貼られて戻されました。正しいの
-は漢数字でもアラビア数字の方が良いこともあるかもしれません。
 .
 .ds @rotate \
 \\*[pp:sp 6]\
@@ -1245,21 +1255,29 @@ T}
 tab(;);
 lw40 l.
 T{
-.sp 0.5
 .EX
 \&.ft GV
+\&.als b @rotate
 \&\e*[b 1]丁目\e*[b 2]番地\e*[b 34]\e-\e*[b 506]号室
 .EE
 T};T{
 .ft GR
 \s-1(左例の結果)\s0
-.sp 0.1
+.sp 0.2
 .ft GV
 .als b @rotate
 \&\*[b 1]丁目\*[b 2]番地\*[b 34]\-\*[b 506]号室
 .rr b
 T}
 .TE
+.
+.sp 0.5
+印刷したハガキを投函してみたところ、漢数字のタイポで1通戻されました。
+アラビア数字の方が、人にやさしいかもしれません。それからハガキの印刷に
+は次のコマンドを使いました。
+.EX
+groff -Tpdf -P-p14.8c,10.0c -P-l -dpaper=a6l -ms hagaki.ms ... | lpr
+.EE
 .
 .
 .\" ------------------------------------------------------------------
@@ -1275,6 +1293,7 @@ T}
 .nr pp:debug.bak \n[pp:debug]
 .nr pp:debug 1
 .PP
+.ne 10
 .B
 1. 日本語の行の継続で取り除かれるスペースを見る（mode 32）
 .
@@ -1291,6 +1310,7 @@ Plethysmographによって四肢の血量を計る方法。Galvanometerによっ
 .ll
 .
 .PP
+.ne 10
 .B
 2. 行を跨ぐ日本語の文をつなぐ。約物のスペースを補正に使う（mode 1）
 .
@@ -1307,6 +1327,7 @@ Plethysmographによって四肢の血量を計る方法。Galvanometerによっ
 .ll
 .
 .PP
+.ne 10
 .B
 3. 上記2.に加え、和文と欧文の境界、および字間にスペースを補う（mode 7）
 .

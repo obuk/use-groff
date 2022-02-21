@@ -16,6 +16,7 @@
 .
 .\" Use headings as bookmarks.
 .if t \{\
+.  if !dan*bookmark \{\
 .rn SH an-SH
 .de SH
 .  an-SH \\$@
@@ -28,6 +29,7 @@
 .  pdfhref O 2 \\$*
 .  pdfhref M -D "\\$*"
 ..
+.  \}
 .\}
 .
 .\" Support PDF link
