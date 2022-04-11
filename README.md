@@ -105,7 +105,7 @@ UVS のないフォントは正しく表示できないかもしれません。
 日本語で groff の両端揃えを試しました。使ったものをまとめておきます。
 
 * 日本語で groff の両端揃えを使うとき、ps や pdf の prepro でスペースを追加します。[App::grops::prepro][]
-* pdfhref の -D オプションでスペースや unicode も扱えるようにします。[pdf.tmac.patch][]
+* pdfhref の -S オプションで markend を分離します。[pdf.tmac.patch][]
 * 修正した pdfhref は man マクロの UR と UL で使います。[man.local][]
 
 [App::grops::prepro]: https://github.com/obuk/App-grops-prepro
