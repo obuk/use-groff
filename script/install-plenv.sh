@@ -1,10 +1,10 @@
 #!/bin/sh -ue
 
 if [ ! -d ~/.plenv ]; then
-    git clone git://github.com/tokuhirom/plenv.git ~/.plenv
+    git clone https://github.com/tokuhirom/plenv.git ~/.plenv
 fi
 if [ ! -d ~/.plenv/plugins/perl-build ]; then
-    git clone git://github.com/tokuhirom/Perl-Build.git \
+    git clone https://github.com/tokuhirom/Perl-Build.git \
 	~/.plenv/plugins/perl-build/
 fi
 
