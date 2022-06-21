@@ -21,13 +21,13 @@
 .de SH
 .  an-SH \\$@
 .  pdfhref O 1 \\$*
-.  pdfhref M -D "\\$*"
+.\" pdfhref M -D "\\$*"
 ..
 .rn SS an-SS
 .de SS
 .  an-SS \\$@
 .  pdfhref O 2 \\$*
-.  pdfhref M -D "\\$*"
+.\" pdfhref M -D "\\$*"
 ..
 .  \}
 .\}
