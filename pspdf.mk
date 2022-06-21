@@ -52,6 +52,9 @@ install::
 	cd ${TMP}; sudo install -m 644 *.local *.tmac troffrc ${SITE_TMAC}
 	cd ${TMP}; sudo install -m 755 gropdf ${GROPDF}
 
+install-gropdf:	${TMP}/gropdf
+	cd ${TMP}; sudo install -m 755 gropdf ${GROPDF}
+
 tmpdir:
 	rm -rf ${TMP}
 	mkdir -p ${TMP}
@@ -101,7 +104,9 @@ ${TMP}/devpdf.DESC:	${GROFF_FONT}/devpdf/DESC
 
 # gropdf
 
-GROPDF_HEAD?=	http://git.savannah.gnu.org/cgit/groff.git/plain/src/devices/gropdf/gropdf.pl
+GROFF_GIT?=	http://git.savannah.gnu.org/cgit/groff.git
+GROPDF_HEAD?=	${GROFF_GIT}/plain/src/devices/gropdf/gropdf.pl
+GROPDF_URL?=	${GROPDF_HEAD}?id=92cbca2a18ea661162bf9a458b5e051066a00d44
 
 GROPDF_CFG=	\
 	use strict; \
@@ -117,7 +122,7 @@ gropdf.suffix:
 	date +-%m%d >$@
 
 gropdf.dist:	$(MAKEFILE_LIST)
-	curl -Ls ${GROPDF_HEAD} >$@
+	curl -Ls ${GROPDF_URL} >$@
 
 clean::
 	rm -f gropdf.suffix
