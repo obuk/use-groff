@@ -162,10 +162,16 @@ install::	download.devps ghostscript.pkg
 	sudo install -b -m 644 Fontmap $(GS_FONTDIR)
 endif
 
+SYSMAP=	$(shell	temp=`mktemp`; \
+		(echo "print-textmap:"; \
+		echo "\t@basename \$$(TEXTMAP)"; \
+		echo include $(GROFF_FONT)/devps/generate/Makefile; \
+		) >$$temp; $(MAKE) -s -f $$temp; rm $$temp)
+
 MAKE_TEXTMAP_TEXTMAP?=	env \
 		GROFF_BIN_PATH=${GROFF_BIN} \
 		GROFF_FONT_PATH=${GROFF_FONT} \
-		${MAKE_TEXTMAP} $(or ${TEXTMAP_LOCAL}, textmap)
+		${MAKE_TEXTMAP} $(or ${TEXTMAP_LOCAL}, $(SYSMAP))
 
 %.textmap:	%.TTF ${MAKE_TEXTMAP}
 	@echo ${MAKE_TEXTMAP_TEXTMAP} $< \>$@
@@ -236,8 +242,11 @@ ff_rename.pl?=\
 	use strict;\
 	use warnings;\
 	use feature "say";\
-	use Slurp;\
-	exit 1 unless my $$afmtodit = slurp "${GROFF_BIN}/afmtodit";\
+	sub slurp { \
+	  local($$/, @ARGV) = (wantarray ? $$/ : undef, @_); \
+	  return <ARGV>; \
+	} \
+	my $$afmtodit = slurp "${GROFF_BIN}/afmtodit";\
 	say "Based: ${AGL}" if "${AGL}";\
 	if ($$afmtodit =~ /%AGL_to_unicode\s*=\s*(\(.*?\))\s*;/s) {\
 	  my %AGL_to_unicode = eval $$1;\
@@ -251,7 +260,7 @@ ff_rename.pl?=\
 	}\
 	exit 0;
 
-ff_rename.nam:	$(MAKEFILE_LIST) Slurp.cpanm
+ff_rename.nam:	$(MAKEFILE_LIST)
 	echo $(FF_RENAME_LIST) | tr ' ' '\n' | perl -e '${ff_rename.pl}' > $@
 
 FF_RENAME_LIST+=	space
