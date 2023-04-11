@@ -40,7 +40,6 @@ GROFF_TMAC?=	${GROFF_SHARE}/current/tmac
 GROFF_FONT?=	${GROFF_SHARE}/current/font
 SITE_TMAC?=	${GROFF_SHARE}/site-tmac
 SITE_FONT?=	${GROFF_SHARE}/site-font
-GROFF_TEXTMAP?=	${GROFF_FONT}/devps/generate/textmap
 #AFMTODIT?=	perl ${GROFF_BIN}/afmtodit -s
 AFMTODIT?=	perl ${GROFF_BIN}/afmtodit
 

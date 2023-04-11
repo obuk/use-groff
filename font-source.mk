@@ -18,7 +18,8 @@ BV?=		BV
 setup::	$(patsubst %,%.git,${REPO})
 
 $(patsubst %,%.git,${REPO}):
-	[ -d `basename $@ .git` ] || git clone --depth 1 https://github.com/adobe-fonts/$@
+	[ -d $(basename $@) ] || git clone --depth 1 https://github.com/adobe-fonts/$@
+	#git -C $(basename $@) pull --depth 1
 	touch $@
 
 veryclean::
@@ -51,11 +52,23 @@ FF_VERTICAL_WRITING=	\
 	AddExtrema(); \
 	RoundToInt();
 
+FONT_FEATURE?=	palt
+
+ifneq "$(filter palt,$(FONT_FEATURE))" ""
+%-$R.sfd:	%-Regular.ttf fontforge.pkg ./script/palt.pl Clone.cpanm
+	fontforge -lang=ff -c '$(FF_SAVE)' $< a.sfd
+	bash -l -c './script/palt.pl a.sfd' >$@ && rm -f a.sfd
+
+%-$B.sfd:	%-Bold.ttf fontforge.pkg ./script/palt.pl Clone.cpanm
+	fontforge -lang=ff -c '$(FF_SAVE)' $< a.sfd
+	basg -l -c './script/palt.pl a.sfd' >$@ && rm -f a.sfd
+else
 %-$R.sfd:	%-Regular.ttf fontforge.pkg
 	fontforge -lang=ff -c '$(FF_SAVE)' $< $@
 
 %-$B.sfd:	%-Bold.ttf fontforge.pkg
 	fontforge -lang=ff -c '$(FF_SAVE)' $< $@
+endif
 
 %-$V.sfd:	%-Regular.ttf fontforge.pkg $(MAKEFILE_LIST)
 	fontforge -lang=ff -c '$(FF_VERTICAL_WRITING); Save($$2)' $< $@

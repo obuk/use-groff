@@ -2,7 +2,7 @@
 
 include use-groff.mk
 
-TYPE42_FONT?=	${SITE_FONT}/devps
+DOWNLOAD_DIR?=	${SITE_FONT}/devps
 EMBED?=		*
 FOUNDRY?=
 TEXT_ENC?=	text.enc
@@ -36,7 +36,7 @@ veryclean::
 	$(MAKE) -f $(firstword $(MAKEFILE_LIST)) clean
 
 all::	clean-download
-	sudo mkdir -p ${TYPE42_FONT}
+	sudo mkdir -p ${DOWNLOAD_DIR}
 	sudo mkdir -p ${SITE_FONT}/devps
 	sudo mkdir -p ${SITE_FONT}/devpdf
 
@@ -69,20 +69,23 @@ endif
 define install_font
 install::	install-$(1)
 
-install-$(1):	$(1) $(1).t42
-	sudo install -m 644 $(1).t42 ${TYPE42_FONT}
+install-$(1):	$(1) $(1).t42 $(1).TTF
+	sudo install -m 644 $(1).t42 ${DOWNLOAD_DIR}
+	sudo install -m 644 $(1).TTF ${DOWNLOAD_DIR}
 	sudo install -m 644 $(1) ${SITE_FONT}/devps
 	sudo ln -sf ${SITE_FONT}/devps/$(1) ${SITE_FONT}/devpdf/$(1)
 
-download.devps::	$(1) $(1).t42
+download.devps::	$(1)
 	printf "$(1)\t$(1).t42\n" >> $$@
+	#printf "$(1)\t$(1).TTF\n" >> $$@
 
-download.devpdf::	$(1) $(1).t42
-	printf "${FOUNDRY}\t$(1)\t${EMBED}${TYPE42_FONT}/$(1).t42\n" >> $$@
+download.devpdf::	$(1)
+	#printf "${FOUNDRY}\t$(1)\t${EMBED}${DOWNLOAD_DIR}/$(1).t42\n" >> $$@
+	printf "${FOUNDRY}\t$(1)\t${EMBED}${DOWNLOAD_DIR}/$(1).TTF\n" >> $$@
 
 # afmtodit option: see /usr/share/groff/current/font/devps/generate/Makefile
 
-$(1):	$(1).afm $(1).t42 $(1).textmap fontforge.pkg
+$(1):	$(1).afm $(1).textmap fontforge.pkg
 	echo ${AFMTODIT} \
 	`case $(1) in \
 	 *Mono$(CN)-*|*Code$(CN)-*) echo "\-n";; \
@@ -154,24 +157,20 @@ install::	download.devps ghostscript.pkg
 	sudo mkdir -p $(GS_FONTDIR)
 	([ -f $(GS_FONTDIR)/Fontmap ] && cat $(GS_FONTDIR)/Fontmap; \
 	 cat $< | while read fontname fontfile; do \
-	   if [ "${TYPE42_FONT}" != "$(GS_FONTDIR)" ]; then \
-	     sudo ln -sf ${TYPE42_FONT}/$$fontfile $(GS_FONTDIR); \
+	   if [ "${DOWNLOAD_DIR}" != "$(GS_FONTDIR)" ]; then \
+	     sudo ln -sf ${DOWNLOAD_DIR}/$$fontfile $(GS_FONTDIR); \
 	   fi; \
 	   printf "/$$fontname ($$fontfile);\n"; \
 	 done) |sort -u >Fontmap
 	sudo install -b -m 644 Fontmap $(GS_FONTDIR)
 endif
 
-SYSMAP=	$(shell	temp=`mktemp`; \
-		(echo "print-textmap:"; \
-		echo "\t@basename \$$(TEXTMAP)"; \
-		echo include $(GROFF_FONT)/devps/generate/Makefile; \
-		) >$$temp; $(MAKE) -s -f $$temp; rm $$temp)
-
 MAKE_TEXTMAP_TEXTMAP?=	env \
-		GROFF_BIN_PATH=${GROFF_BIN} \
-		GROFF_FONT_PATH=${GROFF_FONT} \
-		${MAKE_TEXTMAP} $(or ${TEXTMAP_LOCAL}, $(SYSMAP))
+	GROFF_BIN_PATH=${GROFF_BIN} \
+	GROFF_FONT_PATH=${GROFF_FONT} \
+	${MAKE_TEXTMAP} $(or ${TEXTMAP_LOCAL}, \
+			  $(shell find ${GROFF_FONT}/devps/generate \
+			    -name textmap -or -name text.map))
 
 %.textmap:	%.TTF ${MAKE_TEXTMAP}
 	@echo ${MAKE_TEXTMAP_TEXTMAP} $< \>$@

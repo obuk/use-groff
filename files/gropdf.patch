@@ -1,5 +1,5 @@
-*** gropdf.old	2023-04-10 12:58:02.525669011 +0000
---- gropdf	2023-04-10 12:58:02.529668943 +0000
+*** gropdf.old	2023-04-11 19:34:32.617280066 +0000
+--- gropdf	2023-04-11 19:34:32.657279374 +0000
 ***************
 *** 23,28 ****
 --- 23,41 ----
@@ -17,8 +17,8 @@
 + my $D4_differences = 1;         # rebuild differences by a sparse array
 + my $D4_charset = 1;             # remove unused characters in charset string
 + my $O5_tounicode = 1;
-+ #$D3_afmtodit = 1 if $O5_tounicode;
-+ my $D6_subset = 1;
++ $D3_afmtodit = 1 if $O5_tounicode;
++ my $D6_subset = 0;
   
   use constant
   {
@@ -43,20 +43,47 @@
   my $linecap=1;
   my $linejoin=1;
 ***************
-*** 234,239 ****
---- 249,257 ----
+*** 233,248 ****
+--- 248,283 ----
+  my $stats=0;
   my $unicodemap;
   my @idirs;
-  
++ my %mopts,
++ 
 + my %AGL_to_unicode;
 + my @ucmap_tounicode;
-+ 
+  
   if (!GetOptions('F=s' => \$fd, 'I=s' => \@idirs, 'l' => \$frot,
   		'p=s' => \$fpsz, 'd!' => \$debug, 'help' => \$want_help,
   		'v' => \$version, 'version' => \$version,
+  		'e' => \$embedall, 'y=s' => \$Foundry, 's' => \$stats,
++ 		'm=s' => \%mopts,
+  		'u:s' => \$unicodemap))
+  {
+      &usage(1);
+  }
+  
++ sub checkyesno {
++     if (@_) {
++         local $_ = shift;
++         return $_ if /^\d+$/;
++         return 1  if /^[yt]/i;  # yes/no/true/false
++     }
++     return 0;
++ }
++ 
++ # modify internal options
++ $D3_afmtodit  = checkyesno($mopts{afmtodit})  if defined $mopts{afmtodit};
++ $O5_tounicode = checkyesno($mopts{tounicode}) if defined $mopts{tounicode};
++ $D6_subset    = checkyesno($mopts{subset})    if defined $mopts{subset};
++ #say STDERR "# \$afmtodit=$D3_afmtodit, \$tounicode=$O5_tounicode, \$subset=$D6_subset";
++ 
+  unshift(@idirs,'.');
+  
+  &usage(0) if ($want_help);
 ***************
 *** 272,277 ****
---- 290,297 ----
+--- 307,314 ----
       }
   }
   
@@ -67,7 +94,7 @@
   
 ***************
 *** 284,289 ****
---- 304,310 ----
+--- 321,327 ----
   
   LoadDownload();
   LoadDesc();
@@ -84,7 +111,7 @@
       foreach my $ch (@{$o->{NO}})
       {
   	my $psname=$o->{NAM}->{$ch->[1]}->[PSNAME] || '/.notdef';
---- 491,497 ----
+--- 508,514 ----
   foreach my $fontno (sort keys %fontlst)
   {
       my $o=$fontlst{$fontno}->{FNT};
@@ -94,7 +121,7 @@
   	my $psname=$o->{NAM}->{$ch->[1]}->[PSNAME] || '/.notdef';
 ***************
 *** 489,494 ****
---- 510,584 ----
+--- 527,601 ----
   	splice(@{$o->{DIFF}},257);
   	splice(@{$o->{WIDTH}},257);
       }
@@ -179,7 +206,7 @@
   
   my $xrefct=$fct;
   
---- 588,594 ----
+--- 605,611 ----
   
   #my $encrypt=BuildObj(++$objct,{'Filter' => '/Standard', 'V' => 1, 'R' => 2, 'P' => 252});
   #PutObj($objct);
@@ -198,7 +225,7 @@
   	    Put("%PDF-1.4\n\x25\xe2\xe3\xcf\xd3\n");
   	}
       }
---- 926,934 ----
+--- 943,951 ----
   				),
   		'Type' =>  '/Catalog'});
   
@@ -210,7 +237,7 @@
       }
 ***************
 *** 1023,1028 ****
---- 1113,1131 ----
+--- 1130,1148 ----
   		    $t=~s/\\e/\\\\/g;
   		    $t=~m/(^.*\/Title \()(.*)(\).*)/;
   		    my ($pre,$title,$post)=($1,$2,$3);
@@ -232,7 +259,7 @@
   		    my @xwds=split(' ',"<< $pre$title$post >>");
 ***************
 *** 1484,1489 ****
---- 1587,1597 ----
+--- 1604,1614 ----
       $l=~s/Action/A/;
       $l=~s'/Subtype /URI'/S /URI';
       $l=~s(\\\[u00(..)\])(chr(hex($1)))eg;
@@ -246,7 +273,7 @@
       my $annot=$obj[$objct];
 ***************
 *** 2357,2362 ****
---- 2465,2471 ----
+--- 2482,2488 ----
   sub PutObj
   {
       my $ono=shift;
@@ -256,7 +283,7 @@
       if (exists($obj[$ono]->{STREAM}))
 ***************
 *** 2417,2422 ****
---- 2526,2535 ----
+--- 2543,2552 ----
       {
   	$$pmsg.="$$fld 0 R$term";
       }
@@ -269,7 +296,7 @@
   sub BuildObj
 ***************
 *** 2462,2467 ****
---- 2575,2589 ----
+--- 2592,2606 ----
       my $ascent=0;
       my $charset='';
   
@@ -287,7 +314,7 @@
   	chomp;
 ***************
 *** 2504,2509 ****
---- 2626,2633 ----
+--- 2643,2650 ----
   #           next if $r[3] >255;
               $r[4]=$r[0] if !defined($r[4]);
               $fnt{NAM}->{$r[0]}=[$p[0],$r[3],'/'.$r[4],$r[3],0];
@@ -309,7 +336,7 @@
   
       $t1flags|=2**0 if $fixwid > -1;
       $t1flags|=(exists($fnt{'special'}))?2**2:2**5;
---- 2652,2664 ----
+--- 2669,2681 ----
   
       my $fno=0;
       my $slant=0;
@@ -345,13 +372,13 @@
   				    }
   				    ),
   			'FontDescriptor' => BuildObj($objct+2,
---- 2668,2698 ----
+--- 2685,2715 ----
       if (exists($download{$fontkey}))
       {
           # Not a Base Font
 !         my ($l1,$l2,$l3,$t1stream);
 !         if ($D6_subset) {
-!             if ($download{$fontkey} =~ /\.[ot]tf$/) {
+!             if ($download{$fontkey} =~ /\.[ot]tf$/i) {
 !                 $fontlst{$fontno}->{subset} = { fontkey => $fontkey };
 !             }
 !         }
@@ -391,7 +418,7 @@
   				    }
   				    ),
   			'FontDescriptor' => BuildObj($objct+2,
---- 2742,2755 ----
+--- 2759,2772 ----
                           {'Type' => '/Font',
   			'Subtype' => '/Type1',
   			'BaseFont' => '/'.$fnt{internalname},
@@ -408,7 +435,7 @@
   			'FontDescriptor' => BuildObj($objct+2,
 ***************
 *** 2663,2668 ****
---- 2802,2808 ----
+--- 2819,2825 ----
       Die("unable to open font '$file' for embedding") if !defined($f);
   
       $head=GetChunk($f,1,"currentfile eexec");
@@ -425,7 +452,7 @@
   		    'Contents' => [ BuildObj($objct+1,
   				{'Length' => 0}
   				) ],
---- 2996,3002 ----
+--- 3013,3019 ----
       my $thispg=BuildObj($objct,
   		    {'Type' => '/Page',
   		    'Group' => {'CS' => '/DeviceRGB', 'S' => '/Transparency'},
@@ -435,7 +462,7 @@
   				) ],
 ***************
 *** 2914,2921 ****
---- 3054,3063 ----
+--- 3071,3080 ----
   
   #	IsText();
       $cft="$par";
@@ -448,7 +475,7 @@
   
 ***************
 *** 2925,2930 ****
---- 3067,3073 ----
+--- 3084,3090 ----
       }
   
   #     $krntbl=$fnt->{KERN};
@@ -458,7 +485,7 @@
   sub CacheWid
 ***************
 *** 2943,2955 ****
---- 3086,3102 ----
+--- 3103,3119 ----
   {
       my $fnt=shift;
       my @cwid;
@@ -478,7 +505,7 @@
       return(\@cwid);
 ***************
 *** 2970,2976 ****
---- 3117,3127 ----
+--- 3134,3144 ----
   	if (defined($cft))
   	{
   	    $whtsz=$fontlst{$cft}->{FNT}->{spacewidth}*$cftsz;
@@ -492,7 +519,7 @@
       }
 ***************
 *** 2988,2994 ****
---- 3139,3149 ----
+--- 3156,3166 ----
       {
   	PutLine(0);
   	$whtsz=$fontlst{$cft}->{FNT}->{spacewidth}*$cftsz;
@@ -506,7 +533,7 @@
   
 ***************
 *** 3022,3028 ****
---- 3177,3185 ----
+--- 3194,3202 ----
   	Set_LWidth() if $lwidth < 1;
   #		$stream.="/F$cft $cftsz Tf\n";
   	$fontchg=1;
@@ -518,7 +545,7 @@
       {
 ***************
 *** 3626,3631 ****
---- 3783,3789 ----
+--- 3800,3806 ----
   sub TextWid
   {
       my $txt=shift;
@@ -528,7 +555,7 @@
       my $ck=0;
 ***************
 *** 3633,3640 ****
---- 3791,3803 ----
+--- 3808,3820 ----
       foreach my $c (split('',$txt))
       {
   	my $cn=ord($c);
@@ -544,7 +571,7 @@
       $ck=length($txt)*$curkern;
 ***************
 *** 3646,3651 ****
---- 3809,3817 ----
+--- 3826,3834 ----
   {
       my $par=shift;
       my $fnt=$fontlst{$cft}->{FNT};
@@ -562,11 +589,11 @@
 ! 	my $chnm=$fnt->{NAM}->{$fnt->{NO}->[$cn]->[1]};
   
 ! 	if ($chnm->[USED]==0)
-! 	{
+  	{
 ! 	    $chnm->[USED]=1;
 ! 	}
 ! 	elsif ($fnt->{NO}->[$cn]->[0] ne $fnt->{NO}->[$cn]->[1])
-  	{
+! 	{
 ! 	    # A glyph has already been remapped to this char, so find a spare
 ! 
 ! 	    my $cn2=RemapChr($cn,$fnt,$fnt->{NO}->[$cn]->[0]);
@@ -574,7 +601,7 @@
   
   	    if ($cn2)
   	    {
---- 3826,3839 ----
+--- 3843,3856 ----
       foreach my $j (0..length($par2)-1)
       {
   	my $cn=ord(substr($par2,$j,1));
@@ -598,7 +625,7 @@
   
       $par=reverse(split('',$par)) if $xrev and $par!~m/^!\|!\|(\d\d\d)/;
   
---- 3850,3856 ----
+--- 3867,3873 ----
   	    }
   	}
       }
@@ -608,7 +635,7 @@
   
 ***************
 *** 3714,3720 ****
---- 3876,3886 ----
+--- 3893,3903 ----
       {
   	PutLine();
   	$whtsz=$fontlst{$cft}->{FNT}->{spacewidth}*$cftsz;
@@ -631,7 +658,7 @@
       $nomove=$fontlst{$cft}->{FNT}->{NAM}->{$par}->[WIDTH]*$cftsz ;
   }
   
---- 3981,3987 ----
+--- 3998,4004 ----
   {
       my $par=shift;
   
@@ -652,7 +679,7 @@
       }
       else
       {
---- 3992,4000 ----
+--- 4009,4017 ----
   
       if (exists($fnt->{NAM}->{$chnm}))
       {
@@ -706,7 +733,7 @@
       }
   }
   
---- 4007,4095 ----
+--- 4024,4112 ----
       my $ch=shift;
       my $fnt=shift;
       my $chnm=shift;
@@ -751,18 +778,18 @@
 ! 		$fnt->{NEXT} = $fnt2;
 ! 	    }
 ! 	    return RemapChr($ch, $fnt->{NEXT}, $chnm);
+! 	}
+! 
+! 	my $ux = $unused + $fnt->{SUPPL} * 256;
+! 	my $glyph = $fnt->{NO}->[$ux]->[1];
+! 	if ($D4_use_cache) {
+! 	delete($fontlst{$cft}->{CACHE}->{$cftsz});
+! 	}
+! 	@{$fnt->{NAM}->{$chnm}}[ASSIGNED, SUPPL, USED] = ($unused, $fnt->{SUPPL}, 1);
+! 	$fnt->{NO}->[$ux]->[1] = $chnm;
+! 	if ($D4_use_cache) {
+! 	$widtbl = CacheWid($cft);
   	}
-+ 
-+ 	my $ux = $unused + $fnt->{SUPPL} * 256;
-+ 	my $glyph = $fnt->{NO}->[$ux]->[1];
-+ 	if ($D4_use_cache) {
-+ 	delete($fontlst{$cft}->{CACHE}->{$cftsz});
-+ 	}
-+ 	@{$fnt->{NAM}->{$chnm}}[ASSIGNED, SUPPL, USED] = ($unused, $fnt->{SUPPL}, 1);
-+ 	$fnt->{NO}->[$ux]->[1] = $chnm;
-+ 	if ($D4_use_cache) {
-+ 	$widtbl = CacheWid($cft);
-+ 	}
 + 
 + 	$stream .= "% AAA Assign $chnm ($ch) to ".sprintf("\\%o (%d)", $unused, $unused).
 + 	    ($fnt->{SUPPL}? ".$fnt->{SUPPL}" : '')."\n" if $debug;
@@ -798,7 +825,7 @@
   
 ***************
 *** 3919,3924 ****
---- 4128,4386 ----
+--- 4145,4403 ----
       PutHotSpot($xpos) if defined($mark);
   }
   
