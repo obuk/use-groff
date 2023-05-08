@@ -40,15 +40,14 @@ GROFF_TMAC?=	${GROFF_SHARE}/current/tmac
 GROFF_FONT?=	${GROFF_SHARE}/current/font
 SITE_TMAC?=	${GROFF_SHARE}/site-tmac
 SITE_FONT?=	${GROFF_SHARE}/site-font
-#AFMTODIT?=	perl ${GROFF_BIN}/afmtodit -s
 AFMTODIT?=	perl ${GROFF_BIN}/afmtodit
 
 
 # perl
 
-PERL_VERSION?=	5.30.2
+#PERL_VERSION?=	5.30.2
 #PERL_VERSION?=	5.32.1
-#PERL_VERSION?=	5.34.0
+PERL_VERSION?=	5.34.0
 
 .SUFFIXES:	.stamp
 
@@ -82,6 +81,13 @@ clean::
 	rm -f plenv.stamp
 	rm -f cpanm.stamp
 	rm -f *.cpanm
+
+%.pip:	python3.pkg python3-pip.pkg
+	sudo pip install $*
+	touch $@
+
+clean::
+	rm -f *.pip
 
 # pkg
 
