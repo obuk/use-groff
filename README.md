@@ -13,6 +13,7 @@ man -Tpdf -Lja 7 groff > a.pdf
 ```
 
 Use MANROFFOPT to specify groff options in man command.
+
 To embed a PDF font, use gs like this:
 
 ```
@@ -27,8 +28,12 @@ grops(1) and gropdf(1) if you have a recent groff installation.
 [Adding fonts to groff]: http://www.schaffter.ca/mom/momdoc/appendices.html#fonts
 [Sauce Han Sans / Sauce Han Serif for Japanese]: https://github.com/3846masa/sauce-han-fonts
 
-To use other fonts, such as Takao and Noto, use font-takao.mk and
-font-noto.mk like this:
+To use other fonts, such as Takao (Takao Mincho / Gothic) and
+Source ([Source Han Sans][] / [Source Han Serif][]), 
+use font-takao.mk and font-source.mk like this:
+
+[Source Han Sans]: https://github.com/adobe-fonts/source-han-sans
+[Source Han Serif]: https://github.com/adobe-fonts/source-han-serif
 
 ```
 make -f font-takao.mk clean install
