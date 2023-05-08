@@ -21,13 +21,11 @@
 .de SH
 .  an-SH \\$@
 .  pdfhref O 1 \\$*
-.\" pdfhref M -D "\\$*"
 ..
 .rn SS an-SS
 .de SS
 .  an-SS \\$@
 .  pdfhref O 2 \\$*
-.\" pdfhref M -D "\\$*"
 ..
 .  \}
 .\}
@@ -38,61 +36,45 @@
 .  if '\*(.T'pdf' \
 .    nr mPDF 1
 .
-.\" Parse URL, and setup pdfhref class and options.
-.de my:an-URL
-.  ds my:an-URL.class L
-.  nr my:an-URL.i 0
-.  ds my:an-URL.dest \\$*
-.  length my:an-URL.n \\$*
-.  while (\\n[my:an-URL.i] < \\n[my:an-URL.n]) \{\
-.    ds my:an-URL.s \\$1\"
-.    substring my:an-URL.s 0 \\n[my:an-URL.i]
-.    substring my:an-URL.s -3
-.    if '\\*[my:an-URL.s]-'\\-' \{\
-.      break
-.    \}
-.    if '\\*[my:an-URL.s]-'://-' \{\
-.      ds my:an-URL.class W
-.      break
-.    \}
-.    nr my:an-URL.i +1
-.  \}
-.  ds my:an-URL.pdfhref pdfhref \\*[my:an-URL.class] -D "\\*[my:an-URL.dest]"
-..
-.
-.am UR
-.  if \\n[mPDF] \{\
-.    my:an-URL \\*(m1
-.    ev link-text-env
-.    di link-text-div
-.    \\*[my:an-URL.pdfhref] -A \\c -S --
-.  \}
-..
-.
-.\" End URL.
-.rn UE an-old:UE
-.de UE
+.rn UR an-ext:UR
+.rn UE an-ext:UE
+.de UR
+.  ds m1 \\$1\"
 .  ie \\n[mPDF] \{\
-.    fl
-.    di
-.    if !\\n(dl \{\
-.      do chop link-text-div
-.      da link-text-div
-.      nop \&\\*(m1
-.      fl
-.      di
-.    \}
-.    ev
-.    \" Yes, strip off final newline of diversion and emit it.
-.    do chop link-text-div
-.    do link-text-div
-\c
-.    pdfhrefend
-\&\\$*\"
+.    ds UR.m \\n[.m]
+.    if '\\*[UR.m]'' .ds UR.m black
+.    do ev URL-div
+.    color 1
+.    gcolor \\*[PDFHREF.TEXT.COLOUR]
+.    do di URL-div
 .  \}
 .  el \{\
-.    an-old:UE \\$@
+.    an-ext:UR \\$@
 .  \}
+..
+.
+.de UE
+.  ie \\n[mPDF] \{\
+.    br
+.    di
+.    ev
+.    nr UR.t (\\n[.s]p)
+.    nr UR.b (\\n[.s]p - \\n[.v])
+.    device pdf: markstart \\n[UR.t] \\n[UE.b] \\n[PDFHREF.LEADING] \
+       /Subtype /Link /Action << /Subtype /URI /URI (\\*(m1) >> \
+       /Border [\\*[PDFHREF.BORDER]] /Color [\\*[PDFHREF.COLOUR]]
+.    ie \\n(dn \{\
+.      do chop URL-div
+.      do URL-div
+\c
+.    \}
+.    el \
+.      nop \&\m[\\*[PDFHREF.TEXT.COLOUR]]\\*(m1\m[\\*[UR.m]]\c
+.    device pdf: markend
+.    nop \&\\$*\"
+.  \}
+.  el \
+.    an-old:UE \\$@
 ..
 .
 .if (\n[cR]=0)&(\n[mPDF]) \{\
