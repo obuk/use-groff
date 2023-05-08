@@ -106,8 +106,8 @@ ${TMP}/devpdf.DESC:	${GROFF_FONT}/devpdf/DESC
 
 GROFF_GIT?=	http://git.savannah.gnu.org/cgit/groff.git
 GROPDF_HEAD?=	${GROFF_GIT}/plain/src/devices/gropdf/gropdf.pl
-#GROPDF_URL?=	${GROPDF_HEAD}?id=ac0ed2d49c773ad8dc40ef573d23d8ec5b3afc70
-GROPDF_URL?=	${GROPDF_HEAD}?id=e3824d611be904bad22176f4f4eb282a5352509d
+#GROPDF_URL?=	${GROPDF_HEAD}?id=e3824d611be904bad22176f4f4eb282a5352509d
+GROPDF_URL?=	${GROPDF_HEAD}?id=f4ff4da245d9ae269636fc2225caf632414da4c3
 
 GROPDF_CFG=	\
 	use strict; \
