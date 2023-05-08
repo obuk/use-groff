@@ -56,7 +56,7 @@ afmtodit.tmp:
 	perl -w -lpe 's/^\s+"(?:F[9A][0-9A-F]{2}|2F[89][0-9A-F]{2}|2FA[01][0-9A-F])",\s+"[0-9A-F]+",$$/#$$&/' <${GROFF_BIN}/afmtodit >$@
 endif
 
-AFMTODIT+=	-s
+#AFMTODIT+=	-s
 ifneq "${TEXT_ENC}" ""
 AFMTODIT+=	-e ${TEXT_ENC}
 ifneq "${TEXT_ENC}" "text.enc"
@@ -69,7 +69,8 @@ endif
 define install_font
 install::	install-$(1)
 
-install-$(1):	$(1) $(1).t42 $(1).TTF
+install-$(1):	$(1) $(1).pfb $(1).t42 $(1).TTF
+	sudo install -m 644 $(1).pfb ${DOWNLOAD_DIR}
 	sudo install -m 644 $(1).t42 ${DOWNLOAD_DIR}
 	sudo install -m 644 $(1).TTF ${DOWNLOAD_DIR}
 	sudo install -m 644 $(1) ${SITE_FONT}/devps
@@ -78,10 +79,12 @@ install-$(1):	$(1) $(1).t42 $(1).TTF
 download.devps::	$(1)
 	printf "$(1)\t$(1).t42\n" >> $$@
 	#printf "$(1)\t$(1).TTF\n" >> $$@
+	#printf "$(1)\t$(1).pfb\n" >> $$@
 
 download.devpdf::	$(1)
 	#printf "${FOUNDRY}\t$(1)\t${EMBED}${DOWNLOAD_DIR}/$(1).t42\n" >> $$@
-	printf "${FOUNDRY}\t$(1)\t${EMBED}${DOWNLOAD_DIR}/$(1).TTF\n" >> $$@
+	#printf "${FOUNDRY}\t$(1)\t${EMBED}${DOWNLOAD_DIR}/$(1).TTF\n" >> $$@
+	printf "${FOUNDRY}\t$(1)\t${EMBED}${DOWNLOAD_DIR}/$(1).pfb\n" >> $$@
 
 # afmtodit option: see /usr/share/groff/current/font/devps/generate/Makefile
 
@@ -163,6 +166,10 @@ install::	download.devps ghostscript.pkg
 	   printf "/$$fontname ($$fontfile);\n"; \
 	 done) |sort -u >Fontmap
 	sudo install -b -m 644 Fontmap $(GS_FONTDIR)
+	rm -f Fontmap
+
+clean::
+	rm -f Fontmap
 endif
 
 MAKE_TEXTMAP_TEXTMAP?=	env \
@@ -197,6 +204,9 @@ FF_SAVE=	\
 %.t42:	%.TTF
 	fontforge -lang=ff -c '$(FF_GENERATE)' $< $@
 
+%.pfb:	%.TTF
+	fontforge -lang=ff -c '$(FF_GENERATE)' $< $@
+
 FF_BOLD?=	\
 		Open($$1); \
 		SelectAll(); \
@@ -204,6 +214,8 @@ FF_BOLD?=	\
 		ExpandStroke(50, 0, 1, 0, 1); \
 		SetFontNames($$2:r); \
 		Generate($$2);
+
+# ChangeWeight(0.2) or ExpandStroke(50, 0, 1, 0, 1)
 
 ifneq "${FF_BOLD}" ""
 %-$B.TTF:	%-$R.TTF
@@ -214,9 +226,12 @@ FF_ITALIC?=	\
 		Open($$1); \
 		SelectAll(); \
 		ClearInstrs(); \
-		Skew(13); \
+		Italic(-13); \
+		SetItalicAngle(-13); \
 		SetFontNames($$2:r); \
 		Generate($$2);
+
+# Italic(-13) or Skew(13)
 
 ifneq "${FF_ITALIC}" ""
 %-$I.TTF:	%-$R.TTF
@@ -276,10 +291,9 @@ clean::
 	fontforge -lang=ff -c '$(FF_RENAME)' $< $@
 
 %.ttf:	%.sfd fontforge.pkg $(MAKEFILE_LIST)
-	./script/unaltuni2.pl $(patsubst %, -g %, $(FF_RENAME_LIST)) $< >a.sfd
-	fontforge -lang=ff -c '$(FF_GENERATE)' a.sfd $@
-	rm a.sfd
-
+	cat $< | bash -l -c './script/unaltuni2.pl $(patsubst %, -g %, $(FF_RENAME_LIST))' >$*.SFD
+	fontforge -lang=ff -c '$(FF_GENERATE)' $*.SFD $@
+	rm -f $*.SFD
 
 URI_CIDMAP?=	https://raw.githubusercontent.com/fontforge/fontforge/master/contrib/cidmap
 

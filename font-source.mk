@@ -52,23 +52,16 @@ FF_VERTICAL_WRITING=	\
 	AddExtrema(); \
 	RoundToInt();
 
-FONT_FEATURE?=	palt
+FF_PALT=	\
+	Open($$1); \
+	SelectAll(); \
+	ApplySubstitution("*","*","palt");
 
-ifneq "$(filter palt,$(FONT_FEATURE))" ""
-%-$R.sfd:	%-Regular.ttf fontforge.pkg ./script/palt.pl Clone.cpanm
-	fontforge -lang=ff -c '$(FF_SAVE)' $< a.sfd
-	bash -l -c './script/palt.pl a.sfd' >$@ && rm -f a.sfd
-
-%-$B.sfd:	%-Bold.ttf fontforge.pkg ./script/palt.pl Clone.cpanm
-	fontforge -lang=ff -c '$(FF_SAVE)' $< a.sfd
-	basg -l -c './script/palt.pl a.sfd' >$@ && rm -f a.sfd
-else
 %-$R.sfd:	%-Regular.ttf fontforge.pkg
-	fontforge -lang=ff -c '$(FF_SAVE)' $< $@
+	fontforge -lang=ff -c '$(FF_PALT); Save($$2)' $< $@
 
 %-$B.sfd:	%-Bold.ttf fontforge.pkg
-	fontforge -lang=ff -c '$(FF_SAVE)' $< $@
-endif
+	fontforge -lang=ff -c '$(FF_PALT); Save($$2)' $< $@
 
 %-$V.sfd:	%-Regular.ttf fontforge.pkg $(MAKEFILE_LIST)
 	fontforge -lang=ff -c '$(FF_VERTICAL_WRITING); Save($$2)' $< $@
@@ -79,7 +72,7 @@ endif
 clean::
 	rm -f $(foreach fam, ${FAM}, $($(fam))-Regular.ttf $($(fam))-Bold.ttf)
 
-%.ttf:	%.otf afdko.pip
+%.ttf:	%.otf otf2ttf.pip
 	otf2ttf -o $@ $<
 
 build-han=\
@@ -105,9 +98,5 @@ source-han-serif/Masters/Regular/${SERIF}${CN}-Regular.otf \
 source-han-serif/Masters/Bold/${SERIF}${CN}-Bold.otf:	source-han-serif.git afdko.pip
 	$(call build-han,${SERIF},.${CN},.SUBSET)
 
-%.pip:	python3.pkg python3-pip.pkg
-	sudo pip install $*
-	touch $@
-
-clean::
-	rm -f *.pip
+otf2ttf.pip: fonttools.pip
+afdko.pip: fonttools.pip
