@@ -18,7 +18,7 @@ GROFF?=		env ${GROFF_ENV} ${GROFF_PATH} -P-pa4 -dpaper=a4 -Kutf8
 PDFMAN=		(path=$$(man -w -L${lang} $$(sed -e 's/\(.*\)_\([0-9]\)/\2 \1/')); \
 		mlang=$$(echo $$path | tr / '\n' | sed -n '/^${lang}$$/s//-m&/p'); \
 		(zcat $$path 2>/dev/null || cat $$path) | nkf -w | \
-		${GROFF} -Tpdf -P-e -P-msubset=1 -mandoc -k $$mlang)
+		${GROFF} -Tpdf -mandoc -k -pt $$mlang)
 
 .SUFFIXES: .pdf
 all::	gropdf_1.pdf groff_char_7.pdf groff_mdoc_7.pdf patch_1.pdf
@@ -33,9 +33,9 @@ clean::
 all::	sample.pdf
 
 .PHONY:	sample.pdf
-sample.pdf:	sample.7 fonttools.pkg
+sample.pdf:	sample.7
 	#${GROFF} -Tpdf -pt -mandoc -mja $< | ${GS_PDFWRITE} > $@
-	${GROFF} -Tpdf -P-e -P-msubset=1 -pt -mandoc -mja $< > $@
+	${GROFF} -Tpdf -P-e -pt -mandoc -mja $< > $@
 
 clean::
 	rm -f sample.pdf
@@ -88,8 +88,7 @@ clean::
 	pdfmom $< >$@
 
 %.pdf:	setup fonttools.pkg
-	#echo $* | ${PDFMAN} | ${GS_PDFWRITE} > $@
-	echo $* | ${PDFMAN} > $@
+	echo $* | ${PDFMAN} | ${GS_PDFWRITE} > $@
 
 clean::
 	rm -f a.pdf
