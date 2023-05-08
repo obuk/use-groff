@@ -16,19 +16,19 @@
 .if !d fnH .ds fnH \*[fnH-default]
 .if !d fnC .ds fnC \*[fnC-default]
 .
-.ds my:fzoom-styles "R I B BI O X\""
+.ds my:fzoom-styles "R I B BI O X V BV\""
 .
 .de my:fspecial
-.  if \n[my:debug-font] .tm \\$0 \\$*
+.  if \\n[my:debug-font] .tm \\$0 \\$*
 .  fspecial \\$1R  \\$2R
 .  ie F \\$2I  .fspecial \\$1I \\$2I
 .  el .fspecial \\$1I \\$2R
 .  fspecial \\$1B \\$2B
 .  ie F \\$2BI .fspecial \\$1BI \\$2BI
-.  el .fspecial \\$1BI\\$2B
+.  el .fspecial \\$1BI \\$2B
 ..
 .de my:fzoomf
-.  if \n[my:debug-font] .tm \\$0 \\$*
+.  if \\n[my:debug-font] .tm \\$0 \\$*
 .  ds my:fzoomf-family \\$1
 .  nr my:fzoomf-factor \\$2
 .  shift 2
@@ -39,7 +39,7 @@
 .  \}
 ..
 .de my:fzoom
-.  if \n[my:debug-font] .tm \\$0 \\$*
+.  if \\n[my:debug-font] .tm \\$0 \\$*
 .  nr my:fzoom-factor \\$4
 .  if \\n[my:fzoom-factor]=0 .nr my:fzoom-factor 1000
 .  my:fzoomf \\$1 0 R
@@ -61,7 +61,7 @@
 ..
 .
 .de my:fconfig
-.  if \n[my:debug-font] .tm \\$0 \\$*
+.  if \\n[my:debug-font] .tm \\$0 \\$*
 .  if \\n[.$]=0 .return
 .  ds my:font \\$1
 .  shift
