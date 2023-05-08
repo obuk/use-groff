@@ -1,13 +1,15 @@
-*** gropdf.old	2023-04-11 19:34:32.617280066 +0000
---- gropdf	2023-04-11 19:34:32.657279374 +0000
+*** gropdf.old	2023-05-07 23:24:58.375439261 +0000
+--- gropdf	2023-05-07 23:24:58.403438823 +0000
 ***************
 *** 23,28 ****
---- 23,41 ----
+--- 23,43 ----
   use strict;
   use warnings;
   use Getopt::Long qw(:config bundling);
 + use Encode;
 + use File::Temp;
++ use File::Basename;
++ use File::Spec::Functions;
 + 
 + my $use_suppl_font = 1;
 + my $use_unicode_bookmark = 1;
@@ -18,13 +20,13 @@
 + my $D4_charset = 1;             # remove unused characters in charset string
 + my $O5_tounicode = 1;
 + $D3_afmtodit = 1 if $O5_tounicode;
-+ my $D6_subset = 0;
++ my $D6_subset = 1;
   
   use constant
   {
 ***************
 *** 31,36 ****
---- 44,50 ----
+--- 46,52 ----
       PSNAME		=> 2,
       ASSIGNED		=> 3,
       USED                => 4,
@@ -34,7 +36,7 @@
   my $prog=$0;
 ***************
 *** 83,88 ****
---- 97,103 ----
+--- 99,105 ----
   my $stream='';	# Current Text/Graphics stream
   my $cftsz=10;	# Current font sz
   my $cft;	# Current Font
@@ -44,7 +46,7 @@
   my $linejoin=1;
 ***************
 *** 233,248 ****
---- 248,283 ----
+--- 250,285 ----
   my $stats=0;
   my $unicodemap;
   my @idirs;
@@ -83,7 +85,7 @@
   &usage(0) if ($want_help);
 ***************
 *** 272,277 ****
---- 307,314 ----
+--- 309,316 ----
       }
   }
   
@@ -94,7 +96,7 @@
   
 ***************
 *** 284,289 ****
---- 321,327 ----
+--- 323,329 ----
   
   LoadDownload();
   LoadDesc();
@@ -111,7 +113,7 @@
       foreach my $ch (@{$o->{NO}})
       {
   	my $psname=$o->{NAM}->{$ch->[1]}->[PSNAME] || '/.notdef';
---- 508,514 ----
+--- 510,516 ----
   foreach my $fontno (sort keys %fontlst)
   {
       my $o=$fontlst{$fontno}->{FNT};
@@ -121,7 +123,7 @@
   	my $psname=$o->{NAM}->{$ch->[1]}->[PSNAME] || '/.notdef';
 ***************
 *** 489,494 ****
---- 527,601 ----
+--- 529,575 ----
   	splice(@{$o->{DIFF}},257);
   	splice(@{$o->{WIDTH}},257);
       }
@@ -138,60 +140,32 @@
 +     if ($D4_charset >= 0) {
 + 	my @list = values %{$o->{NAM}};
 +         @list = grep $_->[USED], @list if $D4_charset;
-+ 	my $p = GetObj($fontlst{$fontno}->{OBJ});
-+ 	my $q = GetObj($p->{FontDescriptor});
-+ 	$q->{CharSet} = bless do {
++         update_font($o, 'FontDescriptor', 'CharSet', bless do {
 +             my %seen; [ grep defined && !$seen{$_}++, map $_->[PSNAME], @list ]
-+         }, 'STRING';
++         }, 'STRING');
++ 
 +     }
 +     }
 + 
 +     if ($D6_subset) {
-+         if (my $subset = $fontlst{$fontno}->{subset}) {
++         if (my $fontkey = $fontlst{$fontno}->{download_delayed}) {
 + 
-+             my @glyphs;
-+             # my $o=$fontlst{$fontno}->{FNT};
-+             push @glyphs, get_glyphs($o);
-+             if ($use_suppl_font) {
-+                 my $g = $o;
-+                 while ($g = $g->{NEXT}) {
-+                     push @glyphs, get_glyphs($g);
-+                 }
-+             }
-+ 
-+             my $fontkey = $subset->{fontkey};
-+             my $filename = $download{$fontkey};
-+             my ($suffix) = $filename =~ /(\.\w+)$/;
-+             my $tmp = File::Temp->new(SUFFIX => $suffix);
-+             my @command = (
-+                 "pyftsubset", $filename,
-+                 "--glyphs=".join(",", @glyphs),
-+                 "--output-file=".$tmp->filename,
-+                 "--no-subset-tables+=FFTM", # xxxxx
-+             );
-+ 
-+             my ($l1,$l2,$l3,$t1stream);
-+             #Warn("@command");
-+             system @command;
-+             if ($? == 0) {
-+                 ($l1,$l2,$l3,$t1stream) = GetType1($tmp->filename);
-+             } else {
-+                 Warn("@command: $!");
-+                 ($l1,$l2,$l3,$t1stream) = GetType1($filename);
-+             }
-+             unlink $tmp->filename;
++             my $fh = openfont_as_type1($download{$fontkey}, $o);
++             my ($l1,$l2,$l3,$t1stream) = GetType1($fh);
 +             Warn("incorrect font format for '$fontkey' ($l1)")
 +                 if !defined($t1stream);
 + 
-+             my ($ono) = split " ", $fontlst{$fontno}->{OBJ};
-+             $obj[$ono + 3] = {  # FontFile
++             my $ono = get_ono($o, qw/FontDescriptor FontFile/);
++             my ($ono_fontfile) = split " ", $ono;
++             $obj[$ono_fontfile] = {
 +                 DATA => {
-+                     Length1 => $l1 // 0,
-+                     Length2 => $l2 // 0,
-+                     Length3 => $l3 // 0,
++                     Length1 => $l1,
++                     defined $l2 && $l2 ? (Length2 => $l2) : (),
++                     defined $l3 && $l3 ? (Length3 => $l3) : (),
 +                 },
 +                 STREAM => $t1stream,
 +             };
++ 
 +         }
 +     }
   }
@@ -206,7 +180,7 @@
   
   my $xrefct=$fct;
   
---- 605,611 ----
+--- 579,585 ----
   
   #my $encrypt=BuildObj(++$objct,{'Filter' => '/Standard', 'V' => 1, 'R' => 2, 'P' => 252});
   #PutObj($objct);
@@ -225,7 +199,7 @@
   	    Put("%PDF-1.4\n\x25\xe2\xe3\xcf\xd3\n");
   	}
       }
---- 943,951 ----
+--- 917,925 ----
   				),
   		'Type' =>  '/Catalog'});
   
@@ -237,7 +211,7 @@
       }
 ***************
 *** 1023,1028 ****
---- 1130,1148 ----
+--- 1104,1122 ----
   		    $t=~s/\\e/\\\\/g;
   		    $t=~m/(^.*\/Title \()(.*)(\).*)/;
   		    my ($pre,$title,$post)=($1,$2,$3);
@@ -258,8 +232,24 @@
   		    $title=~s/(?<!\\)\)/\\\)/g;
   		    my @xwds=split(' ',"<< $pre$title$post >>");
 ***************
+*** 1211,1221 ****
+--- 1305,1317 ----
+              }
+              elsif (lc($xprm[1]) eq 'markstart')
+              {
++ 		say STDERR "# markstart: ", join ', ', map "'$_'", @xprm; # xxxxx
+                  $mark={'rst' => ($xprm[2]+$xprm[4])/$unitwidth, 'rsb' => ($xprm[3]-$xprm[4])/$unitwidth, 'xpos' => $xpos-($xprm[4]/$unitwidth),
+  			    'ypos' => $ypos, 'lead' => $xprm[4]/$unitwidth, 'pdfmark' => join(' ',@xprm[5..$#xprm])};
+  	    }
+  	    elsif (lc($xprm[1]) eq 'markend')
+  	    {
++ 		say STDERR "# markend ($xpos, $ypos), \$mark = ", Dumper($mark); # xxxxx
+  		PutHotSpot($xpos) if defined($mark);
+  		$mark=undef;
+  	    }
+***************
 *** 1484,1489 ****
---- 1604,1614 ----
+--- 1580,1590 ----
       $l=~s/Action/A/;
       $l=~s'/Subtype /URI'/S /URI';
       $l=~s(\\\[u00(..)\])(chr(hex($1)))eg;
@@ -273,7 +263,7 @@
       my $annot=$obj[$objct];
 ***************
 *** 2357,2362 ****
---- 2482,2488 ----
+--- 2458,2464 ----
   sub PutObj
   {
       my $ono=shift;
@@ -283,7 +273,7 @@
       if (exists($obj[$ono]->{STREAM}))
 ***************
 *** 2417,2422 ****
---- 2543,2552 ----
+--- 2519,2528 ----
       {
   	$$pmsg.="$$fld 0 R$term";
       }
@@ -296,7 +286,7 @@
   sub BuildObj
 ***************
 *** 2462,2467 ****
---- 2592,2606 ----
+--- 2568,2582 ----
       my $ascent=0;
       my $charset='';
   
@@ -314,7 +304,7 @@
   	chomp;
 ***************
 *** 2504,2509 ****
---- 2643,2650 ----
+--- 2619,2626 ----
   #           next if $r[3] >255;
               $r[4]=$r[0] if !defined($r[4]);
               $fnt{NAM}->{$r[0]}=[$p[0],$r[3],'/'.$r[4],$r[3],0];
@@ -336,7 +326,7 @@
   
       $t1flags|=2**0 if $fixwid > -1;
       $t1flags|=(exists($fnt{'special'}))?2**2:2**5;
---- 2669,2681 ----
+--- 2645,2657 ----
   
       my $fno=0;
       my $slant=0;
@@ -372,17 +362,21 @@
   				    }
   				    ),
   			'FontDescriptor' => BuildObj($objct+2,
---- 2685,2715 ----
+--- 2661,2695 ----
       if (exists($download{$fontkey}))
       {
           # Not a Base Font
 !         my ($l1,$l2,$l3,$t1stream);
 !         if ($D6_subset) {
-!             if ($download{$fontkey} =~ /\.[ot]tf$/i) {
-!                 $fontlst{$fontno}->{subset} = { fontkey => $fontkey };
+!             my $fontfile = $download{$fontkey};
+!             while (-l $fontfile) {
+!                 $fontfile = catfile dirname($fontfile), readlink($fontfile);
+!             }
+!             if ($fontfile !~ /\.(t1|pfa|pfb)$/i) {
+!                 $fontlst{$fontno}->{download_delayed} = $fontkey;
 !             }
 !         }
-!         if (!$fontlst{$fontno}->{subset}) {
+!         if (!$fontlst{$fontno}->{download_delayed}) {
 !             ($l1,$l2,$l3,$t1stream)=GetType1($download{$fontkey});
 !             Warn("incorrect font format for '$fontkey' ($l1)")
 !                 if !defined($t1stream);
@@ -418,7 +412,7 @@
   				    }
   				    ),
   			'FontDescriptor' => BuildObj($objct+2,
---- 2759,2772 ----
+--- 2739,2752 ----
                           {'Type' => '/Font',
   			'Subtype' => '/Type1',
   			'BaseFont' => '/'.$fnt{internalname},
@@ -434,9 +428,27 @@
   				    ),
   			'FontDescriptor' => BuildObj($objct+2,
 ***************
-*** 2663,2668 ****
---- 2819,2825 ----
-      Die("unable to open font '$file' for embedding") if !defined($f);
+*** 2659,2668 ****
+      my ($head,$body,$tail);		# Font contents
+      my $f;
+  
+!     OpenFile(\$f,$fontdir,"$file");
+!     Die("unable to open font '$file' for embedding") if !defined($f);
+  
+      $head=GetChunk($f,1,"currentfile eexec");
+      $body=GetChunk($f,2,"00000000") if !eof($f);
+      $tail=GetChunk($f,3,"cleartomark") if !eof($f);
+  
+--- 2795,2809 ----
+      my ($head,$body,$tail);		# Font contents
+      my $f;
+  
+!     if (ref $file) {
+!         $f = $file;
+!     } else {
+!         OpenFile(\$f,$fontdir,"$file");
+!         Die("unable to open font '$file' for embedding") if !defined($f);
+!     }
   
       $head=GetChunk($f,1,"currentfile eexec");
 +     $body=$tail='';
@@ -452,7 +464,7 @@
   		    'Contents' => [ BuildObj($objct+1,
   				{'Length' => 0}
   				) ],
---- 3013,3019 ----
+--- 2997,3003 ----
       my $thispg=BuildObj($objct,
   		    {'Type' => '/Page',
   		    'Group' => {'CS' => '/DeviceRGB', 'S' => '/Transparency'},
@@ -462,7 +474,7 @@
   				) ],
 ***************
 *** 2914,2921 ****
---- 3071,3080 ----
+--- 3055,3064 ----
   
   #	IsText();
       $cft="$par";
@@ -475,7 +487,7 @@
   
 ***************
 *** 2925,2930 ****
---- 3084,3090 ----
+--- 3068,3074 ----
       }
   
   #     $krntbl=$fnt->{KERN};
@@ -485,7 +497,7 @@
   sub CacheWid
 ***************
 *** 2943,2955 ****
---- 3103,3119 ----
+--- 3087,3103 ----
   {
       my $fnt=shift;
       my @cwid;
@@ -505,7 +517,7 @@
       return(\@cwid);
 ***************
 *** 2970,2976 ****
---- 3134,3144 ----
+--- 3118,3128 ----
   	if (defined($cft))
   	{
   	    $whtsz=$fontlst{$cft}->{FNT}->{spacewidth}*$cftsz;
@@ -519,7 +531,7 @@
       }
 ***************
 *** 2988,2994 ****
---- 3156,3166 ----
+--- 3140,3150 ----
       {
   	PutLine(0);
   	$whtsz=$fontlst{$cft}->{FNT}->{spacewidth}*$cftsz;
@@ -533,7 +545,7 @@
   
 ***************
 *** 3022,3028 ****
---- 3194,3202 ----
+--- 3178,3186 ----
   	Set_LWidth() if $lwidth < 1;
   #		$stream.="/F$cft $cftsz Tf\n";
   	$fontchg=1;
@@ -545,7 +557,7 @@
       {
 ***************
 *** 3626,3631 ****
---- 3800,3806 ----
+--- 3784,3790 ----
   sub TextWid
   {
       my $txt=shift;
@@ -555,7 +567,7 @@
       my $ck=0;
 ***************
 *** 3633,3640 ****
---- 3808,3820 ----
+--- 3792,3804 ----
       foreach my $c (split('',$txt))
       {
   	my $cn=ord($c);
@@ -571,7 +583,7 @@
       $ck=length($txt)*$curkern;
 ***************
 *** 3646,3651 ****
---- 3826,3834 ----
+--- 3810,3818 ----
   {
       my $par=shift;
       my $fnt=$fontlst{$cft}->{FNT};
@@ -589,11 +601,11 @@
 ! 	my $chnm=$fnt->{NAM}->{$fnt->{NO}->[$cn]->[1]};
   
 ! 	if ($chnm->[USED]==0)
-  	{
+! 	{
 ! 	    $chnm->[USED]=1;
 ! 	}
 ! 	elsif ($fnt->{NO}->[$cn]->[0] ne $fnt->{NO}->[$cn]->[1])
-! 	{
+  	{
 ! 	    # A glyph has already been remapped to this char, so find a spare
 ! 
 ! 	    my $cn2=RemapChr($cn,$fnt,$fnt->{NO}->[$cn]->[0]);
@@ -601,7 +613,7 @@
   
   	    if ($cn2)
   	    {
---- 3843,3856 ----
+--- 3827,3840 ----
       foreach my $j (0..length($par2)-1)
       {
   	my $cn=ord(substr($par2,$j,1));
@@ -625,7 +637,7 @@
   
       $par=reverse(split('',$par)) if $xrev and $par!~m/^!\|!\|(\d\d\d)/;
   
---- 3867,3873 ----
+--- 3851,3857 ----
   	    }
   	}
       }
@@ -635,7 +647,7 @@
   
 ***************
 *** 3714,3720 ****
---- 3893,3903 ----
+--- 3877,3887 ----
       {
   	PutLine();
   	$whtsz=$fontlst{$cft}->{FNT}->{spacewidth}*$cftsz;
@@ -658,7 +670,7 @@
       $nomove=$fontlst{$cft}->{FNT}->{NAM}->{$par}->[WIDTH]*$cftsz ;
   }
   
---- 3998,4004 ----
+--- 3982,3988 ----
   {
       my $par=shift;
   
@@ -679,7 +691,7 @@
       }
       else
       {
---- 4009,4017 ----
+--- 3993,4001 ----
   
       if (exists($fnt->{NAM}->{$chnm}))
       {
@@ -733,7 +745,7 @@
       }
   }
   
---- 4024,4112 ----
+--- 4008,4096 ----
       my $ch=shift;
       my $fnt=shift;
       my $chnm=shift;
@@ -825,7 +837,7 @@
   
 ***************
 *** 3919,3924 ****
---- 4145,4403 ----
+--- 4129,4461 ----
       PutHotSpot($xpos) if defined($mark);
   }
   
@@ -1027,13 +1039,6 @@
 +     Warn("Could not find afmtodit") if !%AGL_to_unicode;
 + }
 + 
-+ sub catfile {
-+     if (eval { require File::Spec; 1; }) {
-+         File::Spec->catfile(@_);
-+     } else {
-+         join '/', @_;
-+     }
-+ }
 + 
 + =begin comment
 + 
@@ -1069,6 +1074,63 @@
 + }
 + 
 + 
++ sub openfont_as_type1 {
++     my ($fontfile, $fnt) = @_;
++ 
++     my $subsetpro = $desc{subsetpro};
++     my $fh;
++ 
++     if ($subsetpro) {
++ 
++         my @glyphs = get_glyphs($fnt);
++         if ($use_suppl_font) {
++             my $g = $fnt;
++             while ($g = $g->{NEXT}) {
++                 push @glyphs, get_glyphs($g);
++             }
++         }
++ 
++         # open $fh, "-|", $subsetpro, "-g", join(',', @glyphs);
++         $fh = File::Temp->new(SUFFIX => '.pfb', CLEANUP => 1);
++         system $subsetpro, "-g", join(',', @glyphs), "-o", $fh, $fontfile;
++         $fh = undef unless $? == 0;
++         Die("unable to open font '$fontfile' for embedding") if !defined($fh);
++ 
++         my $tag = name26(6);
++         my $fontname = join '+', $tag, $fnt->{internalname};
++         update_font($fnt, 'FontDescriptor', 'FontName', "/$fontname");
++         update_font($fnt, 'BaseFont', "/$fontname");
++         if ($use_suppl_font) {
++             my $g = $fnt;
++             while ($g = $g->{NEXT}) {
++                 update_font($g, 'BaseFont', "/$fontname");
++             }
++         }
++ 
++     } else {
++         OpenFile(\$fh,$fontdir,"$fontfile");
++         Die("unable to open font '$fontfile' for embedding") if !defined($fh);
++     }
++ 
++     $fh;
++ }
++ 
++ 
++ sub name26 {
++     my ($m, $n) = @_;
++     my @n = '';
++     my @d = split //, "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
++     $n //= rand(@d ** $m);
++     while ($m-- > 0) {
++         my $q = int($n / @d);
++         my $r = $n - $q * @d;
++         unshift @n, $d[$r];
++         $n = $q;
++     }
++     join '', @n;
++ }
++ 
++ 
 + sub get_glyphs {
 +     my $fnt = shift;            # $fontlst{$fontno}->{FNT}
 + 
@@ -1080,6 +1142,30 @@
 +         }
 +     }
 +     return @glyphs;
++ }
++ 
++ 
++ sub update_font {
++     my $value = pop;
++     my $key = pop;
++     my $ono = get_ono(@_);
++     my $p = GetObj($ono);
++     Die("Could not update key '$key' for ono '$ono'") unless $p;
++     $p->{$key} = $value;
++ }
++ 
++ 
++ sub get_ono {
++     my $fnt = shift;            # $fontlst{$fontno}->{FNT}
++     my $nm = $fnt->{SUPPL}? "$fnt->{NM}.$fnt->{SUPPL}" : $fnt->{NM};
++     my $ono = $pages->{Resources}->{Font}->{$nm};
++     for (@_) {
++         my $p = GetObj($ono);
++         Die("Could not GetObj($ono) in get_ono($nm, @_)") unless $p;
++         $ono = $p->{$_};
++     }
++     Die("Could not get_ono(".join(', ', $nm, @_).")") unless $ono;
++     return $ono;
 + }
 + 
   1;
