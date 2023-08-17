@@ -1,4 +1,5 @@
 # install fonts to use groff in Chinese
 
-CN=CN
+CN=	CN
+STY=	R I B BI
 include font-source.mk

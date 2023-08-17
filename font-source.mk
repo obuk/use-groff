@@ -34,40 +34,37 @@ VPATH?=	source-han-sans/Regular \
 FF_BOLD=
 include font-common.mk
 
-all::	$(foreach fam, ${FAM}, $($(fam))-$R.sfd $($(fam))-$B.sfd \
-		$($(fam))-$V.sfd $($(fam))-$(BV).sfd)
+
+SFDFILES?=	$(foreach fam, ${FAM}, $($(fam))-$R.sfd $($(fam))-$B.sfd \
+			$($(fam))-$V.sfd $($(fam))-$(BV).sfd)
+
+all::		$(SFDFILES)
 
 clean::
-	rm -f $(foreach fam, ${FAM}, $($(fam))-$R.sfd $($(fam))-$B.sfd \
-		$($(fam))-$V.sfd $($(fam))-$(BV).sfd)
+	rm -f $(SFDFILES)
+	rm -f $(patsubst %.sfd,%.SFD,$(SFDFILES))
 
-FF_VERTICAL_WRITING=	\
-	Open($$1); \
-	SelectAll(); \
-	ApplySubstitution("*","*","vrt2"); \
-	ApplySubstitution("*","*","vert"); \
-	Select(0u0000, 0u2fff); \
-	SelectInvert(); \
-	Rotate(90, 512, 360); \
-	AddExtrema(); \
-	RoundToInt();
+.PRECIOUS:	$(SFDFILES)
 
-FF_PALT=	\
-	Open($$1); \
-	SelectAll(); \
-	ApplySubstitution("*","*","palt");
+%-$R.sfd:	%-Regular.ttf fontforge.pkg $(PALT)
+	fontforge -lang=ff -c '$(FF_SAVE)' $< $@ && \
+	bash -l -c 'perl -i.bak $(PALT) -a $(abspath $@)'
 
-%-$R.sfd:	%-Regular.ttf fontforge.pkg
-	fontforge -lang=ff -c '$(FF_PALT); Save($$2)' $< $@
+%-$B.sfd:	%-Bold.ttf fontforge.pkg $(PALT)
+	fontforge -lang=ff -c '$(FF_SAVE)' $< $@ && \
+	bash -l -c 'perl -i.bak $(PALT) -a $(abspath $@)'
 
-%-$B.sfd:	%-Bold.ttf fontforge.pkg
-	fontforge -lang=ff -c '$(FF_PALT); Save($$2)' $< $@
+%-$V.sfd:	%-Regular.ttf fontforge.pkg $(PALT)
+	fontforge -lang=ff -c '$(FF_VERT)' $< $@ && \
+	bash -l -c 'perl -i.bak $(PALT) -vpal -a $(abspath $@)' && \
+	mv -f $@ $(patsubst %.sfd,%.SFD,$@) && \
+	fontforge -lang=ff -c '$(FF_VROT)' $(patsubst %.sfd,%.SFD,$@) $@
 
-%-$V.sfd:	%-Regular.ttf fontforge.pkg $(MAKEFILE_LIST)
-	fontforge -lang=ff -c '$(FF_VERTICAL_WRITING); Save($$2)' $< $@
-
-%-$(BV).sfd:	%-Bold.ttf fontforge.pkg $(MAKEFILE_LIST)
-	fontforge -lang=ff -c '$(FF_VERTICAL_WRITING); Save($$2)' $< $@
+%-$(BV).sfd:	%-Bold.ttf fontforge.pkg $(PALT)
+	fontforge -lang=ff -c '$(FF_VERT)' $< $@ && \
+	bash -l -c 'perl -i.bak $(PALT) -vpal -a $(abspath $@)' && \
+	mv -f $@ $(patsubst %.sfd,%.SFD,$@) && \
+	fontforge -lang=ff -c '$(FF_VROT)' $(patsubst %.sfd,%.SFD,$@) $@
 
 clean::
 	rm -f $(foreach fam, ${FAM}, $($(fam))-Regular.ttf $($(fam))-Bold.ttf)

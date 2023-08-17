@@ -198,6 +198,22 @@ FF_SAVE=	\
 		Open($$1); \
 		Save($$2);
 
+FF_VERT=	\
+		Open($$1); \
+		SelectAll(); \
+		ApplySubstitution("*","*","vrt2"); \
+		ApplySubstitution("*","*","vert"); \
+		Save($$2)
+
+FF_VROT=	\
+		Open($$1); \
+		Select(0u0000, 0u2fff); \
+		SelectInvert(); \
+		Rotate(90, 512, 360); \
+		AddExtrema(); \
+		RoundToInt(); \
+		Save($$2)
+
 %.afm:	%.TTF
 	fontforge -lang=ff -c '$(FF_GENERATE)' $< $@
 
@@ -308,3 +324,6 @@ install-fontforge-cidmap:	Adobe-CNS1-6.cidmap Adobe-GB1-5.cidmap \
 		Adobe-Japan2-0.cidmap \
 		Adobe-Korea1-2.cidmap
 	sudo cp $^ /usr/share/fontforge/
+
+PALT?=	${UG}/script/palt.pl
+${PALT}:	Clone.cpanm

@@ -13,6 +13,7 @@ install:: all
 
 setup all install clean::
 	$(MAKE) -f pspdf.mk $@
+	$(MAKE) -f deri-gropdf-ng.mk $@
 	$(MAKE) -f font.mk $@
 	$(MAKE) -f ja-man.mk $@
 	$(MAKE) -f perldoc.mk $@

@@ -21,6 +21,7 @@ endif
 include font-common.mk
 
 setup::	$(FONT_PKG)
+${FONT_MR} ${FONT_GR}: $(FONT_PKG)
 
 $M-$R.sfd:	${FONT_MR} fontforge.pkg
 	fontforge -lang=ff -c '$(FF_SAVE)' $< $@
