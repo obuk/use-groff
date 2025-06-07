@@ -46,6 +46,7 @@ specified.
 
 * 20250607
 I've put prototypes of gropdf(1) and afmtodit(1) with OTF support in [gropdf-otf][].
-[gropdf-otf]: https://github.com/obuk/gropdf-otf
 This prototype uses PDF's Tm operators for italics and vertical writing.
 This will reduce font installation time and the number of fonts embedded in the PDF.
+
+[gropdf-otf]: https://github.com/obuk/gropdf-otf
