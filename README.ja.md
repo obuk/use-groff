@@ -16,15 +16,23 @@ ubuntu の man コマンドで groff のオプションを指定するには MAN
 
 ## 日本語のフォント
 
-フォントは type42 形式でインストールします。
+フォントは PFB 形式でインストールします。
 
 インストール方法は、Peter Schaffter さんの [Adding fonts to groff][] にあります。
 最近の groff をインストールしていれば grops(1) や gropdf(1) にも同様の説明があります。
 
+ここでは、
 日本語のフォントは [Sauce Han Sans / Sauce Han Serif for Japanese][] を選びました。
 
 [Adding fonts to groff]: http://www.schaffter.ca/mom/momdoc/appendices.html#fonts
 [Sauce Han Sans / Sauce Han Serif for Japanese]: https://github.com/3846masa/sauce-han-fonts
+
+* 20250607
+OTF をサポートする gropdf(1) と afmtodit(1) の試作品を [gropdf-otf][] に置きました。
+[gropdf-otf]: https://github.com/obuk/gropdf-otf
+この試作品では、斜体と縦書に PDF の Tm 演算子を使用します。
+これにより、フォントのインストール時間が短縮され、
+PDF に埋め込まれるフォントの数も削減されます。
 
 ### Times と Mincho
 

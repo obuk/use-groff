@@ -43,3 +43,9 @@ All Japanese fonts are installed under the names MR and GR, with MR
 designated as a special font for TR (GR for HR).  Therefore, the
 installed Japanese fonts will be used as needed even if they are not
 specified.
+
+* 20250607
+I've put prototypes of gropdf(1) and afmtodit(1) with OTF support in [gropdf-otf][].
+[gropdf-otf]: https://github.com/obuk/gropdf-otf
+This prototype uses PDF's Tm operators for italics and vertical writing.
+This will reduce font installation time and the number of fonts embedded in the PDF.
