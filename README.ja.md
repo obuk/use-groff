@@ -29,10 +29,11 @@ ubuntu の man コマンドで groff のオプションを指定するには MAN
 
 * 20250607
 OTF をサポートする gropdf(1) と afmtodit(1) の試作品を [gropdf-otf][] に置きました。
-[gropdf-otf]: https://github.com/obuk/gropdf-otf
 この試作品では、斜体と縦書に PDF の Tm 演算子を使用します。
 これにより、フォントのインストール時間が短縮され、
 PDF に埋め込まれるフォントの数も削減されます。
+
+[gropdf-otf]: https://github.com/obuk/gropdf-otf
 
 ### Times と Mincho
 
